@@ -1,0 +1,96 @@
+name: Demande de fonctionnalité
+description: Proposer une amélioration ou une nouvelle capacité pour KubeWatch
+title: "[feat] "
+labels:
+  - enhancement
+  - triage
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Merci pour cette proposition.
+
+        KubeWatch vise un binaire unique, léger et sans dépendance externe :
+        les propositions sont évaluées à l'aune de ce compromis (valeur apportée
+        contre poids, surface d'attaque et complexité ajoutés).
+
+  - type: checkboxes
+    id: prerequisites
+    attributes:
+      label: Vérifications préalables
+      options:
+        - label: J'ai vérifié qu'aucune issue existante ne couvre déjà cette demande.
+          required: true
+        - label: Cette fonctionnalité concerne KubeWatch, et non un outil tiers qu'il intègre.
+          required: true
+
+  - type: dropdown
+    id: area
+    attributes:
+      label: Zone concernée
+      options:
+        - Gestion des clusters et des contextes
+        - Exploration des ressources
+        - Application de YAML / GitOps
+        - Logs et terminal
+        - Métriques et observabilité
+        - Hub d'images et catalogue d'applications
+        - Charts Helm
+        - Détecteur d'updates et rollouts
+        - Topologie
+        - Packaging, distribution, CI/CD
+    validations:
+      required: true
+
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problème à résoudre
+      description: Quelle situation concrète est aujourd'hui pénible ou impossible ?
+      placeholder: "Aujourd'hui, pour faire X je dois quitter KubeWatch et lancer kubectl parce que…"
+    validations:
+      required: true
+
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Solution proposée
+      description: Le comportement attendu, si possible avec l'allure de la commande, de l'API ou de l'écran.
+    validations:
+      required: true
+
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives envisagées
+      description: Contournements actuels, outils existants, autres approches écartées et pourquoi.
+    validations:
+      required: false
+
+  - type: dropdown
+    id: scope
+    attributes:
+      label: Impact estimé
+      options:
+        - Ajustement mineur (option, affichage)
+        - Fonctionnalité isolée (nouvel écran ou nouvelle commande)
+        - Changement structurant (nouvelle dépendance ou nouveau sous-système)
+        - Changement de rupture du format de l'état persistant
+    validations:
+      required: true
+
+  - type: checkboxes
+    id: contribution
+    attributes:
+      label: Contribution
+      options:
+        - label: Je suis prêt·e à proposer une Pull Request pour cette fonctionnalité.
+          required: false
+
+  - type: textarea
+    id: context
+    attributes:
+      label: Contexte additionnel
+      description: Maquettes, extraits d'API Kubernetes, liens vers la documentation amont…
+    validations:
+      required: false

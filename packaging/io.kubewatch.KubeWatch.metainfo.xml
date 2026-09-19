@@ -1,0 +1,118 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Métadonnées AppStream de KubeWatch.
+
+  Installation : /usr/share/metainfo/io.kubewatch.KubeWatch.metainfo.xml
+  Validation   : appstreamcli validate packaging/io.kubewatch.KubeWatch.metainfo.xml
+
+  Aucune capture d'écran n'est déclarée : le projet n'en publie pas encore.
+  `appstreamcli validate` le signale par un avertissement, assumé — mieux vaut
+  une logithèque sans image qu'une image mensongère.
+-->
+<component type="desktop-application">
+  <id>io.kubewatch.KubeWatch</id>
+
+  <metadata_license>CC0-1.0</metadata_license>
+  <project_license>Apache-2.0</project_license>
+
+  <name>KubeWatch</name>
+  <summary>Manage Kubernetes clusters from your desktop</summary>
+  <summary xml:lang="fr">Pilotez vos clusters Kubernetes depuis votre poste</summary>
+
+  <developer id="io.kubewatch">
+    <name>KubeWatch contributors</name>
+  </developer>
+
+  <description>
+    <p>
+      KubeWatch is a native desktop client for Kubernetes. It reads your
+      kubeconfig, talks to the API server exactly like kubectl does, and opens
+      no network port of its own.
+    </p>
+    <p xml:lang="fr">
+      KubeWatch est un client de bureau natif pour Kubernetes. Il lit votre
+      kubeconfig, parle au serveur d'API exactement comme kubectl, et n'ouvre
+      aucun port réseau de son côté.
+    </p>
+    <p>Features:</p>
+    <p xml:lang="fr">Fonctions :</p>
+    <ul>
+      <li>Cluster overview: nodes, pods by phase, namespaces, warnings</li>
+      <li xml:lang="fr">Vue d'ensemble du cluster : nœuds, pods par état, namespaces, avertissements</li>
+      <li>Dynamic resource discovery, including the custom resources of your operators</li>
+      <li xml:lang="fr">Découverte dynamique des ressources, y compris les CRD de vos opérateurs</li>
+      <li>Scale, restart, change image, roll back, cordon and drain nodes</li>
+      <li xml:lang="fr">Mise à l'échelle, redémarrage, changement d'image, retour arrière, cordon et drain</li>
+      <li>Server-side apply, diff and delete from a YAML editor</li>
+      <li xml:lang="fr">Apply côté serveur, diff et suppression depuis une console YAML</li>
+      <li>Live container logs and an interactive terminal</li>
+      <li xml:lang="fr">Journaux de conteneurs en direct et terminal interactif</li>
+      <li>Image and Helm chart search, with a manifest generator</li>
+      <li xml:lang="fr">Recherche d'images et de charts Helm, avec générateur de manifestes</li>
+      <li>Update watchers on GitHub releases, container tags and Helm charts</li>
+      <li xml:lang="fr">Surveillance des versions : releases GitHub, tags de registre, charts Helm</li>
+    </ul>
+    <p>
+      A graphics stack is required: a Wayland or X11 session and a working
+      Vulkan or OpenGL driver. Helm chart rendering is delegated to the helm
+      binary when it is installed.
+    </p>
+    <p xml:lang="fr">
+      Une pile graphique est nécessaire : une session Wayland ou X11 et un
+      pilote Vulkan ou OpenGL fonctionnel. Le rendu des charts Helm est délégué
+      au binaire helm lorsqu'il est installé.
+    </p>
+  </description>
+
+  <launchable type="desktop-id">io.kubewatch.KubeWatch.desktop</launchable>
+
+  <provides>
+    <binary>kubewatch-desktop</binary>
+    <binary>kubewatch</binary>
+  </provides>
+
+  <categories>
+    <category>Development</category>
+    <category>System</category>
+    <category>Monitor</category>
+  </categories>
+
+  <keywords>
+    <keyword>kubernetes</keyword>
+    <keyword>k8s</keyword>
+    <keyword>cluster</keyword>
+    <keyword>kubectl</keyword>
+    <keyword>container</keyword>
+    <keyword>devops</keyword>
+  </keywords>
+
+  <url type="homepage">https://github.com/kubewatch-io/kubewatch</url>
+  <url type="bugtracker">https://github.com/kubewatch-io/kubewatch/issues</url>
+  <url type="help">https://github.com/kubewatch-io/kubewatch/blob/main/docs/interface.md</url>
+  <url type="vcs-browser">https://github.com/kubewatch-io/kubewatch</url>
+  <url type="contribute">https://github.com/kubewatch-io/kubewatch/blob/main/CONTRIBUTING.md</url>
+
+  <!-- Clavier et souris : l'interface n'est pas prévue pour le tactile. -->
+  <supports>
+    <control>keyboard</control>
+    <control>pointing</control>
+  </supports>
+
+  <requires>
+    <display_length compare="ge">768</display_length>
+  </requires>
+
+  <!-- Aucun contenu sensible : la balise vide est la façon normative de le
+       dire en OARS 1.1. -->
+  <content_rating type="oars-1.1" />
+
+  <releases>
+    <release version="0.1.0" date="2026-09-18">
+      <description>
+        <p>First public release, as a native desktop application.</p>
+        <p xml:lang="fr">Première version publique, en application de bureau native.</p>
+      </description>
+      <url>https://github.com/kubewatch-io/kubewatch/releases/tag/v0.1.0</url>
+    </release>
+  </releases>
+</component>

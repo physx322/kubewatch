@@ -1,0 +1,157 @@
+# ---------------------------------------------------------------------------
+# Audit de sécurité et de conformité
+#
+# - cargo audit    : vulnérabilités RustSec des dépendances
+# - cargo deny     : licences, sources, interdictions, doublons (deny.toml)
+# - cargo vet      : revue d'approvisionnement (informatif, non bloquant)
+# - CodeQL         : analyse statique des workflows GitHub Actions
+#
+# Exécuté à chaque push et PR, plus une passe hebdomadaire : une dépendance
+# saine aujourd'hui peut devenir vulnérable demain sans qu'une seule ligne du
+# dépôt n'ait changé.
+#
+# Toutes les actions tierces sont épinglées sur un tag de version explicite,
+# maintenu à jour par Dependabot (.github/dependabot.yml).
+# ---------------------------------------------------------------------------
+name: Security
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+  schedule:
+    # Tous les lundis à 05:17 UTC (heure décalée : les runners sont moins
+    # sollicités qu'aux minutes rondes).
+    - cron: "17 5 * * 1"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: security-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  # -------------------------------------------------------------------------
+  # Vulnérabilités connues (base RustSec)
+  # -------------------------------------------------------------------------
+  audit:
+    name: cargo audit (RustSec)
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    permissions:
+      contents: read
+      # rustsec/audit-check publie ses résultats sous forme de « check run »
+      # et ouvre une issue en cas de nouvelle alerte sur la branche principale.
+      checks: write
+      issues: write
+    steps:
+      - name: Récupérer le dépôt
+        uses: actions/checkout@v7
+
+      - name: Audit RustSec (push et planification)
+        if: github.event_name != 'pull_request'
+        uses: rustsec/audit-check@v2
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      # Sur une PR issue d'un fork, le jeton est en lecture seule : l'action
+      # ci-dessus ne peut pas écrire de check run. On exécute alors cargo-audit
+      # directement, ce qui fait échouer le job de la même façon.
+      - name: Installer cargo-audit (pull request)
+        if: github.event_name == 'pull_request'
+        uses: taiki-e/install-action@v2
+        with:
+          tool: cargo-audit
+
+      - name: Audit RustSec (pull request)
+        if: github.event_name == 'pull_request'
+        run: cargo audit --deny warnings
+
+  # -------------------------------------------------------------------------
+  # Licences, provenance et interdictions (deny.toml)
+  # -------------------------------------------------------------------------
+  deny:
+    name: cargo deny (${{ matrix.checks }})
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    strategy:
+      fail-fast: false
+      matrix:
+        checks:
+          - advisories
+          - bans licenses sources
+    steps:
+      - name: Récupérer le dépôt
+        uses: actions/checkout@v7
+
+      - name: Vérifier le graphe de dépendances
+        uses: EmbarkStudios/cargo-deny-action@v2
+        with:
+          command: check ${{ matrix.checks }}
+          # deny.toml décrit déjà les cibles et les features auditées.
+          arguments: --all-features
+
+  # -------------------------------------------------------------------------
+  # cargo-vet : audit d'approvisionnement, informatif tant que
+  # supply-chain/config.toml n'est pas initialisé (`cargo vet init`).
+  # -------------------------------------------------------------------------
+  vet:
+    name: cargo vet (informatif)
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    continue-on-error: true
+    steps:
+      - name: Récupérer le dépôt
+        uses: actions/checkout@v7
+
+      - name: Installer la toolchain Rust stable
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Installer cargo-vet
+        uses: taiki-e/install-action@v2
+        with:
+          tool: cargo-vet
+
+      - name: Vérifier les audits d'approvisionnement
+        run: |
+          set -uo pipefail
+          if [ ! -f supply-chain/config.toml ]; then
+            echo "::notice title=cargo-vet non initialisé::Exécuter 'cargo vet init' pour activer cet audit"
+            exit 0
+          fi
+          cargo vet --locked || {
+            echo "::warning title=cargo-vet::Des dépendances ne sont pas encore auditées"
+            exit 0
+          }
+
+  # -------------------------------------------------------------------------
+  # CodeQL sur les workflows Actions : détecte les injections d'expressions,
+  # les permissions trop larges et les checkouts de code non fiable.
+  # -------------------------------------------------------------------------
+  codeql:
+    name: CodeQL (GitHub Actions)
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    permissions:
+      contents: read
+      actions: read
+      security-events: write
+    steps:
+      - name: Récupérer le dépôt
+        uses: actions/checkout@v7
+
+      - name: Initialiser CodeQL
+        uses: github/codeql-action/init@v4
+        with:
+          languages: actions
+
+      - name: Analyser
+        uses: github/codeql-action/analyze@v4
+        with:
+          category: "/language:actions"

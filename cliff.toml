@@ -1,0 +1,113 @@
+# ---------------------------------------------------------------------------
+# git-cliff — génération du CHANGELOG et des notes de version KubeWatch
+# Convention : https://www.conventionalcommits.org/fr/v1.0.0/
+#
+#   git cliff --config cliff.toml --output CHANGELOG.md          # changelog complet
+#   git cliff --config cliff.toml --latest --strip header        # notes d'une release
+#   git cliff --config cliff.toml --unreleased --bump            # prochaine version
+#
+# Note TOML : un « \ » en fin de ligne dans une chaîne """…""" supprime le saut
+# de ligne suivant. C'est ainsi que l'on contrôle finement le rendu Markdown.
+# ---------------------------------------------------------------------------
+
+[changelog]
+header = """
+# Changelog
+
+Toutes les modifications notables de KubeWatch sont consignées dans ce fichier.
+
+Le format suit [Keep a Changelog](https://keepachangelog.com/fr/1.1.0/) et le
+versioning respecte [SemVer](https://semver.org/lang/fr/).\n
+"""
+
+body = """
+{% if version %}\
+{% if previous.version %}\
+## [{{ version | trim_start_matches(pat="v") }}](<REPO>/compare/{{ previous.version }}...{{ version }}) — {{ timestamp | date(format="%Y-%m-%d") }}
+{% else %}\
+## [{{ version | trim_start_matches(pat="v") }}](<REPO>/releases/tag/{{ version }}) — {{ timestamp | date(format="%Y-%m-%d") }}
+{% endif %}\
+{% else %}\
+## [Non publié]
+{% endif %}\
+{% set breaking = commits | filter(attribute="breaking", value=true) %}\
+{% if breaking | length > 0 %}
+### Changements de rupture
+{% for commit in breaking %}\
+- {% if commit.scope %}**{{ commit.scope }}** : {% endif %}\
+{{ commit.breaking_description | default(value=commit.message) | upper_first | trim }}
+{% endfor %}\
+{% endif %}\
+{% for group, group_commits in commits | group_by(attribute="group") %}
+### {{ group | striptags | trim | upper_first }}
+{% for commit in group_commits %}\
+- {% if commit.breaking %}[**rupture**] {% endif %}\
+{% if commit.scope %}**{{ commit.scope }}** : {% endif %}\
+{{ commit.message | upper_first | trim }} \
+([{{ commit.id | truncate(length=7, end="") }}](<REPO>/commit/{{ commit.id }}))
+{% endfor %}\
+{% endfor %}
+"""
+
+footer = """
+<!-- Généré par git-cliff : ne pas éditer à la main les sections déjà publiées. -->
+"""
+
+trim = true
+
+# L'URL du dépôt est injectée ici plutôt que via l'intégration GitHub distante :
+# la génération fonctionne ainsi hors ligne et sans jeton d'API.
+postprocessors = [
+  { pattern = '<REPO>', replace = "https://github.com/kubewatch-io/kubewatch" },
+]
+
+[git]
+conventional_commits = true
+filter_unconventional = false
+split_commits = false
+protect_breaking_commits = true
+filter_commits = false
+topo_order = false
+sort_commits = "newest"
+tag_pattern = "v[0-9]*"
+
+commit_preprocessors = [
+  # Les références d'issues deviennent des liens cliquables.
+  { pattern = '\((\w+\s)?#([0-9]+)\)', replace = "([#${2}](https://github.com/kubewatch-io/kubewatch/issues/${2}))" },
+  # Espaces superflus en fin de sujet.
+  { pattern = '[ \t]+$', replace = "" },
+]
+
+commit_parsers = [
+  # --- Bruit exclu du changelog -------------------------------------------
+  { message = "^chore\\(release\\)", skip = true },
+  { message = "^chore\\(version\\)", skip = true },
+  { message = "^chore: release", skip = true },
+  { message = "^Merge (branch|pull request|remote-tracking)", skip = true },
+  { message = "^wip", skip = true },
+
+  # --- Groupes publiés ------------------------------------------------------
+  # Le préfixe HTML est invisible au rendu ; il impose l'ordre des sections,
+  # `group_by` triant les clés par ordre alphabétique.
+  { message = "^feat", group = "<!-- 00 -->Nouveautés" },
+  { message = "^fix", group = "<!-- 01 -->Corrections" },
+  { message = "^security", group = "<!-- 02 -->Sécurité" },
+  { message = "^sec\\(", group = "<!-- 02 -->Sécurité" },
+  { body = ".*CVE-[0-9]{4}-[0-9]+", group = "<!-- 02 -->Sécurité" },
+  { message = "^perf", group = "<!-- 03 -->Performance" },
+  { message = "^refactor", group = "<!-- 04 -->Refactorisation" },
+  { message = "^docs?", group = "<!-- 05 -->Documentation" },
+  { message = "^test", group = "<!-- 06 -->Tests" },
+  { message = "^ci", group = "<!-- 07 -->Intégration continue" },
+  { message = "^build", group = "<!-- 07 -->Intégration continue" },
+  { message = "^chore\\(deps\\)", group = "<!-- 08 -->Dépendances" },
+  { message = "^deps", group = "<!-- 08 -->Dépendances" },
+  { message = "^revert", group = "<!-- 09 -->Retours arrière" },
+  { message = "^chore", group = "<!-- 10 -->Divers" },
+  { message = ".*", group = "<!-- 11 -->Autres" },
+]
+
+[bump]
+# `feat` -> mineure ; « ! » ou BREAKING CHANGE -> majeure ; le reste -> correctif.
+features_always_bump_minor = true
+breaking_always_bump_major = true

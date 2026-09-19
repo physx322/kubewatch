@@ -1,0 +1,21 @@
+# Style de formatage KubeWatch — `cargo fmt --all`
+edition = "2021"
+max_width = 100
+tab_spaces = 4
+hard_tabs = false
+newline_style = "Unix"
+use_small_heuristics = "Default"
+reorder_imports = true
+reorder_modules = true
+use_field_init_shorthand = true
+use_try_shorthand = true
+remove_nested_parens = true
+merge_derives = true
+
+# --- Options de regroupement des imports -----------------------------------
+# Ces deux options ne sont appliquées que par rustfmt nightly
+# (`cargo +nightly fmt` / `make fmt-nightly`). Sur le canal stable utilisé par
+# la CI, rustfmt les ignore avec un simple avertissement : le `cargo fmt --check`
+# reste donc valide. Ordre visé : std -> crates externes -> crate courant.
+group_imports = "StdExternalCrate"
+imports_granularity = "Module"

@@ -1,0 +1,43 @@
+[package]
+name = "kubewatch-desktop"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+repository.workspace = true
+authors.workspace = true
+description = "KubeWatch — application de bureau native pour piloter des clusters Kubernetes"
+
+[[bin]]
+name = "kubewatch-desktop"
+path = "src/main.rs"
+
+[dependencies]
+kubewatch-core.workspace = true
+kubewatch-hub.workspace = true
+kubewatch-updater.workspace = true
+rustls.workspace = true
+eframe.workspace = true
+egui.workspace = true
+egui_extras.workspace = true
+egui-phosphor.workspace = true
+rfd.workspace = true
+image.workspace = true
+tokio.workspace = true
+futures.workspace = true
+serde.workspace = true
+serde_json.workspace = true
+serde_yaml_ng.workspace = true
+anyhow.workspace = true
+thiserror.workspace = true
+tracing.workspace = true
+tracing-subscriber.workspace = true
+chrono.workspace = true
+humantime.workspace = true
+semver.workspace = true
+dirs.workspace = true
+parking_lot.workspace = true
+indexmap.workspace = true
+uuid.workspace = true
+base64.workspace = true
+open.workspace = true

@@ -1,0 +1,57 @@
+# ---------------------------------------------------------------------------
+# KubeWatch — fichiers ignorés par Git
+# ---------------------------------------------------------------------------
+
+# Artefacts de compilation Rust
+/target
+**/target/
+*.rlib
+*.rmeta
+
+# IMPORTANT : Cargo.lock est VERSIONNÉ.
+# KubeWatch est distribué sous forme de binaire ; le verrouillage des
+# dépendances garantit des builds reproductibles et des releases auditables.
+# Ne PAS ajouter Cargo.lock ici.
+
+# État local de l'application (clusters enregistrés, jetons, watchers)
+.kubewatch/
+kubewatch.state.json
+*.kubeconfig.local
+
+# Artefacts de distribution
+dist/
+*.tar.gz
+*.zip
+*.sha256
+SHA256SUMS
+SHA256SUMS.sig
+SHA256SUMS.pem
+
+# Fichiers temporaires
+*.tmp
+*.bak
+*.orig
+*.rej
+*.log
+.env
+.env.local
+
+# Outils front éventuels (précaution)
+node_modules/
+.parcel-cache/
+.vite/
+
+# Éditeurs et systèmes
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/*
+!.vscode/extensions.json
+*.swp
+*~
+
+# Couverture / profilage
+*.profraw
+*.profdata
+coverage/
+lcov.info

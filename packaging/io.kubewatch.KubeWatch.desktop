@@ -1,0 +1,40 @@
+# ---------------------------------------------------------------------------
+# Entrée de bureau freedesktop pour KubeWatch.
+#
+# Installation : /usr/share/applications/io.kubewatch.KubeWatch.desktop  (système)
+#                ~/.local/share/applications/io.kubewatch.KubeWatch.desktop  (utilisateur)
+#
+# Validation :   desktop-file-validate packaging/io.kubewatch.KubeWatch.desktop
+#
+# Note : `Exec=kubewatch-desktop` suppose le binaire dans le PATH ; c'est le
+# seul binaire du projet.
+# ---------------------------------------------------------------------------
+[Desktop Entry]
+Type=Application
+Version=1.0
+Name=KubeWatch
+GenericName=Kubernetes dashboard
+GenericName[fr]=Tableau de bord Kubernetes
+Comment=Manage your Kubernetes clusters from the desktop
+Comment[fr]=Pilotez vos clusters Kubernetes depuis votre poste
+# Le binaire est cherché dans le PATH. Les paquetages qui l'installent
+# ailleurs (/opt, Flatpak…) doivent remplacer cette ligne par un chemin absolu.
+Exec=kubewatch-desktop
+# Aucune icône n'est livrée avec le projet à ce jour : tant qu'aucun fichier
+# io.kubewatch.KubeWatch.png ou .svg n'est installé dans le thème d'icônes, le
+# bureau affichera une icône générique. Voir packaging/README.md.
+Icon=io.kubewatch.KubeWatch
+Terminal=false
+# « Development » est la catégorie principale ; « Monitor » est une catégorie
+# additionnelle, qui exige justement une catégorie principale à ses côtés.
+Categories=Development;Monitor;
+Keywords=kubernetes;k8s;cluster;kubectl;container;devops;
+Keywords[fr]=kubernetes;k8s;cluster;kubectl;conteneur;devops;
+# Doit correspondre à l'identifiant d'application déclaré par la fenêtre
+# (app_id Wayland / WM_CLASS X11), sans quoi la fenêtre ouverte ne sera pas
+# rattachée à cette entrée dans la barre des tâches.
+StartupWMClass=io.kubewatch.KubeWatch
+StartupNotify=true
+# Pas de MimeType= : l'application ne s'enregistre comme gestionnaire d'aucun
+# type de fichier et n'accepte pas de manifeste en argument de ligne de
+# commande. Rien à déclarer, donc rien de déclaré.

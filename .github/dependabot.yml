@@ -1,0 +1,108 @@
+# ---------------------------------------------------------------------------
+# Dependabot — mises à jour automatiques des dépendances KubeWatch
+#
+# Les PR ouvertes ici passent par la CI complète (lint, tests 3 OS, MSRV,
+# budget de taille) et par security.yml : une montée de version qui casse
+# quelque chose ne peut pas être fusionnée par inadvertance.
+# Les messages de commit suivent la convention `chore(deps): …` afin d'être
+# regroupés automatiquement par git-cliff dans la section « Dépendances ».
+# ---------------------------------------------------------------------------
+version: 2
+
+updates:
+  # --- Crates Rust ---------------------------------------------------------
+  - package-ecosystem: cargo
+    directory: "/"
+    schedule:
+      interval: weekly
+      day: monday
+      time: "06:00"
+      timezone: Europe/Paris
+    open-pull-requests-limit: 10
+    labels:
+      - dependencies
+      - rust
+    commit-message:
+      prefix: "chore(deps)"
+      prefix-development: "chore(deps-dev)"
+      include: scope
+    # Les mises à jour sont regroupées pour éviter huit PR qui recompilent
+    # chacune l'intégralité du workspace.
+    groups:
+      kubernetes:
+        patterns:
+          - "kube"
+          - "k8s-openapi"
+      http-stack:
+        patterns:
+          - "axum"
+          - "axum-*"
+          - "tower"
+          - "tower-*"
+          - "hyper"
+          - "hyper-*"
+          - "http"
+          - "http-*"
+          - "reqwest"
+      async-runtime:
+        patterns:
+          - "tokio"
+          - "tokio-*"
+          - "futures"
+          - "futures-*"
+      serde-and-formats:
+        patterns:
+          - "serde"
+          - "serde_*"
+          - "chrono"
+          - "semver"
+      crypto:
+        patterns:
+          - "hmac"
+          - "sha2"
+          - "subtle"
+          - "base64"
+          - "rustls"
+          - "rustls-*"
+      mineures-et-correctifs:
+        patterns:
+          - "*"
+        update-types:
+          - minor
+          - patch
+
+  # --- Actions GitHub ------------------------------------------------------
+  - package-ecosystem: github-actions
+    directory: "/"
+    schedule:
+      interval: weekly
+      day: monday
+      time: "06:30"
+      timezone: Europe/Paris
+    open-pull-requests-limit: 5
+    labels:
+      - dependencies
+      - ci
+    commit-message:
+      prefix: "ci(deps)"
+      include: scope
+    groups:
+      actions:
+        patterns:
+          - "*"
+
+  # --- Image de base du Dockerfile ----------------------------------------
+  - package-ecosystem: docker
+    directory: "/"
+    schedule:
+      interval: weekly
+      day: monday
+      time: "07:00"
+      timezone: Europe/Paris
+    open-pull-requests-limit: 5
+    labels:
+      - dependencies
+      - docker
+    commit-message:
+      prefix: "build(docker)"
+      include: scope

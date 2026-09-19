@@ -1,0 +1,107 @@
+# ---------------------------------------------------------------------------
+# cargo-deny — audit des licences, des vulnérabilités et des sources
+#   cargo deny check              (tout)
+#   cargo deny check licenses     (licences uniquement)
+#   cargo deny check advisories   (RustSec)
+# Exécuté en CI par .github/workflows/security.yml
+# ---------------------------------------------------------------------------
+
+[graph]
+# KubeWatch est distribué sur ces huit cibles : le graphe de dépendances est
+# audité pour chacune d'elles (une faille spécifique à Windows compte autant
+# qu'une faille Linux).
+targets = [
+  { triple = "x86_64-unknown-linux-gnu" },
+  { triple = "x86_64-unknown-linux-musl" },
+  { triple = "aarch64-unknown-linux-gnu" },
+  { triple = "aarch64-unknown-linux-musl" },
+  { triple = "x86_64-apple-darwin" },
+  { triple = "aarch64-apple-darwin" },
+  { triple = "x86_64-pc-windows-msvc" },
+  { triple = "aarch64-pc-windows-msvc" },
+]
+all-features = true
+exclude-dev = false
+
+[output]
+feature-depth = 1
+
+# ---------------------------------------------------------------------------
+# Vulnérabilités (base RustSec)
+# ---------------------------------------------------------------------------
+[advisories]
+db-urls = ["https://github.com/rustsec/advisory-db"]
+# Toute vulnérabilité connue échoue la CI. Aucune dérogation n'est active :
+# ajouter un identifiant ici doit rester exceptionnel, daté et justifié.
+#   ignore = [ { id = "RUSTSEC-0000-0000", reason = "…", expiration = "2026-12-31" } ]
+ignore = []
+# Une version « yanked » signale un paquet retiré par son auteur : on refuse.
+yanked = "deny"
+
+# ---------------------------------------------------------------------------
+# Licences
+# ---------------------------------------------------------------------------
+# Liste blanche stricte : tout ce qui n'y figure pas est REFUSÉ. Les licences
+# copyleft fortes (GPL-2.0/3.0, AGPL-3.0, LGPL, SSPL, EUPL, CC-BY-NC…) sont donc
+# interdites par construction — KubeWatch est distribué sous Apache-2.0 sous
+# forme de binaire statique liant l'intégralité de ses dépendances.
+[licenses]
+allow = [
+  "MIT",
+  "Apache-2.0",
+  "Apache-2.0 WITH LLVM-exception",
+  "BSD-2-Clause",
+  "BSD-3-Clause",
+  "ISC",
+  "Unicode-3.0",
+  "Zlib",
+  "MPL-2.0",
+]
+confidence-threshold = 0.9
+
+# Dérogations nominatives : la licence n'est acceptée que pour ce paquet précis.
+exceptions = [
+  # Liste de certificats racine Mozilla, redistribuée sous licence de données.
+  { allow = ["CDLA-Permissive-2.0"], crate = "webpki-roots" },
+  # Anciennes tables Unicode (transitives via idna/icu).
+  { allow = ["Unicode-DFS-2016"], crate = "unicode-ident" },
+]
+
+# ---------------------------------------------------------------------------
+# Interdictions et duplications
+# ---------------------------------------------------------------------------
+[bans]
+# Les doublons de version gonflent le binaire : on les signale sans bloquer,
+# car ils dépendent d'arbres transitifs qu'on ne maîtrise pas toujours.
+multiple-versions = "warn"
+# Une dépendance en « * » rendrait les builds non reproductibles.
+wildcards = "deny"
+allow-wildcard-paths = true
+highlight = "all"
+workspace-default-features = "allow"
+
+# KubeWatch doit rester 100 % rustls : aucune liaison OpenSSL, sans quoi le
+# binaire musl statique et les builds Windows/macOS cesseraient d'être portables.
+deny = [
+  { crate = "openssl", reason = "KubeWatch utilise exclusivement rustls (binaire statique multi-plateforme)" },
+  { crate = "openssl-sys", reason = "liaison C non désirée : casse le build musl statique" },
+  { crate = "native-tls", reason = "remplacé par rustls + webpki-roots" },
+  { crate = "git2", reason = "liaison libgit2 inutile : la CI utilise le binaire git" },
+]
+
+# Duplications tolérées et connues de l'écosystème : les crates système
+# Windows cohabitent en plusieurs versions majeures dans tout l'écosystème.
+skip-tree = [
+  { crate = "windows-sys" },
+  { crate = "windows-targets" },
+]
+
+# ---------------------------------------------------------------------------
+# Provenance du code
+# ---------------------------------------------------------------------------
+[sources]
+# Uniquement crates.io : aucune dépendance Git, aucun registre privé.
+unknown-registry = "deny"
+unknown-git = "deny"
+allow-registry = ["https://github.com/rust-lang/crates.io-index"]
+allow-git = []

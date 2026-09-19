@@ -1,0 +1,77 @@
+# ---------------------------------------------------------------------------
+# release-plz — préparation automatisée des versions du workspace KubeWatch
+#
+# Rôle exact dans la chaîne :
+#   1. release-plz analyse les commits conventionnels depuis le dernier tag,
+#      calcule la prochaine version SemVer, met à jour les Cargo.toml + le
+#      CHANGELOG et ouvre une « Pull Request de release ».
+#   2. Une fois cette PR fusionnée sur la branche principale, le job `autotag`
+#      de .github/workflows/release.yml pose lui-même le tag `vX.Y.Z` (dès que
+#      le fichier AppStream annonce la version). Le poser à la main reste
+#      possible.
+#   3. Le tag déclenche la suite de release.yml, qui construit les binaires
+#      multi-plateformes, signe les sommes de contrôle et publie.
+#
+# release-plz ne crée donc NI la release GitHub NI la publication crates.io :
+# ces deux étapes appartiennent à release.yml, seul endroit où sont produits
+# les artefacts signés.
+#
+#   cargo release-plz update            # aperçu local des changements
+#   cargo release-plz release-pr        # ouvre/actualise la PR de release
+# ---------------------------------------------------------------------------
+
+[workspace]
+# Les quatre crates avancent ensemble : `kubewatch-desktop` 0.4.0 embarque
+# toujours kubewatch-core/-hub/-updater 0.4.0. Une seule version à retenir
+# pour l'utilisateur, un seul tag à poser.
+shared_version = true
+
+# Le changelog est produit par git-cliff avec exactement la même configuration
+# que les notes de release : le CHANGELOG.md et la page GitHub Releases ne
+# peuvent pas diverger.
+changelog_config = "cliff.toml"
+changelog_update = true
+
+# Le tag n'est jamais posé par release-plz : c'est le job `autotag` de
+# release.yml qui le pose après la fusion (ou un mainteneur, à la main), et
+# c'est lui qui déclenche la chaîne de publication signée.
+git_tag_enable = false
+git_release_enable = false
+
+# La publication crates.io est faite par release.yml, dans l'ordre imposé par
+# les dépendances internes (core -> hub -> updater -> desktop).
+publish = false
+
+# Vérifie qu'aucun changement de rupture d'API ne passe en version mineure.
+semver_check = true
+
+# Les mises à jour de dépendances passent par Dependabot, pas par release-plz.
+dependencies_update = false
+allow_dirty = false
+
+pr_labels = ["release", "automated"]
+pr_draft = false
+
+# ---------------------------------------------------------------------------
+# Un seul CHANGELOG.md à la racine, agrégeant les commits des quatre crates.
+# ---------------------------------------------------------------------------
+[[package]]
+name = "kubewatch-desktop"
+changelog_path = "./CHANGELOG.md"
+changelog_include = ["kubewatch-core", "kubewatch-hub", "kubewatch-updater"]
+publish = false
+
+[[package]]
+name = "kubewatch-core"
+changelog_update = false
+publish = false
+
+[[package]]
+name = "kubewatch-hub"
+changelog_update = false
+publish = false
+
+[[package]]
+name = "kubewatch-updater"
+changelog_update = false
+publish = false

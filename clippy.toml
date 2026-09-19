@@ -1,0 +1,38 @@
+# Configuration Clippy — voir `cargo clippy --workspace --all-targets --all-features`
+# La CI exécute clippy avec `-D warnings` : tout avertissement est bloquant.
+
+# Version minimale supportée de Rust : clippy n'émet alors aucune suggestion
+# reposant sur une API plus récente.
+msrv = "1.85"
+
+# Les crates kubewatch-core / -hub / -updater exposent une API publique
+# consommée par le binaire ; on ne veut pas de suggestions qui la casseraient
+# silencieusement.
+avoid-breaking-exported-api = true
+
+# Seuils adaptés à un code d'intégration Kubernetes : les constructeurs de
+# requêtes (namespace, sélecteurs, pagination, options de rendu) ont
+# légitimement beaucoup de paramètres et des types génériques profonds.
+too-many-arguments-threshold = 10
+type-complexity-threshold = 500
+cognitive-complexity-threshold = 30
+too-many-lines-threshold = 200
+enum-variant-size-threshold = 512
+large-error-threshold = 256
+
+# Identifiants techniques acceptés tels quels dans la documentation.
+doc-valid-idents = [
+    "..",
+    "KubeWatch",
+    "Kubernetes",
+    "kubeconfig",
+    "kubectl",
+    "GitHub",
+    "DockerHub",
+    "GHCR",
+    "OCI",
+    "SemVer",
+    "YAML",
+    "WebSocket",
+    "HMAC",
+]

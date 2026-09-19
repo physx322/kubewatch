@@ -1,0 +1,426 @@
+# ---------------------------------------------------------------------------
+# Intégration continue KubeWatch
+#
+# Le dépôt produit UN binaire :
+#   • kubewatch-desktop  — application de bureau (egui)  (crate crates/desktop)
+#
+# Formatage, lint, tests multi-plateformes, MSRV, compilation du binaire sur
+# les trois systèmes, budget de taille et documentation.
+# Tout échec bloque la fusion.
+# ---------------------------------------------------------------------------
+name: CI
+
+on:
+  push:
+    branches:
+      - main
+      - "release/**"
+  pull_request:
+  workflow_dispatch:
+
+# Principe du moindre privilège : la CI ne fait que lire le dépôt.
+permissions:
+  contents: read
+
+# Une seule exécution par référence : les pushs successifs annulent la
+# précédente pour ne pas saturer les runners.
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  CARGO_TERM_COLOR: always
+  CARGO_INCREMENTAL: 0
+  CARGO_NET_RETRY: 10
+  RUSTUP_MAX_RETRIES: 10
+  RUST_BACKTRACE: 1
+
+jobs:
+  # -------------------------------------------------------------------------
+  # Formatage et lint : la barrière la plus rapide, exécutée en premier.
+  # -------------------------------------------------------------------------
+  lint:
+    name: Format et Clippy
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Récupérer le dépôt
+        uses: actions/checkout@v7
+
+      # ---------------------------------------------------------------------
+      # Dépendances système de l'application de bureau (Linux uniquement).
+      #
+      # CONSTAT VÉRIFIÉ SUR CE DÉPÔT : avec la résolution de features actuelle
+      # (eframe = wgpu + wayland + x11), aucune de ces bibliothèques n'est liée
+      # à l'édition de liens. Tout passe par dlopen au démarrage :
+      #   • wayland-backend est compilé avec la feature « dlopen », donc le
+      #     build.rs de wayland-sys sort immédiatement sans appeler pkg-config
+      #     (constaté : target/debug/build/wayland-sys-*/output est vide) ;
+      #   • x11-dl n'émet que « cargo:rustc-link-lib=dl » (libdl, dans la
+      #     glibc) et ouvre libX11/libXcursor/libXrandr/libXi à l'exécution ;
+      #   • xkbcommon-dl ouvre libxkbcommon(-x11) à l'exécution ;
+      #   • wgpu ouvre libvulkan.so.1 (ash) ou libEGL/libGL (khronos-egl).
+      #
+      # On les installe malgré tout, pour deux raisons honnêtes :
+      #   1. si la feature « dlopen » disparaissait de la résolution, wayland-sys
+      #      repasserait par pkg-config et exigerait libwayland-dev à la
+      #      compilation — la CI casserait alors sans prévenir ;
+      #   2. les paquets -dev tirent les bibliothèques partagées .so.N dont le
+      #      binaire a besoin à l'exécution.
+      #
+      # Aucun webkit2gtk : KubeWatch n'embarque pas de webview.
+      # `rfd` est compilé en mode xdg-portal et dialogue par DBus (zbus, en
+      # Rust pur) : aucun paquet supplémentaire n'est requis pour lui.
+      - name: Installer les dépendances système (Linux)
+        run: |
+          set -euo pipefail
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends \
+            libxkbcommon-dev \
+            libxkbcommon-x11-dev \
+            libwayland-dev \
+            libx11-dev \
+            libxcursor-dev \
+            libxrandr-dev \
+            libxi-dev \
+            libgl1-mesa-dev \
+            libegl1-mesa-dev
+          # Sur Ubuntu 24.04, libgl1-mesa-dev et libegl1-mesa-dev sont des
+          # paquets de transition vers libgl-dev / libegl-dev (libglvnd) :
+          # les installer reste correct et tire les bons en-têtes.
+
+      - name: Installer la toolchain Rust stable
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          components: rustfmt, clippy
+
+      - name: Restaurer le cache Cargo
+        uses: Swatinem/rust-cache@v2
+        with:
+          key: lint
+          save-if: ${{ github.ref == 'refs/heads/main' }}
+
+      - name: Vérifier le formatage (rustfmt.toml)
+        run: cargo fmt --all -- --check
+
+      - name: Clippy — tout avertissement est bloquant
+        run: cargo clippy --workspace --all-targets --all-features -- -D warnings
+
+  # -------------------------------------------------------------------------
+  # Tests sur les trois systèmes supportés : le code kube/reqwest et le pont
+  # asynchrone du bureau doivent se comporter identiquement partout.
+  # -------------------------------------------------------------------------
+  test:
+    name: Tests (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 45
+    strategy:
+      fail-fast: false
+      matrix:
+        os:
+          - ubuntu-latest
+          - macos-latest
+          - windows-latest
+    steps:
+      - name: Récupérer le dépôt
+        uses: actions/checkout@v7
+
+      # Même liste que le job « lint » ; voir les commentaires détaillés
+      # ci-dessus. macOS et Windows fournissent Metal/Direct3D nativement.
+      - name: Installer les dépendances système (Linux)
+        if: runner.os == 'Linux'
+        run: |
+          set -euo pipefail
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends \
+            libxkbcommon-dev \
+            libxkbcommon-x11-dev \
+            libwayland-dev \
+            libx11-dev \
+            libxcursor-dev \
+            libxrandr-dev \
+            libxi-dev \
+            libgl1-mesa-dev \
+            libegl1-mesa-dev
+
+      - name: Installer la toolchain Rust stable
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Restaurer le cache Cargo
+        uses: Swatinem/rust-cache@v2
+        with:
+          key: test-${{ matrix.os }}
+          save-if: ${{ github.ref == 'refs/heads/main' }}
+
+      - name: Compiler les tests
+        run: cargo test --workspace --all-features --no-run
+
+      # Aucun test n'ouvre de fenêtre : les runners n'ont ni serveur graphique
+      # ni GPU. Ce sont les tests de logique (pont asynchrone, formatage,
+      # politiques de version) qui s'exécutent ici.
+      - name: Exécuter la suite de tests
+        run: cargo test --workspace --all-features
+
+  # -------------------------------------------------------------------------
+  # Version minimale supportée de Rust, annoncée dans le Cargo.toml racine.
+  # -------------------------------------------------------------------------
+  msrv:
+    name: MSRV 1.85
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Récupérer le dépôt
+        uses: actions/checkout@v7
+
+      - name: Installer les dépendances système (Linux)
+        run: |
+          set -euo pipefail
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends \
+            libxkbcommon-dev \
+            libxkbcommon-x11-dev \
+            libwayland-dev \
+            libx11-dev \
+            libxcursor-dev \
+            libxrandr-dev \
+            libxi-dev \
+            libgl1-mesa-dev \
+            libegl1-mesa-dev
+
+      - name: Installer Rust 1.85 (rust-version du workspace)
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          toolchain: "1.85"
+
+      - name: Restaurer le cache Cargo
+        uses: Swatinem/rust-cache@v2
+        with:
+          key: msrv
+          save-if: ${{ github.ref == 'refs/heads/main' }}
+
+      - name: Vérifier la compilation avec le verrou de dépendances
+        run: cargo check --workspace --all-features --locked
+
+  # -------------------------------------------------------------------------
+  # Build release de l'application, sur les trois systèmes.
+  #
+  # Elle n'est jamais LANCÉE ici : elle a besoin d'un
+  # serveur graphique et d'un pilote Vulkan/OpenGL, qu'aucun runner n'offre.
+  # On vérifie donc qu'elle se compile et se lie, rien de plus — et on le dit
+  # plutôt que de faire semblant de la tester.
+  # -------------------------------------------------------------------------
+  build:
+    name: Build release (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 60
+    strategy:
+      fail-fast: false
+      matrix:
+        os:
+          - ubuntu-latest
+          - macos-latest
+          - windows-latest
+    steps:
+      - name: Récupérer le dépôt
+        uses: actions/checkout@v7
+
+      - name: Installer les dépendances système (Linux)
+        if: runner.os == 'Linux'
+        run: |
+          set -euo pipefail
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends \
+            libxkbcommon-dev \
+            libxkbcommon-x11-dev \
+            libwayland-dev \
+            libx11-dev \
+            libxcursor-dev \
+            libxrandr-dev \
+            libxi-dev \
+            libgl1-mesa-dev \
+            libegl1-mesa-dev
+
+      - name: Installer la toolchain Rust stable
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Restaurer le cache Cargo
+        uses: Swatinem/rust-cache@v2
+        with:
+          key: build-${{ matrix.os }}
+          save-if: ${{ github.ref == 'refs/heads/main' }}
+
+      - name: Compiler l'application en release
+        run: cargo build --release --locked -p kubewatch-desktop
+
+      - name: Vérifier que le binaire de bureau existe (Unix)
+        if: runner.os != 'Windows'
+        run: |
+          set -euo pipefail
+          test -x target/release/kubewatch-desktop
+          echo "kubewatch-desktop produit et exécutable."
+
+      - name: Vérifier que le binaire de bureau existe (Windows)
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = "Stop"
+          if (-not (Test-Path "target/release/kubewatch-desktop.exe")) {
+            throw "kubewatch-desktop.exe n'a pas ete produit"
+          }
+          Write-Host "kubewatch-desktop.exe produit."
+
+      # Sur Linux uniquement : la liste des bibliothèques partagées exigées à
+      # l'édition de liens. Sert de garde-fou — si une dépendance système
+      # inattendue apparaît (X11 lié en dur, GTK, webkit…), elle se voit ici.
+      - name: Lister les bibliothèques dynamiques requises (Linux)
+        if: runner.os == 'Linux'
+        run: |
+          set -euo pipefail
+          {
+            echo "## Bibliothèques partagées requises"
+            echo ""
+            echo '```'
+            ldd target/release/kubewatch-desktop || true
+            echo '```'
+            echo "_Wayland, X11, xkbcommon, Vulkan et EGL sont ouverts par"
+            echo "dlopen à l'exécution : ils n'apparaissent volontairement pas"
+            echo "dans cette liste._"
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      # ---------------------------------------------------------------------
+      # Budget de taille, mesuré sur Linux seulement (les tailles ne sont pas
+      # comparables d'un système à l'autre). Une régression est un échec, pas
+      # une remarque.
+      # ---------------------------------------------------------------------
+      - name: Mesurer la taille du binaire et alimenter le résumé
+        if: runner.os == 'Linux'
+        shell: bash
+        env:
+          # Application de bureau : egui + wgpu + le moteur Kubernetes complet.
+          GUI_BUDGET_MIB: "60"
+          GUI_WARN_MIB: "45"
+        run: |
+          set -euo pipefail
+          status=0
+          {
+            echo "## Taille du binaire (profil release)"
+            echo ""
+            echo "| Binaire | Taille | Seuil d'alerte | Budget | Verdict |"
+            echo "| --- | --- | --- | --- | --- |"
+          } >> "$GITHUB_STEP_SUMMARY"
+          check() {
+            name="$1"; path="$2"; warn_mib="$3"; budget_mib="$4"
+            if [ ! -f "$path" ]; then
+              echo "::error title=Binaire introuvable::$path n'a pas été produit"
+              return 1
+            fi
+            bytes=$(stat -c%s "$path")
+            human=$(numfmt --to=iec-i --suffix=B --format="%.2f" "$bytes")
+            budget=$(( budget_mib * 1048576 ))
+            warn=$(( warn_mib * 1048576 ))
+            if [ "$bytes" -gt "$budget" ]; then
+              verdict="**Budget dépassé**"
+              echo "::error title=Budget de taille dépassé::$name : $human > ${budget_mib} MiB"
+              status=1
+            elif [ "$bytes" -gt "$warn" ]; then
+              verdict="Au-dessus du seuil d'alerte"
+              echo "::warning title=Binaire volumineux::$name : $human > ${warn_mib} MiB"
+            else
+              verdict="Dans le budget"
+            fi
+            printf '| `%s` | `%s` | `%s MiB` | `%s MiB` | %s |\n' \
+              "$name" "$human" "$warn_mib" "$budget_mib" "$verdict" \
+              >> "$GITHUB_STEP_SUMMARY"
+            return 0
+          }
+          check kubewatch-desktop target/release/kubewatch-desktop "$GUI_WARN_MIB" "$GUI_BUDGET_MIB" || status=1
+          exit "$status"
+
+  # -------------------------------------------------------------------------
+  # Documentation : les liens intra-doc cassés sont traités comme des erreurs.
+  # -------------------------------------------------------------------------
+  docs:
+    name: Documentation
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      RUSTDOCFLAGS: "-D warnings"
+    steps:
+      - name: Récupérer le dépôt
+        uses: actions/checkout@v7
+
+      - name: Installer les dépendances système (Linux)
+        run: |
+          set -euo pipefail
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends \
+            libxkbcommon-dev \
+            libxkbcommon-x11-dev \
+            libwayland-dev \
+            libx11-dev \
+            libxcursor-dev \
+            libxrandr-dev \
+            libxi-dev \
+            libgl1-mesa-dev \
+            libegl1-mesa-dev
+
+      - name: Installer la toolchain Rust stable
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Restaurer le cache Cargo
+        uses: Swatinem/rust-cache@v2
+        with:
+          key: docs
+          save-if: ${{ github.ref == 'refs/heads/main' }}
+
+      - name: Générer la documentation du workspace
+        run: cargo doc --workspace --no-deps --all-features
+
+  # -------------------------------------------------------------------------
+  # Métadonnées d'empaquetage : une entrée .desktop ou un fichier AppStream
+  # invalide ne se voit qu'au moment d'empaqueter, c'est-à-dire trop tard.
+  # -------------------------------------------------------------------------
+  packaging:
+    name: Métadonnées de bureau
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Récupérer le dépôt
+        uses: actions/checkout@v7
+
+      - name: Installer les validateurs freedesktop
+        run: |
+          set -euo pipefail
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends \
+            desktop-file-utils \
+            appstream
+
+      - name: Valider l'entrée de bureau
+        run: desktop-file-validate packaging/io.kubewatch.KubeWatch.desktop
+
+      # --no-net : sans cette option, appstreamcli va chercher chaque <url> sur
+      # le réseau et transforme une indisponibilité passagère de github.com en
+      # échec de CI. On valide la structure du fichier, pas la météo du web.
+      # L'absence de captures d'écran reste signalée en « pedantic » et n'est
+      # pas bloquante : le projet n'en publie pas encore.
+      - name: Valider les métadonnées AppStream
+        run: appstreamcli validate --no-net packaging/io.kubewatch.KubeWatch.metainfo.xml
+
+  # -------------------------------------------------------------------------
+  # Porte unique pour la protection de branche : un seul check requis à
+  # configurer côté GitHub, quel que soit le nombre de jobs de la matrice.
+  # -------------------------------------------------------------------------
+  ci:
+    name: CI
+    if: always()
+    needs: [lint, test, msrv, build, docs, packaging]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Vérifier le résultat de tous les jobs
+        run: |
+          echo "Résultats : ${{ join(needs.*.result, ', ') }}"
+          if [ "${{ contains(needs.*.result, 'failure') || contains(needs.*.result, 'cancelled') }}" = "true" ]; then
+            echo "::error title=CI en échec::Au moins un job requis n'est pas passé"
+            exit 1
+          fi

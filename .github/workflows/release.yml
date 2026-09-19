@@ -1,0 +1,616 @@
+# ---------------------------------------------------------------------------
+# Publication d'une version KubeWatch
+#
+# Trois déclencheurs :
+#   • un push sur la branche principale : si la version du workspace
+#     (`workspace.package.version` dans Cargo.toml) n'a pas encore de tag et
+#     que le fichier AppStream l'annonce, le job `autotag` pose le tag annoté
+#     `vX.Y.Z` et la publication s'enchaîne dans la même exécution ;
+#   • un tag SemVer `vX.Y.Z` poussé à la main ;
+#   • un déclenchement manuel sur un tag existant.
+#
+# Un tag poussé avec le jeton du workflow ne déclenche jamais d'autre workflow
+# (GitHub coupe court à la récursion) : c'est pourquoi `autotag` ne se contente
+# pas de pousser le tag, il passe la main aux jobs suivants dans cette même
+# exécution.
+#
+# Chaque archive contient le binaire `kubewatch-desktop` (sur macOS, un bundle
+# `KubeWatch.app`), la licence, la documentation et, sous Linux, les
+# métadonnées freedesktop. Cinq cibles : Linux glibc et macOS en x86-64 et
+# ARM64, Windows x86-64. Pas de musl : une application graphique charge
+# Vulkan, OpenGL, Wayland, X11 et xkbcommon par `dlopen` à l'exécution, ce
+# qu'un exécutable statique ne sait pas faire. Pas d'ARM64 Windows : la cible
+# ne pourrait être compilée que de façon croisée, sans rien pour vérifier
+# qu'une fenêtre s'ouvre.
+#
+#   push sur master ──> autotag : pose vX.Y.Z si la version est nouvelle ─┐
+#   tag vX.Y.Z ────────────────────────────────────────────────────────────┤
+#     -> create-release : notes de version (git-cliff) + release en brouillon
+#     -> build          : 5 cibles, archives .tar.gz/.zip + .sha256
+#     -> checksums      : SHA256SUMS agrégé et signé (cosign keyless)
+#     -> publish        : bascule du brouillon en release publiée (+ crates.io)
+# ---------------------------------------------------------------------------
+name: Release
+
+on:
+  push:
+    branches:
+      - master
+    tags:
+      - "v*.*.*"
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "Tag existant à publier (ex. v0.1.0)"
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+# Jamais deux publications simultanées, et surtout jamais d'annulation en
+# cours de route : une release à moitié téléversée serait ingérable.
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
+
+env:
+  # Préfixe des archives : le nom du produit, pas celui du binaire.
+  PKG_NAME: kubewatch
+  GUI_BIN_NAME: kubewatch-desktop
+  APP_BUNDLE: KubeWatch.app
+  BUNDLE_ID: io.kubewatch.KubeWatch
+  CARGO_TERM_COLOR: always
+  CARGO_INCREMENTAL: 0
+  CARGO_NET_RETRY: 10
+  RUSTUP_MAX_RETRIES: 10
+
+jobs:
+  # -------------------------------------------------------------------------
+  # 0. Tag automatique
+  #
+  # À chaque push sur la branche principale : si la version du workspace n'a
+  # pas encore de tag, on le pose ici. La fusion de la PR de release-plz
+  # suffit donc à publier — plus de `git tag` à la main.
+  #
+  # Deux conditions, vérifiées AVANT de poser le tag, parce qu'un tag posé puis
+  # refusé plus loin resterait dans l'historique et bloquerait toute nouvelle
+  # tentative sous le même numéro :
+  #   • aucun tag `vX.Y.Z` n'existe encore pour cette version ;
+  #   • le fichier AppStream annonce la version — c'est le signe que la
+  #     publication est voulue, et non un simple bump de version en cours de
+  #     développement. Sans lui, le job s'arrête avec un avertissement.
+  # -------------------------------------------------------------------------
+  autotag:
+    name: Poser le tag de version
+    if: github.event_name == 'push' && github.ref_type == 'branch'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: write
+    outputs:
+      tag: ${{ steps.tag.outputs.tag }}
+      created: ${{ steps.tag.outputs.created }}
+    steps:
+      - name: Récupérer le dépôt
+        uses: actions/checkout@v7
+
+      - name: Lire la version du workspace
+        id: version
+        run: |
+          set -euo pipefail
+          VERSION=$(sed -n '/^\[workspace\.package\]/,/^\[/ s/^version[[:space:]]*=[[:space:]]*"\([^"]*\)".*/\1/p' Cargo.toml | head -n1)
+          if ! printf '%s' "$VERSION" | grep -Eq '^[0-9]+\.[0-9]+\.[0-9]+(-[0-9A-Za-z.-]+)?$'; then
+            echo "::error title=Version illisible::workspace.package.version='$VERSION' n'est pas une version SemVer"
+            exit 1
+          fi
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+          echo "tag=v$VERSION" >> "$GITHUB_OUTPUT"
+          echo "Version du workspace : $VERSION"
+
+      - name: Poser le tag s'il n'existe pas encore
+        id: tag
+        env:
+          TAG: ${{ steps.version.outputs.tag }}
+          VERSION: ${{ steps.version.outputs.version }}
+        run: |
+          set -euo pipefail
+          echo "tag=$TAG" >> "$GITHUB_OUTPUT"
+
+          if git ls-remote --exit-code --tags origin "refs/tags/$TAG" >/dev/null 2>&1; then
+            echo "Le tag $TAG existe déjà : rien à publier."
+            echo "created=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          FILE=packaging/io.kubewatch.KubeWatch.metainfo.xml
+          if ! grep -q "version=\"${VERSION}\"" "$FILE"; then
+            echo "::warning title=Tag non posé::Cargo.toml annonce $VERSION mais $FILE ne déclare pas de <release version=\"${VERSION}\">. Ajoutez cette entrée pour publier $TAG."
+            echo "created=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git tag -a "$TAG" -m "KubeWatch $VERSION" "$GITHUB_SHA"
+          git push origin "refs/tags/$TAG"
+          echo "created=true" >> "$GITHUB_OUTPUT"
+          echo "Tag $TAG posé sur $GITHUB_SHA." | tee -a "$GITHUB_STEP_SUMMARY"
+
+  # -------------------------------------------------------------------------
+  # 1. Notes de version et release en brouillon
+  # -------------------------------------------------------------------------
+  create-release:
+    name: Préparer la release
+    needs: autotag
+    # Trois chemins y mènent : un tag poussé à la main ou un déclenchement
+    # manuel (`autotag` est alors ignoré), ou un tag que `autotag` vient de
+    # poser. Un push sans version nouvelle s'arrête ici, sans erreur.
+    if: >-
+      !cancelled() &&
+      (needs.autotag.result == 'skipped' || needs.autotag.outputs.created == 'true')
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    permissions:
+      contents: write
+    outputs:
+      tag: ${{ steps.meta.outputs.tag }}
+      version: ${{ steps.meta.outputs.version }}
+    steps:
+      - name: Récupérer le dépôt (historique complet pour git-cliff)
+        uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+          ref: ${{ inputs.tag || needs.autotag.outputs.tag || github.ref }}
+
+      - name: Déterminer le tag et la version
+        id: meta
+        env:
+          INPUT_TAG: ${{ inputs.tag }}
+          AUTO_TAG: ${{ needs.autotag.outputs.tag }}
+        run: |
+          set -euo pipefail
+          TAG="${INPUT_TAG:-${AUTO_TAG:-${GITHUB_REF_NAME}}}"
+          if ! printf '%s' "$TAG" | grep -Eq '^v[0-9]+\.[0-9]+\.[0-9]+(-[0-9A-Za-z.-]+)?$'; then
+            echo "::error title=Tag invalide::'$TAG' ne respecte pas le format vX.Y.Z"
+            exit 1
+          fi
+          VERSION="${TAG#v}"
+          echo "tag=$TAG" >> "$GITHUB_OUTPUT"
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+          echo "Publication de KubeWatch $VERSION (tag $TAG)"
+
+      - name: Vérifier la cohérence avec la version du workspace
+        env:
+          VERSION: ${{ steps.meta.outputs.version }}
+        run: |
+          set -euo pipefail
+          MANIFEST_VERSION=$(sed -n '/^\[workspace\.package\]/,/^\[/ s/^version[[:space:]]*=[[:space:]]*"\([^"]*\)".*/\1/p' Cargo.toml | head -n1)
+          echo "Cargo.toml : $MANIFEST_VERSION — tag : $VERSION"
+          if [ "$MANIFEST_VERSION" != "$VERSION" ]; then
+            echo "::error title=Version incohérente::workspace.package.version=$MANIFEST_VERSION alors que le tag annonce $VERSION"
+            exit 1
+          fi
+
+      # Les métadonnées AppStream déclarent la version publiée : un oubli se
+      # verrait seulement dans les logithèques, longtemps après. On le bloque
+      # ici, à la source.
+      - name: Vérifier que le fichier AppStream annonce cette version
+        env:
+          VERSION: ${{ steps.meta.outputs.version }}
+        run: |
+          set -euo pipefail
+          FILE=packaging/io.kubewatch.KubeWatch.metainfo.xml
+          if ! grep -q "version=\"${VERSION}\"" "$FILE"; then
+            echo "::error title=AppStream non à jour::$FILE ne déclare pas de <release version=\"${VERSION}\">"
+            exit 1
+          fi
+
+      - name: Générer les notes de version depuis les commits conventionnels
+        uses: orhun/git-cliff-action@v4
+        with:
+          config: cliff.toml
+          args: --latest --strip header
+        env:
+          OUTPUT: RELEASE_NOTES.md
+          GITHUB_TOKEN: ${{ github.token }}
+
+      - name: Compléter les notes avec les instructions de vérification
+        env:
+          TAG: ${{ steps.meta.outputs.tag }}
+          VERSION: ${{ steps.meta.outputs.version }}
+          REPO: ${{ github.repository }}
+        run: |
+          set -euo pipefail
+          test -s RELEASE_NOTES.md || echo "_Aucun commit conventionnel détecté pour cette version._" > RELEASE_NOTES.md
+          cat >> RELEASE_NOTES.md <<NOTES
+
+          ---
+
+          ### Installation
+
+          Chaque archive contient l'application de bureau \`${GUI_BIN_NAME}\`
+          (sur macOS, sous la forme d'un bundle \`${APP_BUNDLE}\`).
+
+          \`\`\`sh
+          # Linux x86_64 (glibc)
+          curl -sSfL https://github.com/${REPO}/releases/download/${TAG}/${PKG_NAME}-${VERSION}-x86_64-unknown-linux-gnu.tar.gz | tar xz
+          cd ${PKG_NAME}-${VERSION}-x86_64-unknown-linux-gnu
+          sudo install -m 0755 ${GUI_BIN_NAME} /usr/local/bin/
+          sudo install -Dm 0644 io.kubewatch.KubeWatch.desktop /usr/share/applications/io.kubewatch.KubeWatch.desktop
+          sudo install -Dm 0644 ${BUNDLE_ID}.metainfo.xml /usr/share/metainfo/${BUNDLE_ID}.metainfo.xml
+          \`\`\`
+
+          Sur macOS, le bundle n'est **ni signé ni notarisé** :
+
+          \`\`\`sh
+          xattr -dr com.apple.quarantine ${APP_BUNDLE}
+          \`\`\`
+
+          ### Vérifier l'intégrité et la signature
+
+          \`\`\`sh
+          sha256sum -c SHA256SUMS --ignore-missing
+          cosign verify-blob SHA256SUMS \\
+            --signature SHA256SUMS.sig \\
+            --certificate SHA256SUMS.pem \\
+            --certificate-identity-regexp "^https://github.com/${REPO}/" \\
+            --certificate-oidc-issuer https://token.actions.githubusercontent.com
+          \`\`\`
+          NOTES
+          cat RELEASE_NOTES.md >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Créer (ou actualiser) la release en brouillon
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ steps.meta.outputs.tag }}
+          VERSION: ${{ steps.meta.outputs.version }}
+        run: |
+          set -euo pipefail
+          if gh release view "$TAG" >/dev/null 2>&1; then
+            echo "La release $TAG existe déjà : mise à jour des notes."
+            gh release edit "$TAG" --draft --title "KubeWatch $VERSION" --notes-file RELEASE_NOTES.md
+          else
+            gh release create "$TAG" \
+              --draft \
+              --title "KubeWatch $VERSION" \
+              --notes-file RELEASE_NOTES.md \
+              --verify-tag
+          fi
+
+  # -------------------------------------------------------------------------
+  # 2. Binaires multi-plateformes
+  #
+  # Linux : runners 22.04 volontairement, et non 24.04. Le binaire produit
+  # exige alors la glibc 2.35 au lieu de 2.39, donc il fonctionne sur beaucoup
+  # plus de distributions. Les runners ARM (`ubuntu-22.04-arm`) sont gratuits
+  # pour les dépôts publics ; sur un dépôt privé sans plan adapté, remplacez
+  # cette ligne par un runner auto-hébergé ou retirez la cible.
+  # -------------------------------------------------------------------------
+  build:
+    name: Build ${{ matrix.target }}
+    needs: create-release
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 120
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - target: x86_64-unknown-linux-gnu
+            os: ubuntu-22.04
+          - target: aarch64-unknown-linux-gnu
+            os: ubuntu-22.04-arm
+          - target: x86_64-apple-darwin
+            os: macos-13
+          - target: aarch64-apple-darwin
+            os: macos-latest
+          - target: x86_64-pc-windows-msvc
+            os: windows-latest
+    steps:
+      - name: Récupérer le dépôt
+        uses: actions/checkout@v7
+        with:
+          ref: ${{ needs.create-release.outputs.tag }}
+
+      # Voir .github/workflows/ci.yml pour le détail de chaque paquet. Résumé :
+      # avec la résolution de features actuelle, ces bibliothèques sont ouvertes
+      # par dlopen à l'exécution et ne sont pas liées à la compilation ; les
+      # paquets -dev restent installés comme filet de sécurité et pour tirer les
+      # .so.N correspondants.
+      - name: Installer les dépendances système (Linux)
+        if: runner.os == 'Linux'
+        run: |
+          set -euo pipefail
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends \
+            libxkbcommon-dev \
+            libxkbcommon-x11-dev \
+            libwayland-dev \
+            libx11-dev \
+            libxcursor-dev \
+            libxrandr-dev \
+            libxi-dev \
+            libgl1-mesa-dev \
+            libegl1-mesa-dev
+
+      - name: Installer la toolchain Rust stable
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: ${{ matrix.target }}
+
+      - name: Restaurer le cache Cargo
+        uses: Swatinem/rust-cache@v2
+        with:
+          key: release-${{ matrix.target }}
+
+      - name: Compiler l'application de bureau
+        run: cargo build --locked --profile dist --target ${{ matrix.target }} -p kubewatch-desktop
+
+      # ---------------------------------------------------------------------
+      # Archive Linux : le binaire, la licence, la documentation, et les
+      # métadonnées freedesktop qu'un paquetage devra installer.
+      # ---------------------------------------------------------------------
+      - name: Assembler l'archive (Linux)
+        if: runner.os == 'Linux'
+        shell: bash
+        env:
+          VERSION: ${{ needs.create-release.outputs.version }}
+          TARGET: ${{ matrix.target }}
+        run: |
+          set -euo pipefail
+          PKG="${PKG_NAME}-${VERSION}-${TARGET}"
+          mkdir -p "dist/${PKG}"
+          install -m 0755 "target/${TARGET}/dist/${GUI_BIN_NAME}" "dist/${PKG}/${GUI_BIN_NAME}"
+          install -m 0644 packaging/io.kubewatch.KubeWatch.desktop "dist/${PKG}/io.kubewatch.KubeWatch.desktop"
+          install -m 0644 "packaging/${BUNDLE_ID}.metainfo.xml" "dist/${PKG}/${BUNDLE_ID}.metainfo.xml"
+          install -m 0644 packaging/README.md "dist/${PKG}/INSTALL-packaging.md"
+          install -m 0644 LICENSE "dist/${PKG}/LICENSE"
+          if [ -f README.md ]; then
+            install -m 0644 README.md "dist/${PKG}/README.md"
+          else
+            echo "::warning title=README absent::README.md n'a pas été inclus dans l'archive"
+          fi
+          if [ -f CHANGELOG.md ]; then install -m 0644 CHANGELOG.md "dist/${PKG}/CHANGELOG.md"; fi
+          tar -C dist -czf "dist/${PKG}.tar.gz" "${PKG}"
+          rm -rf "dist/${PKG}"
+          cd dist
+          sha256sum "${PKG}.tar.gz" > "${PKG}.tar.gz.sha256"
+          cat "${PKG}.tar.gz.sha256"
+
+      # ---------------------------------------------------------------------
+      # Archive macOS : l'application sous forme de bundle .app minimal écrit
+      # à la main.
+      #
+      # Le bundle n'est ni signé ni notarisé : aucun certificat Apple Developer
+      # n'est disponible pour ce projet. Au premier lancement, Gatekeeper le
+      # refusera tant que l'attribut de quarantaine n'aura pas été retiré. Cette
+      # limite est écrite dans les notes de release et dans
+      # docs/installation.md — on préfère la dire que la cacher.
+      # ---------------------------------------------------------------------
+      - name: Assembler l'archive (macOS)
+        if: runner.os == 'macOS'
+        shell: bash
+        env:
+          VERSION: ${{ needs.create-release.outputs.version }}
+          TARGET: ${{ matrix.target }}
+        run: |
+          set -euo pipefail
+          PKG="${PKG_NAME}-${VERSION}-${TARGET}"
+          APP="dist/${PKG}/${APP_BUNDLE}"
+          mkdir -p "dist/${PKG}"
+
+          mkdir -p "${APP}/Contents/MacOS" "${APP}/Contents/Resources"
+          install -m 0755 "target/${TARGET}/dist/${GUI_BIN_NAME}" "${APP}/Contents/MacOS/${GUI_BIN_NAME}"
+          cat > "${APP}/Contents/Info.plist" <<PLIST
+          <?xml version="1.0" encoding="UTF-8"?>
+          <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+          <plist version="1.0">
+          <dict>
+            <key>CFBundleName</key>
+            <string>KubeWatch</string>
+            <key>CFBundleDisplayName</key>
+            <string>KubeWatch</string>
+            <key>CFBundleIdentifier</key>
+            <string>${BUNDLE_ID}</string>
+            <key>CFBundleExecutable</key>
+            <string>${GUI_BIN_NAME}</string>
+            <key>CFBundlePackageType</key>
+            <string>APPL</string>
+            <key>CFBundleInfoDictionaryVersion</key>
+            <string>6.0</string>
+            <key>CFBundleShortVersionString</key>
+            <string>${VERSION}</string>
+            <key>CFBundleVersion</key>
+            <string>${VERSION}</string>
+            <key>LSMinimumSystemVersion</key>
+            <string>11.0</string>
+            <key>LSApplicationCategoryType</key>
+            <string>public.app-category.developer-tools</string>
+            <key>NSHighResolutionCapable</key>
+            <true/>
+            <key>NSSupportsAutomaticGraphicsSwitching</key>
+            <true/>
+          </dict>
+          </plist>
+          PLIST
+          # Garde-fou : un Info.plist mal formé produit une application qui
+          # « ne peut pas être ouverte » sans autre explication.
+          plutil -lint "${APP}/Contents/Info.plist"
+          printf 'APPL????' > "${APP}/Contents/PkgInfo"
+
+          install -m 0644 LICENSE "dist/${PKG}/LICENSE"
+          if [ -f README.md ]; then install -m 0644 README.md "dist/${PKG}/README.md"; fi
+          if [ -f CHANGELOG.md ]; then install -m 0644 CHANGELOG.md "dist/${PKG}/CHANGELOG.md"; fi
+
+          tar -C dist -czf "dist/${PKG}.tar.gz" "${PKG}"
+          rm -rf "dist/${PKG}"
+          cd dist
+          shasum -a 256 "${PKG}.tar.gz" > "${PKG}.tar.gz.sha256"
+          cat "${PKG}.tar.gz.sha256"
+
+      - name: Assembler l'archive (Windows)
+        if: runner.os == 'Windows'
+        shell: pwsh
+        env:
+          VERSION: ${{ needs.create-release.outputs.version }}
+          TARGET: ${{ matrix.target }}
+        run: |
+          $ErrorActionPreference = "Stop"
+          $pkg = "${env:PKG_NAME}-${env:VERSION}-${env:TARGET}"
+          New-Item -ItemType Directory -Force -Path "dist/$pkg" | Out-Null
+          Copy-Item "target/${env:TARGET}/dist/${env:GUI_BIN_NAME}.exe" "dist/$pkg/"
+          Copy-Item "LICENSE" "dist/$pkg/"
+          if (Test-Path "README.md") { Copy-Item "README.md" "dist/$pkg/" }
+          if (Test-Path "CHANGELOG.md") { Copy-Item "CHANGELOG.md" "dist/$pkg/" }
+          Compress-Archive -Path "dist/$pkg" -DestinationPath "dist/$pkg.zip" -Force
+          Remove-Item -Recurse -Force "dist/$pkg"
+          $hash = (Get-FileHash -Algorithm SHA256 "dist/$pkg.zip").Hash.ToLower()
+          # Format strictement identique à celui de `sha256sum` : deux espaces
+          # de séparation et une fin de ligne LF. Un CRLF ferait échouer le
+          # `sha256sum -c SHA256SUMS` exécuté ensuite sous Linux.
+          [System.IO.File]::WriteAllText(
+            (Join-Path $PWD "dist/$pkg.zip.sha256"),
+            "$hash  $pkg.zip`n"
+          )
+          Get-Content "dist/$pkg.zip.sha256"
+
+      - name: Téléverser les artefacts intermédiaires
+        uses: actions/upload-artifact@v7
+        with:
+          name: dist-${{ matrix.target }}
+          path: |
+            dist/*.tar.gz
+            dist/*.zip
+            dist/*.sha256
+          if-no-files-found: error
+          retention-days: 7
+
+  # -------------------------------------------------------------------------
+  # 3. Sommes de contrôle agrégées et signature keyless
+  # -------------------------------------------------------------------------
+  checksums:
+    name: Sommes de contrôle et signature
+    needs: [create-release, build]
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    permissions:
+      contents: write
+      # Indispensable à cosign keyless : le jeton OIDC atteste l'identité du
+      # workflow auprès de Fulcio, aucune clé privée n'est stockée.
+      id-token: write
+    steps:
+      - name: Récupérer toutes les archives
+        uses: actions/download-artifact@v8
+        with:
+          pattern: dist-*
+          merge-multiple: true
+          path: dist
+
+      - name: Agréger les sommes de contrôle
+        run: |
+          set -euo pipefail
+          cd dist
+          # Les fichiers .sha256 ne contiennent que des noms de fichiers nus :
+          # SHA256SUMS est donc directement vérifiable avec `sha256sum -c`.
+          # `tr -d '\r'` : ceinture et bretelles si un runner Windows a produit
+          # des fins de ligne CRLF, que `sha256sum -c` interpréterait comme
+          # faisant partie du nom de fichier.
+          cat ./*.sha256 | tr -d '\r' | sort -k2 > SHA256SUMS
+          sha256sum -c SHA256SUMS
+          echo "## Artefacts publiés" >> "$GITHUB_STEP_SUMMARY"
+          echo '```' >> "$GITHUB_STEP_SUMMARY"
+          cat SHA256SUMS >> "$GITHUB_STEP_SUMMARY"
+          echo '```' >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Installer cosign
+        uses: sigstore/cosign-installer@v3
+
+      - name: Signer SHA256SUMS (keyless, OIDC GitHub)
+        run: |
+          set -euo pipefail
+          cd dist
+          cosign sign-blob --yes \
+            --output-signature SHA256SUMS.sig \
+            --output-certificate SHA256SUMS.pem \
+            SHA256SUMS
+          ls -l SHA256SUMS SHA256SUMS.sig SHA256SUMS.pem
+
+      - name: Téléverser les artefacts sur la release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ needs.create-release.outputs.tag }}
+        run: |
+          set -euo pipefail
+          gh release upload "$TAG" dist/* --clobber --repo "$GITHUB_REPOSITORY"
+
+  # -------------------------------------------------------------------------
+  # 4. Publication : bascule du brouillon, puis crates.io (optionnel)
+  # -------------------------------------------------------------------------
+  publish:
+    name: Publier la release
+    needs: [create-release, checksums]
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    permissions:
+      contents: write
+    steps:
+      - name: Récupérer le dépôt
+        uses: actions/checkout@v7
+        with:
+          ref: ${{ needs.create-release.outputs.tag }}
+
+      - name: Publier la release GitHub
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ needs.create-release.outputs.tag }}
+        run: |
+          set -euo pipefail
+          # Une préversion (v1.2.3-rc.1) ne devient jamais « latest ».
+          if printf '%s' "$TAG" | grep -q -- '-'; then
+            gh release edit "$TAG" --draft=false --prerelease --repo "$GITHUB_REPOSITORY"
+          else
+            gh release edit "$TAG" --draft=false --latest --repo "$GITHUB_REPOSITORY"
+          fi
+          echo "Release publiée : https://github.com/$GITHUB_REPOSITORY/releases/tag/$TAG"
+
+      - name: Installer les dépendances système (Linux)
+        if: vars.PUBLISH_CRATES == 'true'
+        run: |
+          set -euo pipefail
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends \
+            libxkbcommon-dev \
+            libxkbcommon-x11-dev \
+            libwayland-dev \
+            libx11-dev \
+            libxcursor-dev \
+            libxrandr-dev \
+            libxi-dev \
+            libgl1-mesa-dev \
+            libegl1-mesa-dev
+
+      - name: Installer la toolchain Rust stable
+        if: vars.PUBLISH_CRATES == 'true'
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Publier les crates sur crates.io
+        # Étape désactivée par défaut : définir la variable de dépôt
+        # PUBLISH_CRATES=true pour l'activer. L'ordre suit les dépendances
+        # internes (core, hub, updater, puis l'application), chaque crate devant
+        # être visible dans l'index avant que le suivant ne puisse être vérifié.
+        if: vars.PUBLISH_CRATES == 'true'
+        env:
+          CARGO_REGISTRY_TOKEN: ${{ secrets.CARGO_REGISTRY_TOKEN }}
+        run: |
+          set -euo pipefail
+          for crate in kubewatch-core kubewatch-hub kubewatch-updater kubewatch-desktop; do
+            echo "::group::cargo publish -p $crate"
+            if cargo publish -p "$crate" --locked; then
+              echo "$crate publié."
+            else
+              echo "::warning title=Publication ignorée::$crate est peut-être déjà publié dans cette version"
+            fi
+            echo "::endgroup::"
+            # Laisse l'index crates.io se propager avant le crate dépendant.
+            sleep 30
+          done
