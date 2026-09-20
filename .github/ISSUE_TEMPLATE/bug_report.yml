@@ -95,6 +95,8 @@ body:
         - Hub d'images / déploiement
         - Détecteur d'updates GitHub
         - Topologie
+        - Assistant IA (Claude, ChatGPT, modèle local)
+        - Interface : affichage, thème, raccourcis
         - Build / packaging / CI
     validations:
       required: true

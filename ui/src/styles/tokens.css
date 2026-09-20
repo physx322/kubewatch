@@ -1,0 +1,168 @@
+/* ---------------------------------------------------------------------------
+   KubeWatch — jetons de design.
+   Thème clair par défaut ; sombre par préférence système ou data-theme="dark".
+   --------------------------------------------------------------------------- */
+:root {
+  color-scheme: light;
+
+  /* Marque : le bleu de l'icône. */
+  --brand-900: #0b3f66;
+  --brand-700: #115e96;
+  --brand-500: #1d7fc2;
+  --brand-400: #38bdf8;
+  --brand-100: #e6f3fb;
+
+  --bg: #f4f6f9;
+  --bg-elev: #ffffff;
+  --bg-sunken: #eceff4;
+  --bg-hover: #eef2f7;
+  --bg-active: #e2eaf3;
+  --sidebar-bg: #0f1a26;
+  --sidebar-fg: #c7d3df;
+  --sidebar-fg-muted: #7d8ea0;
+  --sidebar-active: rgba(56, 189, 248, 0.16);
+  --sidebar-border: #1c2a3a;
+
+  --border: #dfe4ec;
+  --border-strong: #c9d2de;
+  --fg: #16202b;
+  --fg-muted: #5b6b7c;
+  --fg-faint: #8a98a8;
+  --fg-on-accent: #ffffff;
+
+  --accent: var(--brand-500);
+  --accent-hover: #186ea9;
+  --accent-soft: var(--brand-100);
+  --accent-ring: rgba(29, 127, 194, 0.35);
+
+  --ok: #1f9d55;
+  --ok-soft: #e3f5ea;
+  --warn: #c77d00;
+  --warn-soft: #fff3dc;
+  --err: #d64545;
+  --err-soft: #fde8e8;
+  --info: var(--brand-500);
+  --info-soft: var(--brand-100);
+  --purple: #7c5cd6;
+  --purple-soft: #efeafb;
+
+  --radius-s: 5px;
+  --radius: 8px;
+  --radius-l: 12px;
+  --shadow-s: 0 1px 2px rgba(16, 24, 40, 0.06);
+  --shadow: 0 4px 16px rgba(16, 24, 40, 0.1);
+  --shadow-l: 0 16px 48px rgba(16, 24, 40, 0.18);
+
+  /* Polices : rien n'est téléchargé, tout vient du système. L'ordre va des
+     polices d'interface modernes aux valeurs sûres présentes partout ; les
+     premières absentes sont ignorées sans coût. */
+  --font: "Inter", "Adwaita Sans", "Noto Sans", system-ui, -apple-system, "Segoe UI", Roboto, Cantarell, "DejaVu Sans", sans-serif;
+  --font-mono: ui-monospace, "JetBrains Mono", "Noto Sans Mono", "DejaVu Sans Mono", SFMono-Regular, Menlo, Consolas, monospace;
+  /* Tailles ENTIÈRES : une taille fractionnaire place les jambages entre deux
+     pixels, ce qui rend le texte flou sur un écran à 1 pixel par point. */
+  --fs-xs: 11px;
+  --fs-s: 12px;
+  --fs: 13px;
+  --fs-m: 15px;
+  --fs-l: 18px;
+  --fs-xl: 22px;
+
+  --sidebar-w: 224px;
+  --topbar-h: 48px;
+  --assistant-w: 420px;
+
+  --code-bg: #f1f4f8;
+  --code-fg: #1f2a37;
+  --log-bg: #0f151c;
+  --log-fg: #d5dde6;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    color-scheme: dark;
+    --bg: #0f151c;
+    --bg-elev: #161e27;
+    --bg-sunken: #0b1016;
+    --bg-hover: #1c2632;
+    --bg-active: #22303e;
+    --sidebar-bg: #0b1118;
+    --sidebar-fg: #c7d3df;
+    --sidebar-fg-muted: #6f8194;
+    --sidebar-active: rgba(56, 189, 248, 0.18);
+    --sidebar-border: #182432;
+
+    --border: #243040;
+    --border-strong: #32414f;
+    --fg: #e6edf3;
+    --fg-muted: #8f9fb0;
+    --fg-faint: #63748a;
+
+    --accent: var(--brand-400);
+    --accent-hover: #63cbfa;
+    --accent-soft: #123a52;
+    --accent-ring: rgba(56, 189, 248, 0.35);
+    --fg-on-accent: #06202f;
+
+    --ok: #3ccf7a;
+    --ok-soft: #12352a;
+    --warn: #f0b64d;
+    --warn-soft: #3a2d10;
+    --err: #ff6b6b;
+    --err-soft: #40191c;
+    --info: var(--brand-400);
+    --info-soft: #123a52;
+    --purple: #a58cf2;
+    --purple-soft: #2a2140;
+
+    --shadow-s: 0 1px 2px rgba(0, 0, 0, 0.4);
+    --shadow: 0 4px 16px rgba(0, 0, 0, 0.45);
+    --shadow-l: 0 16px 48px rgba(0, 0, 0, 0.6);
+
+    --code-bg: #0b1016;
+    --code-fg: #d5dde6;
+  }
+}
+
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --bg: #0f151c;
+  --bg-elev: #161e27;
+  --bg-sunken: #0b1016;
+  --bg-hover: #1c2632;
+  --bg-active: #22303e;
+  --sidebar-bg: #0b1118;
+  --sidebar-fg: #c7d3df;
+  --sidebar-fg-muted: #6f8194;
+  --sidebar-active: rgba(56, 189, 248, 0.18);
+  --sidebar-border: #182432;
+
+  --border: #243040;
+  --border-strong: #32414f;
+  --fg: #e6edf3;
+  --fg-muted: #8f9fb0;
+  --fg-faint: #63748a;
+
+  --accent: var(--brand-400);
+  --accent-hover: #63cbfa;
+  --accent-soft: #123a52;
+  --accent-ring: rgba(56, 189, 248, 0.35);
+  --fg-on-accent: #06202f;
+
+  --ok: #3ccf7a;
+  --ok-soft: #12352a;
+  --warn: #f0b64d;
+  --warn-soft: #3a2d10;
+  --err: #ff6b6b;
+  --err-soft: #40191c;
+  --info: var(--brand-400);
+  --info-soft: #123a52;
+  --purple: #a58cf2;
+  --purple-soft: #2a2140;
+
+  --shadow-s: 0 1px 2px rgba(0, 0, 0, 0.4);
+  --shadow: 0 4px 16px rgba(0, 0, 0, 0.45);
+  --shadow-l: 0 16px 48px rgba(0, 0, 0, 0.6);
+
+  --code-bg: #0b1016;
+  --code-fg: #d5dde6;
+}

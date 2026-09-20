@@ -20,9 +20,9 @@ Comment[fr]=Pilotez vos clusters Kubernetes depuis votre poste
 # Le binaire est cherché dans le PATH. Les paquetages qui l'installent
 # ailleurs (/opt, Flatpak…) doivent remplacer cette ligne par un chemin absolu.
 Exec=kubewatch-desktop
-# Aucune icône n'est livrée avec le projet à ce jour : tant qu'aucun fichier
-# io.kubewatch.KubeWatch.png ou .svg n'est installé dans le thème d'icônes, le
-# bureau affichera une icône générique. Voir packaging/README.md.
+# L'icône est livrée dans packaging/icons/hicolor/ (SVG et PNG 256 px) ; elle
+# doit être installée sous ce nom dans un thème d'icônes, ce que fait
+# « make desktop-install ». Voir packaging/README.md.
 Icon=io.kubewatch.KubeWatch
 Terminal=false
 # « Development » est la catégorie principale ; « Monitor » est une catégorie

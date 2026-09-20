@@ -30,3 +30,6 @@ regex.workspace = true
 once_cell.workspace = true
 semver.workspace = true
 bytes.workspace = true
+
+[dev-dependencies]
+rustls.workspace = true

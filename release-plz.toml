@@ -21,8 +21,8 @@
 # ---------------------------------------------------------------------------
 
 [workspace]
-# Les quatre crates avancent ensemble : `kubewatch-desktop` 0.4.0 embarque
-# toujours kubewatch-core/-hub/-updater 0.4.0. Une seule version à retenir
+# Les cinq crates avancent ensemble : `kubewatch-desktop` 0.4.0 embarque
+# toujours kubewatch-core/-hub/-updater/-ai 0.4.0. Une seule version à retenir
 # pour l'utilisateur, un seul tag à poser.
 shared_version = true
 
@@ -39,7 +39,9 @@ git_tag_enable = false
 git_release_enable = false
 
 # La publication crates.io est faite par release.yml, dans l'ordre imposé par
-# les dépendances internes (core -> hub -> updater -> desktop).
+# les dépendances internes (core -> hub -> updater, puis ai). L'application
+# `kubewatch-desktop` n'est pas publiée : elle a besoin de l'interface web de
+# `ui/`, qui ne fait pas partie du crate.
 publish = false
 
 # Vérifie qu'aucun changement de rupture d'API ne passe en version mineure.
@@ -53,10 +55,12 @@ pr_labels = ["release", "automated"]
 pr_draft = false
 
 # ---------------------------------------------------------------------------
-# Un seul CHANGELOG.md à la racine, agrégeant les commits des quatre crates.
+# Un seul CHANGELOG.md à la racine, agrégeant les commits des cinq crates.
+# Ancré sur kubewatch-core : c'est le crate publié dont tous les autres
+# dépendent, et il ne peut pas disparaître du workspace.
 # ---------------------------------------------------------------------------
 [[package]]
-name = "kubewatch-desktop"
+name = "kubewatch-core"
 changelog_path = "./CHANGELOG.md"
 changelog_include = ["kubewatch-core", "kubewatch-hub", "kubewatch-updater"]
 publish = false

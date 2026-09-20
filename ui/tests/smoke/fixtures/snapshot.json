@@ -1,0 +1,4975 @@
+{
+ "objects": [
+  {
+   "name": "pod-1",
+   "kind": "Pod",
+   "apiVersion": "v1",
+   "namespace": "ns-1",
+   "uid": "00000000-0000-4000-8000-000000000000",
+   "createdAt": "2026-09-18T16:00:37Z",
+   "ageSeconds": 148449,
+   "status": "Running",
+   "ready": "1/1",
+   "restarts": 0,
+   "node": "node-2",
+   "images": [
+    "registry.example/app-1:1.0"
+   ],
+   "labels": {
+    "app": "val-1",
+    "app.kubernetes.io/component": "val-2",
+    "app.kubernetes.io/instance": "val-1",
+    "app.kubernetes.io/name": "val-1",
+    "app.kubernetes.io/version": "val-3",
+    "pod-template-hash": "val-4"
+   },
+   "annotations": {},
+   "owners": [
+    {
+     "kind": "ReplicaSet",
+     "name": "replicaset-1",
+     "uid": null,
+     "controller": true
+    }
+   ],
+   "extra": {
+    "configMaps": [
+     "configmap-1"
+    ],
+    "containers": 1,
+    "hostIP": "10.0.0.1",
+    "phase": "Running",
+    "podIP": "10.0.0.1",
+    "qosClass": "BestEffort",
+    "serviceAccount": "x"
+   }
+  },
+  {
+   "name": "pod-2",
+   "kind": "Pod",
+   "apiVersion": "v1",
+   "namespace": "ns-1",
+   "uid": "00000000-0000-4000-8000-000000000001",
+   "createdAt": "2026-09-18T16:00:37Z",
+   "ageSeconds": 148449,
+   "status": "Running",
+   "ready": "1/1",
+   "restarts": 0,
+   "node": "node-2",
+   "images": [
+    "registry.example/app-2:1.0"
+   ],
+   "labels": {
+    "app": "val-5",
+    "app.kubernetes.io/component": "val-5",
+    "app.kubernetes.io/instance": "val-1",
+    "app.kubernetes.io/name": "val-5",
+    "app.kubernetes.io/version": "val-3",
+    "pod-template-hash": "val-6"
+   },
+   "annotations": {},
+   "owners": [
+    {
+     "kind": "ReplicaSet",
+     "name": "replicaset-2",
+     "uid": null,
+     "controller": true
+    }
+   ],
+   "extra": {
+    "configMaps": [
+     "configmap-1"
+    ],
+    "containers": 1,
+    "hostIP": "10.0.0.1",
+    "phase": "Running",
+    "podIP": "10.0.0.1",
+    "qosClass": "BestEffort",
+    "serviceAccount": "x"
+   }
+  },
+  {
+   "name": "pod-3",
+   "kind": "Pod",
+   "apiVersion": "v1",
+   "namespace": "ns-1",
+   "uid": "00000000-0000-4000-8000-000000000002",
+   "createdAt": "2026-09-18T16:00:37Z",
+   "ageSeconds": 148449,
+   "status": "Running",
+   "ready": "1/1",
+   "restarts": 0,
+   "node": "node-2",
+   "images": [
+    "registry.example/app-3:1.0"
+   ],
+   "labels": {
+    "app": "val-7",
+    "app.kubernetes.io/component": "val-7",
+    "app.kubernetes.io/instance": "val-1",
+    "app.kubernetes.io/name": "val-7",
+    "app.kubernetes.io/version": "val-3",
+    "pod-template-hash": "val-8"
+   },
+   "annotations": {},
+   "owners": [
+    {
+     "kind": "ReplicaSet",
+     "name": "replicaset-3",
+     "uid": null,
+     "controller": true
+    }
+   ],
+   "extra": {
+    "configMaps": [
+     "configmap-1"
+    ],
+    "containers": 1,
+    "hostIP": "10.0.0.1",
+    "phase": "Running",
+    "podIP": "10.0.0.1",
+    "qosClass": "BestEffort",
+    "serviceAccount": "x"
+   }
+  },
+  {
+   "name": "pod-4",
+   "kind": "Pod",
+   "apiVersion": "v1",
+   "namespace": "ns-2",
+   "uid": "00000000-0000-4000-8000-000000000003",
+   "createdAt": "2026-09-20T09:14:25Z",
+   "ageSeconds": 21,
+   "status": "Running",
+   "ready": "1/1",
+   "restarts": 0,
+   "node": "node-2",
+   "images": [
+    "registry.example/app-4:1.0"
+   ],
+   "labels": {
+    "app.kubernetes.io/managed-by": "val-9",
+    "app.kubernetes.io/name": "val-10",
+    "label-1": "val-11",
+    "label-2": "val-12",
+    "label-3": "val-13",
+    "pod-template-hash": "val-14"
+   },
+   "annotations": {},
+   "owners": [
+    {
+     "kind": "ReplicaSet",
+     "name": "replicaset-5",
+     "uid": null,
+     "controller": true
+    }
+   ],
+   "extra": {
+    "containers": 1,
+    "hostIP": "10.0.0.1",
+    "phase": "Running",
+    "podIP": "10.0.0.1",
+    "qosClass": "Burstable",
+    "serviceAccount": "x",
+    "volumeClaims": [
+     "persistentvolumeclaim-1"
+    ]
+   }
+  },
+  {
+   "name": "pod-5",
+   "kind": "Pod",
+   "apiVersion": "v1",
+   "namespace": "ns-2",
+   "uid": "00000000-0000-4000-8000-000000000004",
+   "createdAt": "2026-09-20T09:14:44Z",
+   "ageSeconds": 2,
+   "status": "Pending",
+   "ready": "0/1",
+   "restarts": 0,
+   "images": [
+    "registry.example/app-5:1.0"
+   ],
+   "labels": {
+    "app.kubernetes.io/managed-by": "val-9",
+    "app.kubernetes.io/name": "val-10",
+    "label-4": "val-11",
+    "label-5": "val-15",
+    "label-6": "val-13",
+    "pod-template-hash": "val-16"
+   },
+   "annotations": {},
+   "owners": [
+    {
+     "kind": "ReplicaSet",
+     "name": "replicaset-11",
+     "uid": null,
+     "controller": true
+    }
+   ],
+   "extra": {
+    "containers": 1,
+    "nominatedNodeName": "x",
+    "phase": "Pending",
+    "qosClass": "Burstable",
+    "serviceAccount": "x",
+    "volumeClaims": [
+     "persistentvolumeclaim-2"
+    ]
+   }
+  },
+  {
+   "name": "pod-6",
+   "kind": "Pod",
+   "apiVersion": "v1",
+   "namespace": "ns-3",
+   "uid": "00000000-0000-4000-8000-000000000005",
+   "createdAt": "2026-09-20T08:53:31Z",
+   "ageSeconds": 1275,
+   "status": "Running",
+   "ready": "1/1",
+   "restarts": 0,
+   "node": "node-1",
+   "images": [
+    "registry.example/app-6:1.0"
+   ],
+   "labels": {
+    "app.kubernetes.io/managed-by": "val-9",
+    "app.kubernetes.io/name": "val-10",
+    "label-7": "val-17",
+    "label-8": "val-18",
+    "label-9": "val-19",
+    "pod-template-hash": "val-20"
+   },
+   "annotations": {},
+   "owners": [
+    {
+     "kind": "ReplicaSet",
+     "name": "replicaset-15",
+     "uid": null,
+     "controller": true
+    }
+   ],
+   "extra": {
+    "containers": 1,
+    "hostIP": "10.0.0.1",
+    "phase": "Running",
+    "podIP": "10.0.0.1",
+    "qosClass": "Burstable",
+    "serviceAccount": "x",
+    "volumeClaims": [
+     "persistentvolumeclaim-3"
+    ]
+   }
+  },
+  {
+   "name": "pod-7",
+   "kind": "Pod",
+   "apiVersion": "v1",
+   "namespace": "ns-4",
+   "uid": "00000000-0000-4000-8000-000000000006",
+   "createdAt": "2026-09-20T09:13:19Z",
+   "ageSeconds": 87,
+   "status": "Running",
+   "ready": "1/1",
+   "restarts": 0,
+   "node": "node-2",
+   "images": [
+    "registry.example/app-6:1.0"
+   ],
+   "labels": {
+    "app.kubernetes.io/managed-by": "val-9",
+    "app.kubernetes.io/name": "val-10",
+    "label-10": "val-21",
+    "label-11": "val-22",
+    "label-12": "val-23",
+    "pod-template-hash": "val-24"
+   },
+   "annotations": {},
+   "owners": [
+    {
+     "kind": "ReplicaSet",
+     "name": "replicaset-21",
+     "uid": null,
+     "controller": true
+    }
+   ],
+   "extra": {
+    "containers": 1,
+    "hostIP": "10.0.0.1",
+    "phase": "Running",
+    "podIP": "10.0.0.1",
+    "qosClass": "Burstable",
+    "serviceAccount": "x",
+    "volumeClaims": [
+     "persistentvolumeclaim-4"
+    ]
+   }
+  },
+  {
+   "name": "pod-8",
+   "kind": "Pod",
+   "apiVersion": "v1",
+   "namespace": "ns-4",
+   "uid": "00000000-0000-4000-8000-000000000007",
+   "createdAt": "2026-09-20T06:50:15Z",
+   "ageSeconds": 8671,
+   "status": "Running",
+   "ready": "1/1",
+   "restarts": 0,
+   "node": "node-1",
+   "images": [
+    "registry.example/app-7:1.0"
+   ],
+   "labels": {
+    "app.kubernetes.io/managed-by": "val-9",
+    "app.kubernetes.io/name": "val-10",
+    "label-13": "val-21",
+    "label-14": "val-25",
+    "label-15": "val-23",
+    "pod-template-hash": "val-26"
+   },
+   "annotations": {},
+   "owners": [
+    {
+     "kind": "ReplicaSet",
+     "name": "replicaset-22",
+     "uid": null,
+     "controller": true
+    }
+   ],
+   "extra": {
+    "containers": 1,
+    "hostIP": "10.0.0.1",
+    "phase": "Running",
+    "podIP": "10.0.0.1",
+    "qosClass": "Burstable",
+    "serviceAccount": "x",
+    "volumeClaims": [
+     "persistentvolumeclaim-5"
+    ]
+   }
+  },
+  {
+   "name": "pod-9",
+   "kind": "Pod",
+   "apiVersion": "v1",
+   "namespace": "ns-5",
+   "uid": "00000000-0000-4000-8000-000000000008",
+   "createdAt": "2026-09-18T05:37:26Z",
+   "ageSeconds": 185840,
+   "status": "Running",
+   "ready": "1/1",
+   "restarts": 0,
+   "node": "node-1",
+   "images": [
+    "registry.example/app-8:1.0"
+   ],
+   "labels": {
+    "app.kubernetes.io/instance": "val-27",
+    "app.kubernetes.io/name": "val-27",
+    "pod-template-hash": "val-28"
+   },
+   "annotations": {},
+   "owners": [
+    {
+     "kind": "ReplicaSet",
+     "name": "replicaset-24",
+     "uid": null,
+     "controller": true
+    }
+   ],
+   "extra": {
+    "configMaps": [
+     "configmap-1"
+    ],
+    "containers": 1,
+    "hostIP": "10.0.0.1",
+    "phase": "Running",
+    "podIP": "10.0.0.1",
+    "qosClass": "Burstable",
+    "serviceAccount": "x"
+   }
+  },
+  {
+   "name": "pod-10",
+   "kind": "Pod",
+   "apiVersion": "v1",
+   "namespace": "ns-5",
+   "uid": "00000000-0000-4000-8000-000000000009",
+   "createdAt": "2026-09-18T05:41:49Z",
+   "ageSeconds": 185577,
+   "status": "Running",
+   "ready": "1/1",
+   "restarts": 0,
+   "node": "node-2",
+   "images": [
+    "registry.example/app-8:1.0"
+   ],
+   "labels": {
+    "app.kubernetes.io/instance": "val-27",
+    "app.kubernetes.io/name": "val-27",
+    "pod-template-hash": "val-28"
+   },
+   "annotations": {},
+   "owners": [
+    {
+     "kind": "ReplicaSet",
+     "name": "replicaset-24",
+     "uid": null,
+     "controller": true
+    }
+   ],
+   "extra": {
+    "configMaps": [
+     "configmap-1"
+    ],
+    "containers": 1,
+    "hostIP": "10.0.0.1",
+    "phase": "Running",
+    "podIP": "10.0.0.1",
+    "qosClass": "Burstable",
+    "serviceAccount": "x"
+   }
+  },
+  {
+   "name": "pod-11",
+   "kind": "Pod",
+   "apiVersion": "v1",
+   "namespace": "kube-system",
+   "uid": "00000000-0000-4000-8000-000000000010",
+   "createdAt": "2026-09-13T21:36:06Z",
+   "ageSeconds": 560320,
+   "status": "Running",
+   "ready": "1/1",
+   "restarts": 1,
+   "node": "node-1",
+   "images": [
+    "registry.example/app-9:1.0"
+   ],
+   "labels": {
+    "label-16": "val-29",
+    "pod-template-hash": "val-30"
+   },
+   "annotations": {},
+   "owners": [
+    {
+     "kind": "ReplicaSet",
+     "name": "replicaset-25",
+     "uid": null,
+     "controller": true
+    }
+   ],
+   "extra": {
+    "configMaps": [
+     "configmap-2",
+     "configmap-3",
+     "configmap-1"
+    ],
+    "containers": 1,
+    "hostIP": "10.0.0.1",
+    "phase": "Running",
+    "podIP": "10.0.0.1",
+    "qosClass": "Burstable",
+    "serviceAccount": "x"
+   }
+  },
+  {
+   "name": "pod-12",
+   "kind": "Pod",
+   "apiVersion": "v1",
+   "namespace": "kube-system",
+   "uid": "00000000-0000-4000-8000-000000000011",
+   "createdAt": "2026-09-13T21:36:10Z",
+   "ageSeconds": 560316,
+   "status": "Completed",
+   "ready": "0/1",
+   "restarts": 0,
+   "node": "node-1",
+   "images": [
+    "registry.example/app-10:1.0"
+   ],
+   "labels": {
+    "app.kubernetes.io/controller-uid": "val-31",
+    "app.kubernetes.io/job-name": "val-32",
+    "controller-uid": "val-31",
+    "label-17": "val-33",
+    "job-name": "val-32"
+   },
+   "annotations": {},
+   "owners": [
+    {
+     "kind": "Job",
+     "name": "job-2",
+     "uid": null,
+     "controller": true
+    }
+   ],
+   "extra": {
+    "configMaps": [
+     "configmap-4",
+     "configmap-1"
+    ],
+    "containers": 1,
+    "hostIP": "10.0.0.1",
+    "phase": "Succeeded",
+    "qosClass": "Burstable",
+    "secrets": [
+     "secret-1"
+    ],
+    "serviceAccount": "x"
+   }
+  },
+  {
+   "name": "pod-13",
+   "kind": "Pod",
+   "apiVersion": "v1",
+   "namespace": "kube-system",
+   "uid": "00000000-0000-4000-8000-000000000012",
+   "createdAt": "2026-09-13T21:36:10Z",
+   "ageSeconds": 560316,
+   "status": "Completed",
+   "ready": "0/1",
+   "restarts": 1,
+   "node": "node-1",
+   "images": [
+    "registry.example/app-10:1.0"
+   ],
+   "labels": {
+    "app.kubernetes.io/controller-uid": "val-34",
+    "app.kubernetes.io/job-name": "val-35",
+    "controller-uid": "val-34",
+    "label-18": "val-36",
+    "job-name": "val-35"
+   },
+   "annotations": {},
+   "owners": [
+    {
+     "kind": "Job",
+     "name": "job-1",
+     "uid": null,
+     "controller": true
+    }
+   ],
+   "extra": {
+    "configMaps": [
+     "configmap-5",
+     "configmap-1"
+    ],
+    "containers": 1,
+    "hostIP": "10.0.0.1",
+    "phase": "Succeeded",
+    "qosClass": "Burstable",
+    "secrets": [
+     "secret-2"
+    ],
+    "serviceAccount": "x"
+   }
+  },
+  {
+   "name": "pod-14",
+   "kind": "Pod",
+   "apiVersion": "v1",
+   "namespace": "kube-system",
+   "uid": "00000000-0000-4000-8000-000000000013",
+   "createdAt": "2026-09-20T09:14:44Z",
+   "ageSeconds": 2,
+   "status": "Running",
+   "ready": "1/1",
+   "restarts": 0,
+   "node": "node-1",
+   "images": [
+    "registry.example/app-11:1.0"
+   ],
+   "labels": {},
+   "annotations": {},
+   "extra": {
+    "configMaps": [
+     "configmap-6",
+     "configmap-1"
+    ],
+    "containers": 1,
+    "hostIP": "10.0.0.1",
+    "phase": "Running",
+    "podIP": "10.0.0.1",
+    "qosClass": "BestEffort",
+    "serviceAccount": "x"
+   }
+  },
+  {
+   "name": "pod-15",
+   "kind": "Pod",
+   "apiVersion": "v1",
+   "namespace": "kube-system",
+   "uid": "00000000-0000-4000-8000-000000000014",
+   "createdAt": "2026-09-13T21:36:06Z",
+   "ageSeconds": 560320,
+   "status": "Running",
+   "ready": "1/1",
+   "restarts": 1,
+   "node": "node-1",
+   "images": [
+    "registry.example/app-12:1.0"
+   ],
+   "labels": {
+    "app": "val-37",
+    "pod-template-hash": "val-38"
+   },
+   "annotations": {},
+   "owners": [
+    {
+     "kind": "ReplicaSet",
+     "name": "replicaset-26",
+     "uid": null,
+     "controller": true
+    }
+   ],
+   "extra": {
+    "configMaps": [
+     "configmap-6",
+     "configmap-1"
+    ],
+    "containers": 1,
+    "hostIP": "10.0.0.1",
+    "phase": "Running",
+    "podIP": "10.0.0.1",
+    "qosClass": "BestEffort",
+    "serviceAccount": "x"
+   }
+  },
+  {
+   "name": "pod-16",
+   "kind": "Pod",
+   "apiVersion": "v1",
+   "namespace": "kube-system",
+   "uid": "00000000-0000-4000-8000-000000000015",
+   "createdAt": "2026-09-18T18:08:25Z",
+   "ageSeconds": 140781,
+   "status": "Running",
+   "ready": "1/1",
+   "restarts": 0,
+   "node": "node-2",
+   "images": [
+    "registry.example/app-13:1.0"
+   ],
+   "labels": {
+    "label-19": "val-39",
+    "pod-template-hash": "val-40"
+   },
+   "annotations": {},
+   "owners": [
+    {
+     "kind": "ReplicaSet",
+     "name": "replicaset-27",
+     "uid": null,
+     "controller": true
+    }
+   ],
+   "extra": {
+    "configMaps": [
+     "configmap-1"
+    ],
+    "containers": 1,
+    "hostIP": "10.0.0.1",
+    "phase": "Running",
+    "podIP": "10.0.0.1",
+    "qosClass": "Burstable",
+    "serviceAccount": "x"
+   }
+  },
+  {
+   "name": "pod-17",
+   "kind": "Pod",
+   "apiVersion": "v1",
+   "namespace": "kube-system",
+   "uid": "00000000-0000-4000-8000-000000000016",
+   "createdAt": "2026-09-18T15:42:08Z",
+   "ageSeconds": 149558,
+   "status": "Running",
+   "ready": "3/3",
+   "restarts": 0,
+   "node": "node-2",
+   "images": [
+    "registry.example/app-14:1.0",
+    "registry.example/app-14:1.0",
+    "registry.example/app-14:1.0"
+   ],
+   "labels": {
+    "app": "val-41",
+    "label-20": "val-42",
+    "label-21": "1",
+    "label-22": "val-43",
+    "label-23": "val-44"
+   },
+   "annotations": {},
+   "owners": [
+    {
+     "kind": "DaemonSet",
+     "name": "daemonset-1",
+     "uid": null,
+     "controller": true
+    }
+   ],
+   "extra": {
+    "containers": 3,
+    "hostIP": "10.0.0.1",
+    "phase": "Running",
+    "podIP": "10.0.0.1",
+    "qosClass": "BestEffort",
+    "serviceAccount": "x"
+   }
+  },
+  {
+   "name": "pod-18",
+   "kind": "Pod",
+   "apiVersion": "v1",
+   "namespace": "kube-system",
+   "uid": "00000000-0000-4000-8000-000000000017",
+   "createdAt": "2026-09-18T15:42:08Z",
+   "ageSeconds": 149558,
+   "status": "Running",
+   "ready": "3/3",
+   "restarts": 0,
+   "node": "node-1",
+   "images": [
+    "registry.example/app-14:1.0",
+    "registry.example/app-14:1.0",
+    "registry.example/app-14:1.0"
+   ],
+   "labels": {
+    "app": "val-41",
+    "label-24": "val-42",
+    "label-25": "1",
+    "label-26": "val-43",
+    "label-27": "val-44"
+   },
+   "annotations": {},
+   "owners": [
+    {
+     "kind": "DaemonSet",
+     "name": "daemonset-1",
+     "uid": null,
+     "controller": true
+    }
+   ],
+   "extra": {
+    "containers": 3,
+    "hostIP": "10.0.0.1",
+    "phase": "Running",
+    "podIP": "10.0.0.1",
+    "qosClass": "BestEffort",
+    "serviceAccount": "x"
+   }
+  },
+  {
+   "name": "pod-19",
+   "kind": "Pod",
+   "apiVersion": "v1",
+   "namespace": "kube-system",
+   "uid": "00000000-0000-4000-8000-000000000018",
+   "createdAt": "2026-09-17T18:12:06Z",
+   "ageSeconds": 226960,
+   "status": "Running",
+   "ready": "1/1",
+   "restarts": 0,
+   "node": "node-2",
+   "images": [
+    "registry.example/app-14:1.0"
+   ],
+   "labels": {
+    "app": "val-45",
+    "label-28": "val-46",
+    "label-29": "1",
+    "label-30": "val-47",
+    "label-31": "val-47"
+   },
+   "annotations": {},
+   "owners": [
+    {
+     "kind": "DaemonSet",
+     "name": "daemonset-2",
+     "uid": null,
+     "controller": true
+    }
+   ],
+   "extra": {
+    "containers": 1,
+    "hostIP": "10.0.0.1",
+    "phase": "Running",
+    "podIP": "10.0.0.1",
+    "qosClass": "BestEffort",
+    "serviceAccount": "x"
+   }
+  },
+  {
+   "name": "pod-20",
+   "kind": "Pod",
+   "apiVersion": "v1",
+   "namespace": "kube-system",
+   "uid": "00000000-0000-4000-8000-000000000019",
+   "createdAt": "2026-09-13T21:50:55Z",
+   "ageSeconds": 559431,
+   "status": "Running",
+   "ready": "1/1",
+   "restarts": 1,
+   "node": "node-1",
+   "images": [
+    "registry.example/app-14:1.0"
+   ],
+   "labels": {
+    "app": "val-45",
+    "label-32": "val-46",
+    "label-33": "1",
+    "label-34": "val-47",
+    "label-35": "val-47"
+   },
+   "annotations": {},
+   "owners": [
+    {
+     "kind": "DaemonSet",
+     "name": "daemonset-2",
+     "uid": null,
+     "controller": true
+    }
+   ],
+   "extra": {
+    "containers": 1,
+    "hostIP": "10.0.0.1",
+    "phase": "Running",
+    "podIP": "10.0.0.1",
+    "qosClass": "BestEffort",
+    "serviceAccount": "x"
+   }
+  },
+  {
+   "name": "pod-21",
+   "kind": "Pod",
+   "apiVersion": "v1",
+   "namespace": "kube-system",
+   "uid": "00000000-0000-4000-8000-000000000020",
+   "createdAt": "2026-09-20T06:50:15Z",
+   "ageSeconds": 8671,
+   "status": "Running",
+   "ready": "1/1",
+   "restarts": 0,
+   "node": "node-2",
+   "images": [
+    "registry.example/app-14:1.0"
+   ],
+   "labels": {
+    "app": "val-48",
+    "label-36": "val-49",
+    "label-37": "1",
+    "label-38": "val-50",
+    "label-39": "val-51"
+   },
+   "annotations": {},
+   "owners": [
+    {
+     "kind": "DaemonSet",
+     "name": "daemonset-3",
+     "uid": null,
+     "controller": true
+    }
+   ],
+   "extra": {
+    "containers": 1,
+    "hostIP": "10.0.0.1",
+    "phase": "Running",
+    "podIP": "10.0.0.1",
+    "qosClass": "BestEffort",
+    "serviceAccount": "x"
+   }
+  },
+  {
+   "name": "pod-22",
+   "kind": "Pod",
+   "apiVersion": "v1",
+   "namespace": "kube-system",
+   "uid": "00000000-0000-4000-8000-000000000021",
+   "createdAt": "2026-09-20T06:50:15Z",
+   "ageSeconds": 8671,
+   "status": "Running",
+   "ready": "1/1",
+   "restarts": 0,
+   "node": "node-1",
+   "images": [
+    "registry.example/app-14:1.0"
+   ],
+   "labels": {
+    "app": "val-48",
+    "label-40": "val-49",
+    "label-41": "1",
+    "label-42": "val-50",
+    "label-43": "val-51"
+   },
+   "annotations": {},
+   "owners": [
+    {
+     "kind": "DaemonSet",
+     "name": "daemonset-3",
+     "uid": null,
+     "controller": true
+    }
+   ],
+   "extra": {
+    "containers": 1,
+    "hostIP": "10.0.0.1",
+    "phase": "Running",
+    "podIP": "10.0.0.1",
+    "qosClass": "BestEffort",
+    "serviceAccount": "x"
+   }
+  },
+  {
+   "name": "pod-23",
+   "kind": "Pod",
+   "apiVersion": "v1",
+   "namespace": "kube-system",
+   "uid": "00000000-0000-4000-8000-000000000022",
+   "createdAt": "2026-09-13T21:36:38Z",
+   "ageSeconds": 560288,
+   "status": "Running",
+   "ready": "2/2",
+   "restarts": 2,
+   "node": "node-1",
+   "images": [
+    "registry.example/app-14:1.0",
+    "registry.example/app-14:1.0"
+   ],
+   "labels": {
+    "app": "val-52",
+    "label-44": "val-53",
+    "label-45": "1",
+    "label-46": "val-36",
+    "label-47": "val-54"
+   },
+   "annotations": {},
+   "owners": [
+    {
+     "kind": "DaemonSet",
+     "name": "daemonset-4",
+     "uid": null,
+     "controller": true
+    }
+   ],
+   "extra": {
+    "containers": 2,
+    "hostIP": "10.0.0.1",
+    "phase": "Running",
+    "podIP": "10.0.0.1",
+    "qosClass": "BestEffort",
+    "serviceAccount": "x"
+   }
+  },
+  {
+   "name": "pod-24",
+   "kind": "Pod",
+   "apiVersion": "v1",
+   "namespace": "kube-system",
+   "uid": "00000000-0000-4000-8000-000000000023",
+   "createdAt": "2026-09-17T18:12:06Z",
+   "ageSeconds": 226960,
+   "status": "Running",
+   "ready": "2/2",
+   "restarts": 0,
+   "node": "node-2",
+   "images": [
+    "registry.example/app-14:1.0",
+    "registry.example/app-14:1.0"
+   ],
+   "labels": {
+    "app": "val-52",
+    "label-48": "val-53",
+    "label-49": "1",
+    "label-50": "val-36",
+    "label-51": "val-54"
+   },
+   "annotations": {},
+   "owners": [
+    {
+     "kind": "DaemonSet",
+     "name": "daemonset-4",
+     "uid": null,
+     "controller": true
+    }
+   ],
+   "extra": {
+    "containers": 2,
+    "hostIP": "10.0.0.1",
+    "phase": "Running",
+    "podIP": "10.0.0.1",
+    "qosClass": "BestEffort",
+    "serviceAccount": "x"
+   }
+  },
+  {
+   "name": "pod-25",
+   "kind": "Pod",
+   "apiVersion": "v1",
+   "namespace": "kube-system",
+   "uid": "00000000-0000-4000-8000-000000000024",
+   "createdAt": "2026-09-13T21:36:38Z",
+   "ageSeconds": 560288,
+   "status": "Running",
+   "ready": "1/1",
+   "restarts": 2,
+   "node": "node-1",
+   "images": [
+    "registry.example/app-15:1.0"
+   ],
+   "labels": {
+    "app.kubernetes.io/instance": "val-55",
+    "app.kubernetes.io/managed-by": "val-56",
+    "app.kubernetes.io/name": "val-36",
+    "label-52": "val-57",
+    "pod-template-hash": "val-58"
+   },
+   "annotations": {},
+   "owners": [
+    {
+     "kind": "ReplicaSet",
+     "name": "replicaset-28",
+     "uid": null,
+     "controller": true
+    }
+   ],
+   "extra": {
+    "configMaps": [
+     "configmap-1"
+    ],
+    "containers": 1,
+    "hostIP": "10.0.0.1",
+    "phase": "Running",
+    "podIP": "10.0.0.1",
+    "qosClass": "BestEffort",
+    "serviceAccount": "x"
+   }
+  },
+  {
+   "name": "pod-26",
+   "kind": "Pod",
+   "apiVersion": "v1",
+   "namespace": "ns-6",
+   "uid": "00000000-0000-4000-8000-000000000025",
+   "createdAt": "2026-09-18T15:42:08Z",
+   "ageSeconds": 149558,
+   "status": "Running",
+   "ready": "1/1",
+   "restarts": 1,
+   "node": "node-2",
+   "images": [
+    "registry.example/app-16:1.0"
+   ],
+   "labels": {
+    "app": "val-43",
+    "label-53": "0",
+    "label-54": "val-59",
+    "label-55": "val-60"
+   },
+   "annotations": {},
+   "owners": [
+    {
+     "kind": "StatefulSet",
+     "name": "statefulset-1",
+     "uid": null,
+     "controller": true
+    }
+   ],
+   "extra": {
+    "configMaps": [
+     "configmap-1"
+    ],
+    "containers": 1,
+    "hostIP": "10.0.0.1",
+    "phase": "Running",
+    "podIP": "10.0.0.1",
+    "qosClass": "Burstable",
+    "secrets": [
+     "secret-3"
+    ],
+    "serviceAccount": "x",
+    "volumeClaims": [
+     "persistentvolumeclaim-6"
+    ]
+   }
+  },
+  {
+   "name": "pod-27",
+   "kind": "Pod",
+   "apiVersion": "v1",
+   "namespace": "ns-6",
+   "uid": "00000000-0000-4000-8000-000000000026",
+   "createdAt": "2026-09-18T15:56:39Z",
+   "ageSeconds": 148687,
+   "status": "Running",
+   "ready": "1/1",
+   "restarts": 0,
+   "node": "node-2",
+   "images": [
+    "registry.example/app-17:1.0"
+   ],
+   "labels": {
+    "app": "val-61",
+    "label-56": "0",
+    "label-57": "val-62",
+    "label-58": "val-63"
+   },
+   "annotations": {},
+   "owners": [
+    {
+     "kind": "StatefulSet",
+     "name": "statefulset-2",
+     "uid": null,
+     "controller": true
+    }
+   ],
+   "extra": {
+    "configMaps": [
+     "configmap-1"
+    ],
+    "containers": 1,
+    "hostIP": "10.0.0.1",
+    "phase": "Running",
+    "podIP": "10.0.0.1",
+    "qosClass": "Burstable",
+    "secrets": [
+     "secret-4"
+    ],
+    "serviceAccount": "x",
+    "volumeClaims": [
+     "persistentvolumeclaim-7"
+    ]
+   }
+  },
+  {
+   "name": "pod-28",
+   "kind": "Pod",
+   "apiVersion": "v1",
+   "namespace": "ns-7",
+   "uid": "00000000-0000-4000-8000-000000000027",
+   "createdAt": "2026-09-18T12:53:12Z",
+   "ageSeconds": 159694,
+   "status": "Running",
+   "ready": "1/1",
+   "restarts": 0,
+   "node": "node-1",
+   "images": [
+    "registry.example/app-18:1.0"
+   ],
+   "labels": {
+    "app": "val-47",
+    "label-59": "0",
+    "label-60": "val-64",
+    "label-61": "val-65"
+   },
+   "annotations": {},
+   "owners": [
+    {
+     "kind": "StatefulSet",
+     "name": "statefulset-3",
+     "uid": null,
+     "controller": true
+    }
+   ],
+   "extra": {
+    "configMaps": [
+     "configmap-1"
+    ],
+    "containers": 1,
+    "hostIP": "10.0.0.1",
+    "phase": "Running",
+    "podIP": "10.0.0.1",
+    "qosClass": "Burstable",
+    "serviceAccount": "x",
+    "volumeClaims": [
+     "persistentvolumeclaim-8"
+    ]
+   }
+  },
+  {
+   "name": "pod-29",
+   "kind": "Pod",
+   "apiVersion": "v1",
+   "namespace": "ns-8",
+   "uid": "00000000-0000-4000-8000-000000000028",
+   "createdAt": "2026-09-18T18:24:08Z",
+   "ageSeconds": 139838,
+   "status": "Running",
+   "ready": "1/1",
+   "restarts": 0,
+   "node": "node-2",
+   "images": [
+    "registry.example/app-19:1.0"
+   ],
+   "labels": {
+    "app.kubernetes.io/name": "val-66",
+    "pod-template-hash": "val-67"
+   },
+   "annotations": {},
+   "owners": [
+    {
+     "kind": "ReplicaSet",
+     "name": "replicaset-29",
+     "uid": null,
+     "controller": true
+    }
+   ],
+   "extra": {
+    "configMaps": [
+     "configmap-1"
+    ],
+    "containers": 1,
+    "hostIP": "10.0.0.1",
+    "phase": "Running",
+    "podIP": "10.0.0.1",
+    "qosClass": "Burstable",
+    "serviceAccount": "x"
+   }
+  },
+  {
+   "name": "pod-30",
+   "kind": "Pod",
+   "apiVersion": "v1",
+   "namespace": "ns-9",
+   "uid": "00000000-0000-4000-8000-000000000029",
+   "createdAt": "2026-09-20T09:11:25Z",
+   "ageSeconds": 201,
+   "status": "Running",
+   "ready": "1/1",
+   "restarts": 0,
+   "node": "node-1",
+   "images": [
+    "registry.example/app-20:1.0"
+   ],
+   "labels": {
+    "app.kubernetes.io/name": "val-9",
+    "app.kubernetes.io/part-of": "val-9",
+    "pod-template-hash": "val-68"
+   },
+   "annotations": {},
+   "owners": [
+    {
+     "kind": "ReplicaSet",
+     "name": "replicaset-35",
+     "uid": null,
+     "controller": true
+    }
+   ],
+   "extra": {
+    "configMaps": [
+     "configmap-1",
+     "configmap-7"
+    ],
+    "containers": 1,
+    "hostIP": "10.0.0.1",
+    "phase": "Running",
+    "podIP": "10.0.0.1",
+    "qosClass": "Burstable",
+    "secrets": [
+     "secret-5"
+    ],
+    "serviceAccount": "x",
+    "volumeClaims": [
+     "persistentvolumeclaim-10"
+    ]
+   }
+  },
+  {
+   "name": "pod-31",
+   "kind": "Pod",
+   "apiVersion": "v1",
+   "namespace": "ns-9",
+   "uid": "00000000-0000-4000-8000-000000000030",
+   "createdAt": "2026-09-20T09:11:46Z",
+   "ageSeconds": 180,
+   "status": "Running",
+   "ready": "1/1",
+   "restarts": 0,
+   "node": "node-1",
+   "images": [
+    "registry.example/app-20:1.0"
+   ],
+   "labels": {
+    "app.kubernetes.io/name": "val-9",
+    "app.kubernetes.io/part-of": "val-9",
+    "pod-template-hash": "val-68"
+   },
+   "annotations": {},
+   "owners": [
+    {
+     "kind": "ReplicaSet",
+     "name": "replicaset-35",
+     "uid": null,
+     "controller": true
+    }
+   ],
+   "extra": {
+    "configMaps": [
+     "configmap-1",
+     "configmap-7"
+    ],
+    "containers": 1,
+    "hostIP": "10.0.0.1",
+    "phase": "Running",
+    "podIP": "10.0.0.1",
+    "qosClass": "Burstable",
+    "secrets": [
+     "secret-5"
+    ],
+    "serviceAccount": "x",
+    "volumeClaims": [
+     "persistentvolumeclaim-10"
+    ]
+   }
+  },
+  {
+   "name": "pod-32",
+   "kind": "Pod",
+   "apiVersion": "v1",
+   "namespace": "ns-9",
+   "uid": "00000000-0000-4000-8000-000000000031",
+   "createdAt": "2026-09-20T06:17:00Z",
+   "ageSeconds": 10666,
+   "status": "Completed",
+   "ready": "0/1",
+   "restarts": 0,
+   "node": "node-2",
+   "images": [
+    "registry.example/app-21:1.0"
+   ],
+   "labels": {
+    "app.kubernetes.io/name": "val-69",
+    "app.kubernetes.io/part-of": "val-9",
+    "app.kubernetes.io/controller-uid": "val-70",
+    "app.kubernetes.io/job-name": "val-71",
+    "controller-uid": "val-70",
+    "job-name": "val-71"
+   },
+   "annotations": {},
+   "owners": [
+    {
+     "kind": "Job",
+     "name": "job-3",
+     "uid": null,
+     "controller": true
+    }
+   ],
+   "extra": {
+    "configMaps": [
+     "configmap-8",
+     "configmap-9",
+     "configmap-1"
+    ],
+    "containers": 1,
+    "hostIP": "10.0.0.1",
+    "phase": "Succeeded",
+    "podIP": "10.0.0.1",
+    "qosClass": "Burstable",
+    "secrets": [
+     "secret-6",
+     "secret-5"
+    ],
+    "serviceAccount": "x",
+    "volumeClaims": [
+     "persistentvolumeclaim-11"
+    ]
+   }
+  },
+  {
+   "name": "pod-33",
+   "kind": "Pod",
+   "apiVersion": "v1",
+   "namespace": "ns-9",
+   "uid": "00000000-0000-4000-8000-000000000032",
+   "createdAt": "2026-09-20T07:17:00Z",
+   "ageSeconds": 7066,
+   "status": "Completed",
+   "ready": "0/1",
+   "restarts": 0,
+   "node": "node-2",
+   "images": [
+    "registry.example/app-21:1.0"
+   ],
+   "labels": {
+    "app.kubernetes.io/name": "val-69",
+    "app.kubernetes.io/part-of": "val-9",
+    "app.kubernetes.io/controller-uid": "val-72",
+    "app.kubernetes.io/job-name": "val-73",
+    "controller-uid": "val-72",
+    "job-name": "val-73"
+   },
+   "annotations": {},
+   "owners": [
+    {
+     "kind": "Job",
+     "name": "job-4",
+     "uid": null,
+     "controller": true
+    }
+   ],
+   "extra": {
+    "configMaps": [
+     "configmap-8",
+     "configmap-9",
+     "configmap-1"
+    ],
+    "containers": 1,
+    "hostIP": "10.0.0.1",
+    "phase": "Succeeded",
+    "podIP": "10.0.0.1",
+    "qosClass": "Burstable",
+    "secrets": [
+     "secret-6",
+     "secret-5"
+    ],
+    "serviceAccount": "x",
+    "volumeClaims": [
+     "persistentvolumeclaim-11"
+    ]
+   }
+  },
+  {
+   "name": "pod-34",
+   "kind": "Pod",
+   "apiVersion": "v1",
+   "namespace": "ns-9",
+   "uid": "00000000-0000-4000-8000-000000000033",
+   "createdAt": "2026-09-20T08:17:00Z",
+   "ageSeconds": 3466,
+   "status": "Completed",
+   "ready": "0/1",
+   "restarts": 0,
+   "node": "node-2",
+   "images": [
+    "registry.example/app-21:1.0"
+   ],
+   "labels": {
+    "app.kubernetes.io/name": "val-69",
+    "app.kubernetes.io/part-of": "val-9",
+    "app.kubernetes.io/controller-uid": "val-74",
+    "app.kubernetes.io/job-name": "val-75",
+    "controller-uid": "val-74",
+    "job-name": "val-75"
+   },
+   "annotations": {},
+   "owners": [
+    {
+     "kind": "Job",
+     "name": "job-5",
+     "uid": null,
+     "controller": true
+    }
+   ],
+   "extra": {
+    "configMaps": [
+     "configmap-8",
+     "configmap-9",
+     "configmap-1"
+    ],
+    "containers": 1,
+    "hostIP": "10.0.0.1",
+    "phase": "Succeeded",
+    "podIP": "10.0.0.1",
+    "qosClass": "Burstable",
+    "secrets": [
+     "secret-6",
+     "secret-5"
+    ],
+    "serviceAccount": "x",
+    "volumeClaims": [
+     "persistentvolumeclaim-11"
+    ]
+   }
+  },
+  {
+   "name": "replicaset-1",
+   "kind": "ReplicaSet",
+   "apiVersion": "apps/v1",
+   "namespace": "ns-1",
+   "uid": "00000000-0000-4000-8000-000000000034",
+   "createdAt": "2026-09-18T16:00:37Z",
+   "ageSeconds": 148449,
+   "status": "Ready",
+   "ready": "1/1",
+   "images": [
+    "registry.example/app-1:1.0"
+   ],
+   "labels": {
+    "app": "val-1",
+    "app.kubernetes.io/component": "val-2",
+    "app.kubernetes.io/instance": "val-1",
+    "app.kubernetes.io/name": "val-1",
+    "app.kubernetes.io/version": "val-3",
+    "pod-template-hash": "val-4"
+   },
+   "annotations": {},
+   "owners": [
+    {
+     "kind": "Deployment",
+     "name": "deployment-1",
+     "uid": null,
+     "controller": true
+    }
+   ],
+   "extra": {
+    "available": 1,
+    "current": 1,
+    "desired": 1,
+    "readyReplicas": 1,
+    "revision": "1",
+    "upToDate": 0
+   }
+  },
+  {
+   "name": "replicaset-2",
+   "kind": "ReplicaSet",
+   "apiVersion": "apps/v1",
+   "namespace": "ns-1",
+   "uid": "00000000-0000-4000-8000-000000000035",
+   "createdAt": "2026-09-18T16:00:37Z",
+   "ageSeconds": 148449,
+   "status": "Ready",
+   "ready": "1/1",
+   "images": [
+    "registry.example/app-2:1.0"
+   ],
+   "labels": {
+    "app": "val-5",
+    "app.kubernetes.io/component": "val-5",
+    "app.kubernetes.io/instance": "val-1",
+    "app.kubernetes.io/name": "val-5",
+    "app.kubernetes.io/version": "val-3",
+    "pod-template-hash": "val-6"
+   },
+   "annotations": {},
+   "owners": [
+    {
+     "kind": "Deployment",
+     "name": "deployment-2",
+     "uid": null,
+     "controller": true
+    }
+   ],
+   "extra": {
+    "available": 1,
+    "current": 1,
+    "desired": 1,
+    "readyReplicas": 1,
+    "revision": "1",
+    "upToDate": 0
+   }
+  },
+  {
+   "name": "replicaset-3",
+   "kind": "ReplicaSet",
+   "apiVersion": "apps/v1",
+   "namespace": "ns-1",
+   "uid": "00000000-0000-4000-8000-000000000036",
+   "createdAt": "2026-09-18T16:00:37Z",
+   "ageSeconds": 148449,
+   "status": "Ready",
+   "ready": "1/1",
+   "images": [
+    "registry.example/app-3:1.0"
+   ],
+   "labels": {
+    "app": "val-7",
+    "app.kubernetes.io/component": "val-7",
+    "app.kubernetes.io/instance": "val-1",
+    "app.kubernetes.io/name": "val-7",
+    "app.kubernetes.io/version": "val-3",
+    "pod-template-hash": "val-8"
+   },
+   "annotations": {},
+   "owners": [
+    {
+     "kind": "Deployment",
+     "name": "deployment-3",
+     "uid": null,
+     "controller": true
+    }
+   ],
+   "extra": {
+    "available": 1,
+    "current": 1,
+    "desired": 1,
+    "readyReplicas": 1,
+    "revision": "1",
+    "upToDate": 0
+   }
+  },
+  {
+   "name": "replicaset-4",
+   "kind": "ReplicaSet",
+   "apiVersion": "apps/v1",
+   "namespace": "ns-2",
+   "uid": "00000000-0000-4000-8000-000000000037",
+   "createdAt": "2026-09-20T09:13:18Z",
+   "ageSeconds": 88,
+   "status": "Scaled to zero",
+   "ready": "0/0",
+   "images": [
+    "registry.example/app-22:1.0"
+   ],
+   "labels": {
+    "app.kubernetes.io/managed-by": "val-9",
+    "app.kubernetes.io/name": "val-10",
+    "label-62": "val-11",
+    "label-63": "val-12",
+    "label-64": "val-13",
+    "pod-template-hash": "val-76"
+   },
+   "annotations": {},
+   "owners": [
+    {
+     "kind": "Deployment",
+     "name": "deployment-4",
+     "uid": null,
+     "controller": true
+    }
+   ],
+   "extra": {
+    "available": 0,
+    "current": 0,
+    "desired": 0,
+    "readyReplicas": 0,
+    "revision": "2",
+    "upToDate": 0
+   }
+  },
+  {
+   "name": "replicaset-5",
+   "kind": "ReplicaSet",
+   "apiVersion": "apps/v1",
+   "namespace": "ns-2",
+   "uid": "00000000-0000-4000-8000-000000000038",
+   "createdAt": "2026-09-20T09:14:25Z",
+   "ageSeconds": 21,
+   "status": "Ready",
+   "ready": "1/1",
+   "images": [
+    "registry.example/app-4:1.0"
+   ],
+   "labels": {
+    "app.kubernetes.io/managed-by": "val-9",
+    "app.kubernetes.io/name": "val-10",
+    "label-65": "val-11",
+    "label-66": "val-12",
+    "label-67": "val-13",
+    "pod-template-hash": "val-14"
+   },
+   "annotations": {},
+   "owners": [
+    {
+     "kind": "Deployment",
+     "name": "deployment-4",
+     "uid": null,
+     "controller": true
+    }
+   ],
+   "extra": {
+    "available": 1,
+    "current": 1,
+    "desired": 1,
+    "readyReplicas": 1,
+    "revision": "7",
+    "upToDate": 0
+   }
+  },
+  {
+   "name": "replicaset-6",
+   "kind": "ReplicaSet",
+   "apiVersion": "apps/v1",
+   "namespace": "ns-2",
+   "uid": "00000000-0000-4000-8000-000000000039",
+   "createdAt": "2026-09-20T09:14:18Z",
+   "ageSeconds": 28,
+   "status": "Scaled to zero",
+   "ready": "0/0",
+   "images": [
+    "registry.example/app-22:1.0"
+   ],
+   "labels": {
+    "app.kubernetes.io/managed-by": "val-9",
+    "app.kubernetes.io/name": "val-10",
+    "label-68": "val-11",
+    "label-69": "val-12",
+    "label-70": "val-13",
+    "pod-template-hash": "val-77"
+   },
+   "annotations": {},
+   "owners": [
+    {
+     "kind": "Deployment",
+     "name": "deployment-4",
+     "uid": null,
+     "controller": true
+    }
+   ],
+   "extra": {
+    "available": 0,
+    "current": 0,
+    "desired": 0,
+    "readyReplicas": 0,
+    "revision": "5",
+    "upToDate": 0
+   }
+  },
+  {
+   "name": "replicaset-7",
+   "kind": "ReplicaSet",
+   "apiVersion": "apps/v1",
+   "namespace": "ns-2",
+   "uid": "00000000-0000-4000-8000-000000000040",
+   "createdAt": "2026-09-20T09:14:12Z",
+   "ageSeconds": 34,
+   "status": "Scaled to zero",
+   "ready": "0/0",
+   "images": [
+    "registry.example/app-22:1.0"
+   ],
+   "labels": {
+    "app.kubernetes.io/managed-by": "val-9",
+    "app.kubernetes.io/name": "val-10",
+    "label-71": "val-11",
+    "label-72": "val-12",
+    "label-73": "val-13",
+    "pod-template-hash": "val-78"
+   },
+   "annotations": {},
+   "owners": [
+    {
+     "kind": "Deployment",
+     "name": "deployment-4",
+     "uid": null,
+     "controller": true
+    }
+   ],
+   "extra": {
+    "available": 0,
+    "current": 0,
+    "desired": 0,
+    "readyReplicas": 0,
+    "revision": "4",
+    "upToDate": 0
+   }
+  },
+  {
+   "name": "replicaset-8",
+   "kind": "ReplicaSet",
+   "apiVersion": "apps/v1",
+   "namespace": "ns-2",
+   "uid": "00000000-0000-4000-8000-000000000041",
+   "createdAt": "2026-09-20T09:13:08Z",
+   "ageSeconds": 98,
+   "status": "Scaled to zero",
+   "ready": "0/0",
+   "images": [
+    "registry.example/app-22:1.0"
+   ],
+   "labels": {
+    "app.kubernetes.io/managed-by": "val-9",
+    "app.kubernetes.io/name": "val-10",
+    "label-74": "val-11",
+    "label-75": "val-12",
+    "label-76": "val-13",
+    "pod-template-hash": "val-79"
+   },
+   "annotations": {},
+   "owners": [
+    {
+     "kind": "Deployment",
+     "name": "deployment-4",
+     "uid": null,
+     "controller": true
+    }
+   ],
+   "extra": {
+    "available": 0,
+    "current": 0,
+    "desired": 0,
+    "readyReplicas": 0,
+    "revision": "1",
+    "upToDate": 0
+   }
+  },
+  {
+   "name": "replicaset-9",
+   "kind": "ReplicaSet",
+   "apiVersion": "apps/v1",
+   "namespace": "ns-2",
+   "uid": "00000000-0000-4000-8000-000000000042",
+   "createdAt": "2026-09-20T09:13:45Z",
+   "ageSeconds": 61,
+   "status": "Scaled to zero",
+   "ready": "0/0",
+   "images": [
+    "registry.example/app-22:1.0"
+   ],
+   "labels": {
+    "app.kubernetes.io/managed-by": "val-9",
+    "app.kubernetes.io/name": "val-10",
+    "label-77": "val-11",
+    "label-78": "val-12",
+    "label-79": "val-13",
+    "pod-template-hash": "val-80"
+   },
+   "annotations": {},
+   "owners": [
+    {
+     "kind": "Deployment",
+     "name": "deployment-4",
+     "uid": null,
+     "controller": true
+    }
+   ],
+   "extra": {
+    "available": 0,
+    "current": 0,
+    "desired": 0,
+    "readyReplicas": 0,
+    "revision": "3",
+    "upToDate": 0
+   }
+  },
+  {
+   "name": "replicaset-10",
+   "kind": "ReplicaSet",
+   "apiVersion": "apps/v1",
+   "namespace": "ns-2",
+   "uid": "00000000-0000-4000-8000-000000000043",
+   "createdAt": "2026-09-20T09:14:19Z",
+   "ageSeconds": 27,
+   "status": "Scaled to zero",
+   "ready": "0/0",
+   "images": [
+    "registry.example/app-22:1.0"
+   ],
+   "labels": {
+    "app.kubernetes.io/managed-by": "val-9",
+    "app.kubernetes.io/name": "val-10",
+    "label-80": "val-11",
+    "label-81": "val-12",
+    "label-82": "val-13",
+    "pod-template-hash": "val-81"
+   },
+   "annotations": {},
+   "owners": [
+    {
+     "kind": "Deployment",
+     "name": "deployment-4",
+     "uid": null,
+     "controller": true
+    }
+   ],
+   "extra": {
+    "available": 0,
+    "current": 0,
+    "desired": 0,
+    "readyReplicas": 0,
+    "revision": "6",
+    "upToDate": 0
+   }
+  },
+  {
+   "name": "replicaset-11",
+   "kind": "ReplicaSet",
+   "apiVersion": "apps/v1",
+   "namespace": "ns-2",
+   "uid": "00000000-0000-4000-8000-000000000044",
+   "createdAt": "2026-09-20T09:14:44Z",
+   "ageSeconds": 2,
+   "status": "Progressing",
+   "ready": "0/1",
+   "images": [
+    "registry.example/app-5:1.0"
+   ],
+   "labels": {
+    "app.kubernetes.io/managed-by": "val-9",
+    "app.kubernetes.io/name": "val-10",
+    "label-83": "val-11",
+    "label-84": "val-15",
+    "label-85": "val-13",
+    "pod-template-hash": "val-16"
+   },
+   "annotations": {},
+   "owners": [
+    {
+     "kind": "Deployment",
+     "name": "deployment-5",
+     "uid": null,
+     "controller": true
+    }
+   ],
+   "extra": {
+    "available": 0,
+    "current": 1,
+    "desired": 1,
+    "readyReplicas": 0,
+    "revision": "2",
+    "upToDate": 0
+   }
+  },
+  {
+   "name": "replicaset-12",
+   "kind": "ReplicaSet",
+   "apiVersion": "apps/v1",
+   "namespace": "ns-2",
+   "uid": "00000000-0000-4000-8000-000000000045",
+   "createdAt": "2026-09-20T09:14:44Z",
+   "ageSeconds": 2,
+   "status": "Scaled to zero",
+   "ready": "0/0",
+   "images": [
+    "registry.example/app-22:1.0"
+   ],
+   "labels": {
+    "app.kubernetes.io/managed-by": "val-9",
+    "app.kubernetes.io/name": "val-10",
+    "label-86": "val-11",
+    "label-87": "val-15",
+    "label-88": "val-13",
+    "pod-template-hash": "val-82"
+   },
+   "annotations": {},
+   "owners": [
+    {
+     "kind": "Deployment",
+     "name": "deployment-5",
+     "uid": null,
+     "controller": true
+    }
+   ],
+   "extra": {
+    "available": 0,
+    "current": 0,
+    "desired": 0,
+    "readyReplicas": 0,
+    "revision": "1",
+    "upToDate": 0
+   }
+  },
+  {
+   "name": "replicaset-13",
+   "kind": "ReplicaSet",
+   "apiVersion": "apps/v1",
+   "namespace": "ns-3",
+   "uid": "00000000-0000-4000-8000-000000000046",
+   "createdAt": "2026-09-20T08:48:11Z",
+   "ageSeconds": 1595,
+   "status": "Scaled to zero",
+   "ready": "0/0",
+   "images": [
+    "registry.example/app-6:1.0"
+   ],
+   "labels": {
+    "app.kubernetes.io/managed-by": "val-9",
+    "app.kubernetes.io/name": "val-10",
+    "label-89": "val-17",
+    "label-90": "val-18",
+    "label-91": "val-19",
+    "pod-template-hash": "val-83"
+   },
+   "annotations": {},
+   "owners": [
+    {
+     "kind": "Deployment",
+     "name": "deployment-6",
+     "uid": null,
+     "controller": true
+    }
+   ],
+   "extra": {
+    "available": 0,
+    "current": 0,
+    "desired": 0,
+    "readyReplicas": 0,
+    "revision": "3",
+    "upToDate": 0
+   }
+  },
+  {
+   "name": "replicaset-14",
+   "kind": "ReplicaSet",
+   "apiVersion": "apps/v1",
+   "namespace": "ns-3",
+   "uid": "00000000-0000-4000-8000-000000000047",
+   "createdAt": "2026-09-20T08:48:02Z",
+   "ageSeconds": 1604,
+   "status": "Scaled to zero",
+   "ready": "0/0",
+   "images": [
+    "registry.example/app-6:1.0"
+   ],
+   "labels": {
+    "app.kubernetes.io/managed-by": "val-9",
+    "app.kubernetes.io/name": "val-10",
+    "label-92": "val-17",
+    "label-93": "val-18",
+    "label-94": "val-19",
+    "pod-template-hash": "val-84"
+   },
+   "annotations": {},
+   "owners": [
+    {
+     "kind": "Deployment",
+     "name": "deployment-6",
+     "uid": null,
+     "controller": true
+    }
+   ],
+   "extra": {
+    "available": 0,
+    "current": 0,
+    "desired": 0,
+    "readyReplicas": 0,
+    "revision": "1",
+    "upToDate": 0
+   }
+  },
+  {
+   "name": "replicaset-15",
+   "kind": "ReplicaSet",
+   "apiVersion": "apps/v1",
+   "namespace": "ns-3",
+   "uid": "00000000-0000-4000-8000-000000000048",
+   "createdAt": "2026-09-20T08:53:31Z",
+   "ageSeconds": 1275,
+   "status": "Ready",
+   "ready": "1/1",
+   "images": [
+    "registry.example/app-6:1.0"
+   ],
+   "labels": {
+    "app.kubernetes.io/managed-by": "val-9",
+    "app.kubernetes.io/name": "val-10",
+    "label-95": "val-17",
+    "label-96": "val-18",
+    "label-97": "val-19",
+    "pod-template-hash": "val-20"
+   },
+   "annotations": {},
+   "owners": [
+    {
+     "kind": "Deployment",
+     "name": "deployment-6",
+     "uid": null,
+     "controller": true
+    }
+   ],
+   "extra": {
+    "available": 1,
+    "current": 1,
+    "desired": 1,
+    "readyReplicas": 1,
+    "revision": "4",
+    "upToDate": 0
+   }
+  },
+  {
+   "name": "replicaset-16",
+   "kind": "ReplicaSet",
+   "apiVersion": "apps/v1",
+   "namespace": "ns-3",
+   "uid": "00000000-0000-4000-8000-000000000049",
+   "createdAt": "2026-09-20T08:48:03Z",
+   "ageSeconds": 1603,
+   "status": "Scaled to zero",
+   "ready": "0/0",
+   "images": [
+    "registry.example/app-6:1.0"
+   ],
+   "labels": {
+    "app.kubernetes.io/managed-by": "val-9",
+    "app.kubernetes.io/name": "val-10",
+    "label-98": "val-17",
+    "label-99": "val-18",
+    "label-100": "val-19",
+    "pod-template-hash": "val-85"
+   },
+   "annotations": {},
+   "owners": [
+    {
+     "kind": "Deployment",
+     "name": "deployment-6",
+     "uid": null,
+     "controller": true
+    }
+   ],
+   "extra": {
+    "available": 0,
+    "current": 0,
+    "desired": 0,
+    "readyReplicas": 0,
+    "revision": "2",
+    "upToDate": 0
+   }
+  },
+  {
+   "name": "replicaset-17",
+   "kind": "ReplicaSet",
+   "apiVersion": "apps/v1",
+   "namespace": "ns-4",
+   "uid": "00000000-0000-4000-8000-000000000050",
+   "createdAt": "2026-09-20T06:48:52Z",
+   "ageSeconds": 8754,
+   "status": "Scaled to zero",
+   "ready": "0/0",
+   "images": [
+    "registry.example/app-6:1.0"
+   ],
+   "labels": {
+    "app.kubernetes.io/managed-by": "val-9",
+    "app.kubernetes.io/name": "val-10",
+    "label-101": "val-21",
+    "label-102": "val-22",
+    "label-103": "val-23",
+    "pod-template-hash": "val-86"
+   },
+   "annotations": {},
+   "owners": [
+    {
+     "kind": "Deployment",
+     "name": "deployment-7",
+     "uid": null,
+     "controller": true
+    }
+   ],
+   "extra": {
+    "available": 0,
+    "current": 0,
+    "desired": 0,
+    "readyReplicas": 0,
+    "revision": "3",
+    "upToDate": 0
+   }
+  },
+  {
+   "name": "replicaset-18",
+   "kind": "ReplicaSet",
+   "apiVersion": "apps/v1",
+   "namespace": "ns-4",
+   "uid": "00000000-0000-4000-8000-000000000051",
+   "createdAt": "2026-09-20T08:54:57Z",
+   "ageSeconds": 1189,
+   "status": "Scaled to zero",
+   "ready": "0/0",
+   "images": [
+    "registry.example/app-6:1.0"
+   ],
+   "labels": {
+    "app.kubernetes.io/managed-by": "val-9",
+    "app.kubernetes.io/name": "val-10",
+    "label-104": "val-21",
+    "label-105": "val-22",
+    "label-106": "val-23",
+    "pod-template-hash": "val-87"
+   },
+   "annotations": {},
+   "owners": [
+    {
+     "kind": "Deployment",
+     "name": "deployment-7",
+     "uid": null,
+     "controller": true
+    }
+   ],
+   "extra": {
+    "available": 0,
+    "current": 0,
+    "desired": 0,
+    "readyReplicas": 0,
+    "revision": "4",
+    "upToDate": 0
+   }
+  },
+  {
+   "name": "replicaset-19",
+   "kind": "ReplicaSet",
+   "apiVersion": "apps/v1",
+   "namespace": "ns-4",
+   "uid": "00000000-0000-4000-8000-000000000052",
+   "createdAt": "2026-09-20T06:48:46Z",
+   "ageSeconds": 8760,
+   "status": "Scaled to zero",
+   "ready": "0/0",
+   "images": [
+    "registry.example/app-6:1.0"
+   ],
+   "labels": {
+    "app.kubernetes.io/managed-by": "val-9",
+    "app.kubernetes.io/name": "val-10",
+    "label-107": "val-21",
+    "label-108": "val-22",
+    "label-109": "val-23",
+    "pod-template-hash": "val-88"
+   },
+   "annotations": {},
+   "owners": [
+    {
+     "kind": "Deployment",
+     "name": "deployment-7",
+     "uid": null,
+     "controller": true
+    }
+   ],
+   "extra": {
+    "available": 0,
+    "current": 0,
+    "desired": 0,
+    "readyReplicas": 0,
+    "revision": "2",
+    "upToDate": 0
+   }
+  },
+  {
+   "name": "replicaset-20",
+   "kind": "ReplicaSet",
+   "apiVersion": "apps/v1",
+   "namespace": "ns-4",
+   "uid": "00000000-0000-4000-8000-000000000053",
+   "createdAt": "2026-09-20T06:48:45Z",
+   "ageSeconds": 8761,
+   "status": "Scaled to zero",
+   "ready": "0/0",
+   "images": [
+    "registry.example/app-6:1.0"
+   ],
+   "labels": {
+    "app.kubernetes.io/managed-by": "val-9",
+    "app.kubernetes.io/name": "val-10",
+    "label-110": "val-21",
+    "label-111": "val-22",
+    "label-112": "val-23",
+    "pod-template-hash": "val-89"
+   },
+   "annotations": {},
+   "owners": [
+    {
+     "kind": "Deployment",
+     "name": "deployment-7",
+     "uid": null,
+     "controller": true
+    }
+   ],
+   "extra": {
+    "available": 0,
+    "current": 0,
+    "desired": 0,
+    "readyReplicas": 0,
+    "revision": "1",
+    "upToDate": 0
+   }
+  },
+  {
+   "name": "replicaset-21",
+   "kind": "ReplicaSet",
+   "apiVersion": "apps/v1",
+   "namespace": "ns-4",
+   "uid": "00000000-0000-4000-8000-000000000054",
+   "createdAt": "2026-09-20T09:13:19Z",
+   "ageSeconds": 87,
+   "status": "Ready",
+   "ready": "1/1",
+   "images": [
+    "registry.example/app-6:1.0"
+   ],
+   "labels": {
+    "app.kubernetes.io/managed-by": "val-9",
+    "app.kubernetes.io/name": "val-10",
+    "label-113": "val-21",
+    "label-114": "val-22",
+    "label-115": "val-23",
+    "pod-template-hash": "val-24"
+   },
+   "annotations": {},
+   "owners": [
+    {
+     "kind": "Deployment",
+     "name": "deployment-7",
+     "uid": null,
+     "controller": true
+    }
+   ],
+   "extra": {
+    "available": 1,
+    "current": 1,
+    "desired": 1,
+    "readyReplicas": 1,
+    "revision": "5",
+    "upToDate": 0
+   }
+  },
+  {
+   "name": "replicaset-22",
+   "kind": "ReplicaSet",
+   "apiVersion": "apps/v1",
+   "namespace": "ns-4",
+   "uid": "00000000-0000-4000-8000-000000000055",
+   "createdAt": "2026-09-20T06:50:15Z",
+   "ageSeconds": 8671,
+   "status": "Ready",
+   "ready": "1/1",
+   "images": [
+    "registry.example/app-7:1.0"
+   ],
+   "labels": {
+    "app.kubernetes.io/managed-by": "val-9",
+    "app.kubernetes.io/name": "val-10",
+    "label-116": "val-21",
+    "label-117": "val-25",
+    "label-118": "val-23",
+    "pod-template-hash": "val-26"
+   },
+   "annotations": {},
+   "owners": [
+    {
+     "kind": "Deployment",
+     "name": "deployment-8",
+     "uid": null,
+     "controller": true
+    }
+   ],
+   "extra": {
+    "available": 1,
+    "current": 1,
+    "desired": 1,
+    "readyReplicas": 1,
+    "revision": "2",
+    "upToDate": 0
+   }
+  },
+  {
+   "name": "replicaset-23",
+   "kind": "ReplicaSet",
+   "apiVersion": "apps/v1",
+   "namespace": "ns-4",
+   "uid": "00000000-0000-4000-8000-000000000056",
+   "createdAt": "2026-09-20T06:50:14Z",
+   "ageSeconds": 8672,
+   "status": "Scaled to zero",
+   "ready": "0/0",
+   "images": [
+    "registry.example/app-7:1.0"
+   ],
+   "labels": {
+    "app.kubernetes.io/managed-by": "val-9",
+    "app.kubernetes.io/name": "val-10",
+    "label-119": "val-21",
+    "label-120": "val-25",
+    "label-121": "val-23",
+    "pod-template-hash": "val-90"
+   },
+   "annotations": {},
+   "owners": [
+    {
+     "kind": "Deployment",
+     "name": "deployment-8",
+     "uid": null,
+     "controller": true
+    }
+   ],
+   "extra": {
+    "available": 0,
+    "current": 0,
+    "desired": 0,
+    "readyReplicas": 0,
+    "revision": "1",
+    "upToDate": 0
+   }
+  },
+  {
+   "name": "replicaset-24",
+   "kind": "ReplicaSet",
+   "apiVersion": "apps/v1",
+   "namespace": "ns-5",
+   "uid": "00000000-0000-4000-8000-000000000057",
+   "createdAt": "2026-09-18T05:37:26Z",
+   "ageSeconds": 185840,
+   "status": "Ready",
+   "ready": "2/2",
+   "images": [
+    "registry.example/app-8:1.0"
+   ],
+   "labels": {
+    "app.kubernetes.io/instance": "val-27",
+    "app.kubernetes.io/name": "val-27",
+    "label-122": "val-91",
+    "pod-template-hash": "val-28"
+   },
+   "annotations": {},
+   "owners": [
+    {
+     "kind": "Deployment",
+     "name": "deployment-9",
+     "uid": null,
+     "controller": true
+    }
+   ],
+   "extra": {
+    "available": 2,
+    "current": 2,
+    "desired": 2,
+    "readyReplicas": 2,
+    "revision": "1",
+    "upToDate": 0
+   }
+  },
+  {
+   "name": "replicaset-25",
+   "kind": "ReplicaSet",
+   "apiVersion": "apps/v1",
+   "namespace": "kube-system",
+   "uid": "00000000-0000-4000-8000-000000000058",
+   "createdAt": "2026-09-13T21:36:06Z",
+   "ageSeconds": 560320,
+   "status": "Ready",
+   "ready": "1/1",
+   "images": [
+    "registry.example/app-9:1.0"
+   ],
+   "labels": {
+    "label-123": "val-29",
+    "pod-template-hash": "val-30"
+   },
+   "annotations": {},
+   "owners": [
+    {
+     "kind": "Deployment",
+     "name": "deployment-10",
+     "uid": null,
+     "controller": true
+    }
+   ],
+   "extra": {
+    "available": 1,
+    "current": 1,
+    "desired": 1,
+    "readyReplicas": 1,
+    "revision": "1",
+    "upToDate": 0
+   }
+  },
+  {
+   "name": "replicaset-26",
+   "kind": "ReplicaSet",
+   "apiVersion": "apps/v1",
+   "namespace": "kube-system",
+   "uid": "00000000-0000-4000-8000-000000000059",
+   "createdAt": "2026-09-13T21:36:06Z",
+   "ageSeconds": 560320,
+   "status": "Ready",
+   "ready": "1/1",
+   "images": [
+    "registry.example/app-12:1.0"
+   ],
+   "labels": {
+    "app": "val-37",
+    "pod-template-hash": "val-38"
+   },
+   "annotations": {},
+   "owners": [
+    {
+     "kind": "Deployment",
+     "name": "deployment-11",
+     "uid": null,
+     "controller": true
+    }
+   ],
+   "extra": {
+    "available": 1,
+    "current": 1,
+    "desired": 1,
+    "readyReplicas": 1,
+    "revision": "1",
+    "upToDate": 0
+   }
+  },
+  {
+   "name": "replicaset-27",
+   "kind": "ReplicaSet",
+   "apiVersion": "apps/v1",
+   "namespace": "kube-system",
+   "uid": "00000000-0000-4000-8000-000000000060",
+   "createdAt": "2026-09-13T21:36:06Z",
+   "ageSeconds": 560320,
+   "status": "Ready",
+   "ready": "1/1",
+   "images": [
+    "registry.example/app-13:1.0"
+   ],
+   "labels": {
+    "label-124": "val-39",
+    "pod-template-hash": "val-40"
+   },
+   "annotations": {},
+   "owners": [
+    {
+     "kind": "Deployment",
+     "name": "deployment-12",
+     "uid": null,
+     "controller": true
+    }
+   ],
+   "extra": {
+    "available": 1,
+    "current": 1,
+    "desired": 1,
+    "readyReplicas": 1,
+    "revision": "1",
+    "upToDate": 0
+   }
+  },
+  {
+   "name": "replicaset-28",
+   "kind": "ReplicaSet",
+   "apiVersion": "apps/v1",
+   "namespace": "kube-system",
+   "uid": "00000000-0000-4000-8000-000000000061",
+   "createdAt": "2026-09-13T21:36:37Z",
+   "ageSeconds": 560289,
+   "status": "Ready",
+   "ready": "1/1",
+   "images": [
+    "registry.example/app-15:1.0"
+   ],
+   "labels": {
+    "app.kubernetes.io/instance": "val-55",
+    "app.kubernetes.io/managed-by": "val-56",
+    "app.kubernetes.io/name": "val-36",
+    "label-125": "val-57",
+    "pod-template-hash": "val-58"
+   },
+   "annotations": {},
+   "owners": [
+    {
+     "kind": "Deployment",
+     "name": "deployment-13",
+     "uid": null,
+     "controller": true
+    }
+   ],
+   "extra": {
+    "available": 1,
+    "current": 1,
+    "desired": 1,
+    "readyReplicas": 1,
+    "revision": "1",
+    "upToDate": 0
+   }
+  },
+  {
+   "name": "replicaset-29",
+   "kind": "ReplicaSet",
+   "apiVersion": "apps/v1",
+   "namespace": "ns-8",
+   "uid": "00000000-0000-4000-8000-000000000062",
+   "createdAt": "2026-09-18T18:23:58Z",
+   "ageSeconds": 139848,
+   "status": "Ready",
+   "ready": "1/1",
+   "images": [
+    "registry.example/app-19:1.0"
+   ],
+   "labels": {
+    "app.kubernetes.io/name": "val-66",
+    "pod-template-hash": "val-67"
+   },
+   "annotations": {},
+   "owners": [
+    {
+     "kind": "Deployment",
+     "name": "deployment-14",
+     "uid": null,
+     "controller": true
+    }
+   ],
+   "extra": {
+    "available": 1,
+    "current": 1,
+    "desired": 1,
+    "readyReplicas": 1,
+    "revision": "2",
+    "upToDate": 0
+   }
+  },
+  {
+   "name": "replicaset-30",
+   "kind": "ReplicaSet",
+   "apiVersion": "apps/v1",
+   "namespace": "ns-9",
+   "uid": "00000000-0000-4000-8000-000000000063",
+   "createdAt": "2026-09-19T20:20:59Z",
+   "ageSeconds": 46427,
+   "status": "Scaled to zero",
+   "ready": "0/0",
+   "images": [
+    "registry.example/app-23:1.0"
+   ],
+   "labels": {
+    "app.kubernetes.io/name": "val-9",
+    "app.kubernetes.io/part-of": "val-9",
+    "pod-template-hash": "val-92"
+   },
+   "annotations": {},
+   "owners": [
+    {
+     "kind": "Deployment",
+     "name": "deployment-15",
+     "uid": null,
+     "controller": true
+    }
+   ],
+   "extra": {
+    "available": 0,
+    "current": 0,
+    "desired": 0,
+    "readyReplicas": 0,
+    "revision": "15",
+    "upToDate": 0
+   }
+  },
+  {
+   "name": "replicaset-31",
+   "kind": "ReplicaSet",
+   "apiVersion": "apps/v1",
+   "namespace": "ns-9",
+   "uid": "00000000-0000-4000-8000-000000000064",
+   "createdAt": "2026-09-19T22:50:33Z",
+   "ageSeconds": 37453,
+   "status": "Scaled to zero",
+   "ready": "0/0",
+   "images": [
+    "registry.example/app-24:1.0"
+   ],
+   "labels": {
+    "app.kubernetes.io/name": "val-9",
+    "app.kubernetes.io/part-of": "val-9",
+    "pod-template-hash": "val-93"
+   },
+   "annotations": {},
+   "owners": [
+    {
+     "kind": "Deployment",
+     "name": "deployment-15",
+     "uid": null,
+     "controller": true
+    }
+   ],
+   "extra": {
+    "available": 0,
+    "current": 0,
+    "desired": 0,
+    "readyReplicas": 0,
+    "revision": "20",
+    "upToDate": 0
+   }
+  },
+  {
+   "name": "replicaset-32",
+   "kind": "ReplicaSet",
+   "apiVersion": "apps/v1",
+   "namespace": "ns-9",
+   "uid": "00000000-0000-4000-8000-000000000065",
+   "createdAt": "2026-09-19T22:20:12Z",
+   "ageSeconds": 39274,
+   "status": "Scaled to zero",
+   "ready": "0/0",
+   "images": [
+    "registry.example/app-25:1.0"
+   ],
+   "labels": {
+    "app.kubernetes.io/name": "val-9",
+    "app.kubernetes.io/part-of": "val-9",
+    "pod-template-hash": "val-94"
+   },
+   "annotations": {},
+   "owners": [
+    {
+     "kind": "Deployment",
+     "name": "deployment-15",
+     "uid": null,
+     "controller": true
+    }
+   ],
+   "extra": {
+    "available": 0,
+    "current": 0,
+    "desired": 0,
+    "readyReplicas": 0,
+    "revision": "18",
+    "upToDate": 0
+   }
+  },
+  {
+   "name": "replicaset-33",
+   "kind": "ReplicaSet",
+   "apiVersion": "apps/v1",
+   "namespace": "ns-9",
+   "uid": "00000000-0000-4000-8000-000000000066",
+   "createdAt": "2026-09-19T21:19:01Z",
+   "ageSeconds": 42945,
+   "status": "Scaled to zero",
+   "ready": "0/0",
+   "images": [
+    "registry.example/app-26:1.0"
+   ],
+   "labels": {
+    "app.kubernetes.io/name": "val-9",
+    "app.kubernetes.io/part-of": "val-9",
+    "pod-template-hash": "val-95"
+   },
+   "annotations": {},
+   "owners": [
+    {
+     "kind": "Deployment",
+     "name": "deployment-15",
+     "uid": null,
+     "controller": true
+    }
+   ],
+   "extra": {
+    "available": 0,
+    "current": 0,
+    "desired": 0,
+    "readyReplicas": 0,
+    "revision": "16",
+    "upToDate": 0
+   }
+  },
+  {
+   "name": "replicaset-34",
+   "kind": "ReplicaSet",
+   "apiVersion": "apps/v1",
+   "namespace": "ns-9",
+   "uid": "00000000-0000-4000-8000-000000000067",
+   "createdAt": "2026-09-19T20:17:51Z",
+   "ageSeconds": 46615,
+   "status": "Scaled to zero",
+   "ready": "0/0",
+   "images": [
+    "registry.example/app-27:1.0"
+   ],
+   "labels": {
+    "app.kubernetes.io/name": "val-9",
+    "app.kubernetes.io/part-of": "val-9",
+    "pod-template-hash": "val-96"
+   },
+   "annotations": {},
+   "owners": [
+    {
+     "kind": "Deployment",
+     "name": "deployment-15",
+     "uid": null,
+     "controller": true
+    }
+   ],
+   "extra": {
+    "available": 0,
+    "current": 0,
+    "desired": 0,
+    "readyReplicas": 0,
+    "revision": "14",
+    "upToDate": 0
+   }
+  },
+  {
+   "name": "replicaset-35",
+   "kind": "ReplicaSet",
+   "apiVersion": "apps/v1",
+   "namespace": "ns-9",
+   "uid": "00000000-0000-4000-8000-000000000068",
+   "createdAt": "2026-09-20T09:11:25Z",
+   "ageSeconds": 201,
+   "status": "Ready",
+   "ready": "2/2",
+   "images": [
+    "registry.example/app-20:1.0"
+   ],
+   "labels": {
+    "app.kubernetes.io/name": "val-9",
+    "app.kubernetes.io/part-of": "val-9",
+    "pod-template-hash": "val-68"
+   },
+   "annotations": {},
+   "owners": [
+    {
+     "kind": "Deployment",
+     "name": "deployment-15",
+     "uid": null,
+     "controller": true
+    }
+   ],
+   "extra": {
+    "available": 2,
+    "current": 2,
+    "desired": 2,
+    "readyReplicas": 2,
+    "revision": "22",
+    "upToDate": 0
+   }
+  },
+  {
+   "name": "replicaset-36",
+   "kind": "ReplicaSet",
+   "apiVersion": "apps/v1",
+   "namespace": "ns-9",
+   "uid": "00000000-0000-4000-8000-000000000069",
+   "createdAt": "2026-09-19T22:35:43Z",
+   "ageSeconds": 38343,
+   "status": "Scaled to zero",
+   "ready": "0/0",
+   "images": [
+    "registry.example/app-28:1.0"
+   ],
+   "labels": {
+    "app.kubernetes.io/name": "val-9",
+    "app.kubernetes.io/part-of": "val-9",
+    "pod-template-hash": "val-97"
+   },
+   "annotations": {},
+   "owners": [
+    {
+     "kind": "Deployment",
+     "name": "deployment-15",
+     "uid": null,
+     "controller": true
+    }
+   ],
+   "extra": {
+    "available": 0,
+    "current": 0,
+    "desired": 0,
+    "readyReplicas": 0,
+    "revision": "19",
+    "upToDate": 0
+   }
+  },
+  {
+   "name": "replicaset-37",
+   "kind": "ReplicaSet",
+   "apiVersion": "apps/v1",
+   "namespace": "ns-9",
+   "uid": "00000000-0000-4000-8000-000000000070",
+   "createdAt": "2026-09-19T20:08:12Z",
+   "ageSeconds": 47194,
+   "status": "Scaled to zero",
+   "ready": "0/0",
+   "images": [
+    "registry.example/app-27:1.0"
+   ],
+   "labels": {
+    "app.kubernetes.io/name": "val-9",
+    "app.kubernetes.io/part-of": "val-9",
+    "pod-template-hash": "val-98"
+   },
+   "annotations": {},
+   "owners": [
+    {
+     "kind": "Deployment",
+     "name": "deployment-15",
+     "uid": null,
+     "controller": true
+    }
+   ],
+   "extra": {
+    "available": 0,
+    "current": 0,
+    "desired": 0,
+    "readyReplicas": 0,
+    "revision": "13",
+    "upToDate": 0
+   }
+  },
+  {
+   "name": "replicaset-38",
+   "kind": "ReplicaSet",
+   "apiVersion": "apps/v1",
+   "namespace": "ns-9",
+   "uid": "00000000-0000-4000-8000-000000000071",
+   "createdAt": "2026-09-19T20:00:57Z",
+   "ageSeconds": 47629,
+   "status": "Scaled to zero",
+   "ready": "0/0",
+   "images": [
+    "registry.example/app-27:1.0"
+   ],
+   "labels": {
+    "app.kubernetes.io/name": "val-9",
+    "app.kubernetes.io/part-of": "val-9",
+    "pod-template-hash": "val-99"
+   },
+   "annotations": {},
+   "owners": [
+    {
+     "kind": "Deployment",
+     "name": "deployment-15",
+     "uid": null,
+     "controller": true
+    }
+   ],
+   "extra": {
+    "available": 0,
+    "current": 0,
+    "desired": 0,
+    "readyReplicas": 0,
+    "revision": "12",
+    "upToDate": 0
+   }
+  },
+  {
+   "name": "replicaset-39",
+   "kind": "ReplicaSet",
+   "apiVersion": "apps/v1",
+   "namespace": "ns-9",
+   "uid": "00000000-0000-4000-8000-000000000072",
+   "createdAt": "2026-09-19T23:35:11Z",
+   "ageSeconds": 34775,
+   "status": "Scaled to zero",
+   "ready": "0/0",
+   "images": [
+    "registry.example/app-29:1.0"
+   ],
+   "labels": {
+    "app.kubernetes.io/name": "val-9",
+    "app.kubernetes.io/part-of": "val-9",
+    "pod-template-hash": "val-100"
+   },
+   "annotations": {},
+   "owners": [
+    {
+     "kind": "Deployment",
+     "name": "deployment-15",
+     "uid": null,
+     "controller": true
+    }
+   ],
+   "extra": {
+    "available": 0,
+    "current": 0,
+    "desired": 0,
+    "readyReplicas": 0,
+    "revision": "21",
+    "upToDate": 0
+   }
+  },
+  {
+   "name": "replicaset-40",
+   "kind": "ReplicaSet",
+   "apiVersion": "apps/v1",
+   "namespace": "ns-9",
+   "uid": "00000000-0000-4000-8000-000000000073",
+   "createdAt": "2026-09-19T21:36:40Z",
+   "ageSeconds": 41886,
+   "status": "Scaled to zero",
+   "ready": "0/0",
+   "images": [
+    "registry.example/app-30:1.0"
+   ],
+   "labels": {
+    "app.kubernetes.io/name": "val-9",
+    "app.kubernetes.io/part-of": "val-9",
+    "pod-template-hash": "val-101"
+   },
+   "annotations": {},
+   "owners": [
+    {
+     "kind": "Deployment",
+     "name": "deployment-15",
+     "uid": null,
+     "controller": true
+    }
+   ],
+   "extra": {
+    "available": 0,
+    "current": 0,
+    "desired": 0,
+    "readyReplicas": 0,
+    "revision": "17",
+    "upToDate": 0
+   }
+  },
+  {
+   "name": "deployment-1",
+   "kind": "Deployment",
+   "apiVersion": "apps/v1",
+   "namespace": "ns-1",
+   "uid": "00000000-0000-4000-8000-000000000074",
+   "createdAt": "2026-09-18T16:00:37Z",
+   "ageSeconds": 148449,
+   "status": "Ready",
+   "ready": "1/1",
+   "images": [
+    "registry.example/app-1:1.0"
+   ],
+   "labels": {
+    "app": "val-1",
+    "app.kubernetes.io/component": "val-2",
+    "app.kubernetes.io/instance": "val-1",
+    "app.kubernetes.io/name": "val-1",
+    "app.kubernetes.io/version": "val-3"
+   },
+   "annotations": {},
+   "extra": {
+    "available": 1,
+    "current": 1,
+    "desired": 1,
+    "readyReplicas": 1,
+    "revision": "1",
+    "strategy": "RollingUpdate",
+    "upToDate": 1
+   }
+  },
+  {
+   "name": "deployment-2",
+   "kind": "Deployment",
+   "apiVersion": "apps/v1",
+   "namespace": "ns-1",
+   "uid": "00000000-0000-4000-8000-000000000075",
+   "createdAt": "2026-09-18T16:00:37Z",
+   "ageSeconds": 148449,
+   "status": "Ready",
+   "ready": "1/1",
+   "images": [
+    "registry.example/app-2:1.0"
+   ],
+   "labels": {
+    "app": "val-5",
+    "app.kubernetes.io/component": "val-5",
+    "app.kubernetes.io/instance": "val-1",
+    "app.kubernetes.io/name": "val-5",
+    "app.kubernetes.io/version": "val-3"
+   },
+   "annotations": {},
+   "extra": {
+    "available": 1,
+    "current": 1,
+    "desired": 1,
+    "readyReplicas": 1,
+    "revision": "1",
+    "strategy": "RollingUpdate",
+    "upToDate": 1
+   }
+  },
+  {
+   "name": "deployment-3",
+   "kind": "Deployment",
+   "apiVersion": "apps/v1",
+   "namespace": "ns-1",
+   "uid": "00000000-0000-4000-8000-000000000076",
+   "createdAt": "2026-09-18T16:00:37Z",
+   "ageSeconds": 148449,
+   "status": "Ready",
+   "ready": "1/1",
+   "images": [
+    "registry.example/app-3:1.0"
+   ],
+   "labels": {
+    "app": "val-7",
+    "app.kubernetes.io/component": "val-7",
+    "app.kubernetes.io/instance": "val-1",
+    "app.kubernetes.io/name": "val-7",
+    "app.kubernetes.io/version": "val-3"
+   },
+   "annotations": {},
+   "extra": {
+    "available": 1,
+    "current": 1,
+    "desired": 1,
+    "readyReplicas": 1,
+    "revision": "1",
+    "strategy": "RollingUpdate",
+    "upToDate": 1
+   }
+  },
+  {
+   "name": "deployment-4",
+   "kind": "Deployment",
+   "apiVersion": "apps/v1",
+   "namespace": "ns-2",
+   "uid": "00000000-0000-4000-8000-000000000077",
+   "createdAt": "2026-09-20T09:13:08Z",
+   "ageSeconds": 98,
+   "status": "Ready",
+   "ready": "1/1",
+   "images": [
+    "registry.example/app-4:1.0"
+   ],
+   "labels": {
+    "app.kubernetes.io/managed-by": "val-9",
+    "app.kubernetes.io/name": "val-10",
+    "label-126": "val-11",
+    "label-127": "val-12",
+    "label-128": "val-13"
+   },
+   "annotations": {},
+   "extra": {
+    "available": 1,
+    "current": 1,
+    "desired": 1,
+    "readyReplicas": 1,
+    "revision": "7",
+    "strategy": "Recreate",
+    "upToDate": 1
+   }
+  },
+  {
+   "name": "deployment-5",
+   "kind": "Deployment",
+   "apiVersion": "apps/v1",
+   "namespace": "ns-2",
+   "uid": "00000000-0000-4000-8000-000000000078",
+   "createdAt": "2026-09-20T09:14:44Z",
+   "ageSeconds": 2,
+   "status": "Progressing",
+   "ready": "0/1",
+   "images": [
+    "registry.example/app-5:1.0"
+   ],
+   "labels": {
+    "app.kubernetes.io/managed-by": "val-9",
+    "app.kubernetes.io/name": "val-10",
+    "label-129": "val-11",
+    "label-130": "val-15",
+    "label-131": "val-13"
+   },
+   "annotations": {},
+   "extra": {
+    "available": 0,
+    "current": 1,
+    "desired": 1,
+    "readyReplicas": 0,
+    "revision": "2",
+    "strategy": "Recreate",
+    "upToDate": 1
+   }
+  },
+  {
+   "name": "deployment-6",
+   "kind": "Deployment",
+   "apiVersion": "apps/v1",
+   "namespace": "ns-3",
+   "uid": "00000000-0000-4000-8000-000000000079",
+   "createdAt": "2026-09-20T08:48:02Z",
+   "ageSeconds": 1604,
+   "status": "Ready",
+   "ready": "1/1",
+   "images": [
+    "registry.example/app-6:1.0"
+   ],
+   "labels": {
+    "app.kubernetes.io/managed-by": "val-9",
+    "app.kubernetes.io/name": "val-10",
+    "label-132": "val-17",
+    "label-133": "val-18",
+    "label-134": "val-19"
+   },
+   "annotations": {},
+   "extra": {
+    "available": 1,
+    "current": 1,
+    "desired": 1,
+    "readyReplicas": 1,
+    "revision": "4",
+    "strategy": "Recreate",
+    "upToDate": 1
+   }
+  },
+  {
+   "name": "deployment-7",
+   "kind": "Deployment",
+   "apiVersion": "apps/v1",
+   "namespace": "ns-4",
+   "uid": "00000000-0000-4000-8000-000000000080",
+   "createdAt": "2026-09-20T06:48:45Z",
+   "ageSeconds": 8761,
+   "status": "Ready",
+   "ready": "1/1",
+   "images": [
+    "registry.example/app-6:1.0"
+   ],
+   "labels": {
+    "app.kubernetes.io/managed-by": "val-9",
+    "app.kubernetes.io/name": "val-10",
+    "label-135": "val-21",
+    "label-136": "val-22",
+    "label-137": "val-23"
+   },
+   "annotations": {},
+   "extra": {
+    "available": 1,
+    "current": 1,
+    "desired": 1,
+    "readyReplicas": 1,
+    "revision": "5",
+    "strategy": "Recreate",
+    "upToDate": 1
+   }
+  },
+  {
+   "name": "deployment-8",
+   "kind": "Deployment",
+   "apiVersion": "apps/v1",
+   "namespace": "ns-4",
+   "uid": "00000000-0000-4000-8000-000000000081",
+   "createdAt": "2026-09-20T06:50:14Z",
+   "ageSeconds": 8672,
+   "status": "Ready",
+   "ready": "1/1",
+   "images": [
+    "registry.example/app-7:1.0"
+   ],
+   "labels": {
+    "app.kubernetes.io/managed-by": "val-9",
+    "app.kubernetes.io/name": "val-10",
+    "label-138": "val-21",
+    "label-139": "val-25",
+    "label-140": "val-23"
+   },
+   "annotations": {},
+   "extra": {
+    "available": 1,
+    "current": 1,
+    "desired": 1,
+    "readyReplicas": 1,
+    "revision": "2",
+    "strategy": "Recreate",
+    "upToDate": 1
+   }
+  },
+  {
+   "name": "deployment-9",
+   "kind": "Deployment",
+   "apiVersion": "apps/v1",
+   "namespace": "ns-5",
+   "uid": "00000000-0000-4000-8000-000000000082",
+   "createdAt": "2026-09-17T20:37:53Z",
+   "ageSeconds": 218213,
+   "status": "Ready",
+   "ready": "2/2",
+   "images": [
+    "registry.example/app-8:1.0"
+   ],
+   "labels": {
+    "app.kubernetes.io/instance": "val-27",
+    "app.kubernetes.io/managed-by": "val-56",
+    "app.kubernetes.io/name": "val-27",
+    "app.kubernetes.io/version": "val-102",
+    "label-141": "val-103"
+   },
+   "annotations": {},
+   "extra": {
+    "available": 2,
+    "current": 2,
+    "desired": 2,
+    "readyReplicas": 2,
+    "revision": "1",
+    "strategy": "RollingUpdate",
+    "upToDate": 2
+   }
+  },
+  {
+   "name": "deployment-10",
+   "kind": "Deployment",
+   "apiVersion": "apps/v1",
+   "namespace": "kube-system",
+   "uid": "00000000-0000-4000-8000-000000000083",
+   "createdAt": "2026-09-13T21:36:03Z",
+   "ageSeconds": 560323,
+   "status": "Ready",
+   "ready": "1/1",
+   "images": [
+    "registry.example/app-9:1.0"
+   ],
+   "labels": {
+    "label-142": "val-29",
+    "app.kubernetes.io/name": "val-104",
+    "label-143": "val-105"
+   },
+   "annotations": {},
+   "extra": {
+    "available": 1,
+    "current": 1,
+    "desired": 1,
+    "readyReplicas": 1,
+    "revision": "1",
+    "strategy": "RollingUpdate",
+    "upToDate": 1
+   }
+  },
+  {
+   "name": "deployment-11",
+   "kind": "Deployment",
+   "apiVersion": "apps/v1",
+   "namespace": "kube-system",
+   "uid": "00000000-0000-4000-8000-000000000084",
+   "createdAt": "2026-09-13T21:36:04Z",
+   "ageSeconds": 560322,
+   "status": "Ready",
+   "ready": "1/1",
+   "images": [
+    "registry.example/app-12:1.0"
+   ],
+   "labels": {
+    "label-144": "val-106"
+   },
+   "annotations": {},
+   "extra": {
+    "available": 1,
+    "current": 1,
+    "desired": 1,
+    "readyReplicas": 1,
+    "revision": "1",
+    "strategy": "RollingUpdate",
+    "upToDate": 1
+   }
+  },
+  {
+   "name": "deployment-12",
+   "kind": "Deployment",
+   "apiVersion": "apps/v1",
+   "namespace": "kube-system",
+   "uid": "00000000-0000-4000-8000-000000000085",
+   "createdAt": "2026-09-13T21:36:06Z",
+   "ageSeconds": 560320,
+   "status": "Ready",
+   "ready": "1/1",
+   "images": [
+    "registry.example/app-13:1.0"
+   ],
+   "labels": {
+    "label-145": "val-39",
+    "label-146": "val-107"
+   },
+   "annotations": {},
+   "extra": {
+    "available": 1,
+    "current": 1,
+    "desired": 1,
+    "readyReplicas": 1,
+    "revision": "1",
+    "strategy": "RollingUpdate",
+    "upToDate": 1
+   }
+  },
+  {
+   "name": "deployment-13",
+   "kind": "Deployment",
+   "apiVersion": "apps/v1",
+   "namespace": "kube-system",
+   "uid": "00000000-0000-4000-8000-000000000086",
+   "createdAt": "2026-09-13T21:36:37Z",
+   "ageSeconds": 560289,
+   "status": "Ready",
+   "ready": "1/1",
+   "images": [
+    "registry.example/app-15:1.0"
+   ],
+   "labels": {
+    "app.kubernetes.io/instance": "val-55",
+    "app.kubernetes.io/managed-by": "val-56",
+    "app.kubernetes.io/name": "val-36",
+    "label-147": "val-57"
+   },
+   "annotations": {},
+   "extra": {
+    "available": 1,
+    "current": 1,
+    "desired": 1,
+    "readyReplicas": 1,
+    "revision": "1",
+    "strategy": "RollingUpdate",
+    "upToDate": 1
+   }
+  },
+  {
+   "name": "deployment-14",
+   "kind": "Deployment",
+   "apiVersion": "apps/v1",
+   "namespace": "ns-8",
+   "uid": "00000000-0000-4000-8000-000000000087",
+   "createdAt": "2026-09-18T13:35:51Z",
+   "ageSeconds": 157135,
+   "status": "Ready",
+   "ready": "1/1",
+   "images": [
+    "registry.example/app-19:1.0"
+   ],
+   "labels": {
+    "app.kubernetes.io/name": "val-66",
+    "app.kubernetes.io/part-of": "val-66"
+   },
+   "annotations": {},
+   "extra": {
+    "available": 1,
+    "current": 1,
+    "desired": 1,
+    "readyReplicas": 1,
+    "revision": "2",
+    "strategy": "RollingUpdate",
+    "upToDate": 1
+   }
+  },
+  {
+   "name": "deployment-15",
+   "kind": "Deployment",
+   "apiVersion": "apps/v1",
+   "namespace": "ns-9",
+   "uid": "00000000-0000-4000-8000-000000000088",
+   "createdAt": "2026-09-19T15:40:15Z",
+   "ageSeconds": 63271,
+   "status": "Ready",
+   "ready": "2/2",
+   "images": [
+    "registry.example/app-20:1.0"
+   ],
+   "labels": {
+    "app.kubernetes.io/name": "val-9",
+    "app.kubernetes.io/part-of": "val-9"
+   },
+   "annotations": {},
+   "extra": {
+    "available": 2,
+    "current": 2,
+    "desired": 2,
+    "readyReplicas": 2,
+    "revision": "22",
+    "strategy": "RollingUpdate",
+    "upToDate": 2
+   }
+  },
+  {
+   "name": "statefulset-1",
+   "kind": "StatefulSet",
+   "apiVersion": "apps/v1",
+   "namespace": "ns-6",
+   "uid": "00000000-0000-4000-8000-000000000089",
+   "createdAt": "2026-09-18T15:42:08Z",
+   "ageSeconds": 149558,
+   "status": "Ready",
+   "ready": "1/1",
+   "images": [
+    "registry.example/app-16:1.0"
+   ],
+   "labels": {},
+   "annotations": {},
+   "extra": {
+    "available": 1,
+    "current": 1,
+    "desired": 1,
+    "readyReplicas": 1,
+    "upToDate": 1
+   }
+  },
+  {
+   "name": "statefulset-2",
+   "kind": "StatefulSet",
+   "apiVersion": "apps/v1",
+   "namespace": "ns-6",
+   "uid": "00000000-0000-4000-8000-000000000090",
+   "createdAt": "2026-09-18T15:43:41Z",
+   "ageSeconds": 149465,
+   "status": "Ready",
+   "ready": "1/1",
+   "images": [
+    "registry.example/app-17:1.0"
+   ],
+   "labels": {},
+   "annotations": {},
+   "extra": {
+    "available": 1,
+    "current": 1,
+    "desired": 1,
+    "readyReplicas": 1,
+    "upToDate": 1
+   }
+  },
+  {
+   "name": "statefulset-3",
+   "kind": "StatefulSet",
+   "apiVersion": "apps/v1",
+   "namespace": "ns-7",
+   "uid": "00000000-0000-4000-8000-000000000091",
+   "createdAt": "2026-09-13T21:50:55Z",
+   "ageSeconds": 559431,
+   "status": "Ready",
+   "ready": "1/1",
+   "images": [
+    "registry.example/app-18:1.0"
+   ],
+   "labels": {
+    "label-148": "val-91"
+   },
+   "annotations": {},
+   "extra": {
+    "available": 1,
+    "current": 1,
+    "desired": 1,
+    "readyReplicas": 1,
+    "upToDate": 1
+   }
+  },
+  {
+   "name": "daemonset-1",
+   "kind": "DaemonSet",
+   "apiVersion": "apps/v1",
+   "namespace": "kube-system",
+   "uid": "00000000-0000-4000-8000-000000000092",
+   "createdAt": "2026-09-18T15:42:08Z",
+   "ageSeconds": 149558,
+   "status": "Ready",
+   "ready": "2/2",
+   "images": [
+    "registry.example/app-14:1.0",
+    "registry.example/app-14:1.0",
+    "registry.example/app-14:1.0"
+   ],
+   "labels": {
+    "label-149": "val-108",
+    "label-150": "false",
+    "label-151": "val-43",
+    "label-152": "val-44"
+   },
+   "annotations": {},
+   "extra": {
+    "available": 2,
+    "current": 2,
+    "desired": 2,
+    "misscheduled": 0,
+    "readyReplicas": 2,
+    "upToDate": 2
+   }
+  },
+  {
+   "name": "daemonset-2",
+   "kind": "DaemonSet",
+   "apiVersion": "apps/v1",
+   "namespace": "kube-system",
+   "uid": "00000000-0000-4000-8000-000000000093",
+   "createdAt": "2026-09-13T21:50:55Z",
+   "ageSeconds": 559431,
+   "status": "Ready",
+   "ready": "2/2",
+   "images": [
+    "registry.example/app-14:1.0"
+   ],
+   "labels": {
+    "label-153": "val-109",
+    "label-154": "false",
+    "label-155": "val-47",
+    "label-156": "val-47"
+   },
+   "annotations": {},
+   "extra": {
+    "available": 2,
+    "current": 2,
+    "desired": 2,
+    "misscheduled": 0,
+    "readyReplicas": 2,
+    "upToDate": 2
+   }
+  },
+  {
+   "name": "daemonset-3",
+   "kind": "DaemonSet",
+   "apiVersion": "apps/v1",
+   "namespace": "kube-system",
+   "uid": "00000000-0000-4000-8000-000000000094",
+   "createdAt": "2026-09-20T06:50:15Z",
+   "ageSeconds": 8671,
+   "status": "Ready",
+   "ready": "2/2",
+   "images": [
+    "registry.example/app-14:1.0"
+   ],
+   "labels": {
+    "label-157": "val-110",
+    "label-158": "false",
+    "label-159": "val-50",
+    "label-160": "val-51"
+   },
+   "annotations": {},
+   "extra": {
+    "available": 2,
+    "current": 2,
+    "desired": 2,
+    "misscheduled": 0,
+    "readyReplicas": 2,
+    "upToDate": 2
+   }
+  },
+  {
+   "name": "daemonset-4",
+   "kind": "DaemonSet",
+   "apiVersion": "apps/v1",
+   "namespace": "kube-system",
+   "uid": "00000000-0000-4000-8000-000000000095",
+   "createdAt": "2026-09-13T21:36:37Z",
+   "ageSeconds": 560289,
+   "status": "Ready",
+   "ready": "2/2",
+   "images": [
+    "registry.example/app-14:1.0",
+    "registry.example/app-14:1.0"
+   ],
+   "labels": {
+    "label-161": "val-111",
+    "label-162": "false",
+    "label-163": "val-36",
+    "label-164": "val-54"
+   },
+   "annotations": {},
+   "extra": {
+    "available": 2,
+    "current": 2,
+    "desired": 2,
+    "misscheduled": 0,
+    "readyReplicas": 2,
+    "upToDate": 2
+   }
+  },
+  {
+   "name": "job-1",
+   "kind": "Job",
+   "apiVersion": "batch/v1",
+   "namespace": "kube-system",
+   "uid": "00000000-0000-4000-8000-000000000096",
+   "createdAt": "2026-09-13T21:36:10Z",
+   "ageSeconds": 560317,
+   "status": "Complete",
+   "ready": "1/1",
+   "images": [
+    "registry.example/app-10:1.0"
+   ],
+   "labels": {
+    "label-165": "val-36",
+    "label-166": "val-112"
+   },
+   "annotations": {},
+   "owners": [
+    {
+     "kind": "HelmChart",
+     "name": "helmchart-1",
+     "uid": null,
+     "controller": false
+    }
+   ],
+   "extra": {
+    "active": 0,
+    "completions": "1/1",
+    "duration": "32s",
+    "durationSeconds": 32,
+    "failed": 0,
+    "succeeded": 1
+   }
+  },
+  {
+   "name": "job-2",
+   "kind": "Job",
+   "apiVersion": "batch/v1",
+   "namespace": "kube-system",
+   "uid": "00000000-0000-4000-8000-000000000097",
+   "createdAt": "2026-09-13T21:36:10Z",
+   "ageSeconds": 560317,
+   "status": "Complete",
+   "ready": "1/1",
+   "images": [
+    "registry.example/app-10:1.0"
+   ],
+   "labels": {
+    "label-167": "val-33",
+    "label-168": "val-113"
+   },
+   "annotations": {},
+   "owners": [
+    {
+     "kind": "HelmChart",
+     "name": "helmchart-2",
+     "uid": null,
+     "controller": false
+    }
+   ],
+   "extra": {
+    "active": 0,
+    "completions": "1/1",
+    "duration": "27s",
+    "durationSeconds": 27,
+    "failed": 0,
+    "succeeded": 1
+   }
+  },
+  {
+   "name": "job-3",
+   "kind": "Job",
+   "apiVersion": "batch/v1",
+   "namespace": "ns-9",
+   "uid": "00000000-0000-4000-8000-000000000098",
+   "createdAt": "2026-09-20T06:17:00Z",
+   "ageSeconds": 10667,
+   "status": "Complete",
+   "ready": "1/1",
+   "images": [
+    "registry.example/app-21:1.0"
+   ],
+   "labels": {
+    "app.kubernetes.io/name": "val-69",
+    "app.kubernetes.io/part-of": "val-9"
+   },
+   "annotations": {},
+   "owners": [
+    {
+     "kind": "CronJob",
+     "name": "cronjob-1",
+     "uid": null,
+     "controller": true
+    }
+   ],
+   "extra": {
+    "active": 0,
+    "completions": "1/1",
+    "duration": "2m11s",
+    "durationSeconds": 131,
+    "failed": 0,
+    "succeeded": 1
+   }
+  },
+  {
+   "name": "job-4",
+   "kind": "Job",
+   "apiVersion": "batch/v1",
+   "namespace": "ns-9",
+   "uid": "00000000-0000-4000-8000-000000000099",
+   "createdAt": "2026-09-20T07:17:00Z",
+   "ageSeconds": 7067,
+   "status": "Complete",
+   "ready": "1/1",
+   "images": [
+    "registry.example/app-21:1.0"
+   ],
+   "labels": {
+    "app.kubernetes.io/name": "val-69",
+    "app.kubernetes.io/part-of": "val-9"
+   },
+   "annotations": {},
+   "owners": [
+    {
+     "kind": "CronJob",
+     "name": "cronjob-1",
+     "uid": null,
+     "controller": true
+    }
+   ],
+   "extra": {
+    "active": 0,
+    "completions": "1/1",
+    "duration": "4m13s",
+    "durationSeconds": 253,
+    "failed": 0,
+    "succeeded": 1
+   }
+  },
+  {
+   "name": "job-5",
+   "kind": "Job",
+   "apiVersion": "batch/v1",
+   "namespace": "ns-9",
+   "uid": "00000000-0000-4000-8000-000000000100",
+   "createdAt": "2026-09-20T08:17:00Z",
+   "ageSeconds": 3467,
+   "status": "Complete",
+   "ready": "1/1",
+   "images": [
+    "registry.example/app-21:1.0"
+   ],
+   "labels": {
+    "app.kubernetes.io/name": "val-69",
+    "app.kubernetes.io/part-of": "val-9"
+   },
+   "annotations": {},
+   "owners": [
+    {
+     "kind": "CronJob",
+     "name": "cronjob-1",
+     "uid": null,
+     "controller": true
+    }
+   ],
+   "extra": {
+    "active": 0,
+    "completions": "1/1",
+    "duration": "4m15s",
+    "durationSeconds": 255,
+    "failed": 0,
+    "succeeded": 1
+   }
+  },
+  {
+   "name": "cronjob-1",
+   "kind": "CronJob",
+   "apiVersion": "batch/v1",
+   "namespace": "ns-9",
+   "uid": "00000000-0000-4000-8000-000000000101",
+   "createdAt": "2026-09-19T18:18:09Z",
+   "ageSeconds": 53798,
+   "status": "Scheduled",
+   "ready": "0 actif(s)",
+   "images": [
+    "registry.example/app-21:1.0"
+   ],
+   "labels": {
+    "app.kubernetes.io/name": "val-69",
+    "app.kubernetes.io/part-of": "val-9"
+   },
+   "annotations": {},
+   "extra": {
+    "active": 0,
+    "lastSchedule": "2026-09-20T08:17:00Z",
+    "lastSuccessful": "2026-09-20T08:21:15Z",
+    "schedule": "17 * * * *",
+    "suspend": false
+   }
+  },
+  {
+   "name": "service-1",
+   "kind": "Service",
+   "apiVersion": "v1",
+   "namespace": "ns-1",
+   "uid": "00000000-0000-4000-8000-000000000102",
+   "createdAt": "2026-09-18T16:00:37Z",
+   "ageSeconds": 148450,
+   "status": "ClusterIP",
+   "ready": "1 port(s)",
+   "images": [],
+   "labels": {
+    "app": "val-1",
+    "app.kubernetes.io/component": "val-2",
+    "app.kubernetes.io/instance": "val-1",
+    "app.kubernetes.io/name": "val-1",
+    "app.kubernetes.io/version": "val-3"
+   },
+   "annotations": {},
+   "extra": {
+    "clusterIP": "10.0.0.1",
+    "externalIP": "10.0.0.1",
+    "ports": "9402/TCP",
+    "selector": {
+     "app.kubernetes.io/component": "val-2",
+     "app.kubernetes.io/instance": "val-1",
+     "app.kubernetes.io/name": "val-1"
+    },
+    "type": "ClusterIP"
+   }
+  },
+  {
+   "name": "service-2",
+   "kind": "Service",
+   "apiVersion": "v1",
+   "namespace": "ns-1",
+   "uid": "00000000-0000-4000-8000-000000000103",
+   "createdAt": "2026-09-18T16:00:37Z",
+   "ageSeconds": 148450,
+   "status": "ClusterIP",
+   "ready": "1 port(s)",
+   "images": [],
+   "labels": {
+    "app": "val-5",
+    "app.kubernetes.io/component": "val-5",
+    "app.kubernetes.io/instance": "val-1",
+    "app.kubernetes.io/name": "val-5",
+    "app.kubernetes.io/version": "val-3"
+   },
+   "annotations": {},
+   "extra": {
+    "clusterIP": "10.0.0.1",
+    "externalIP": "10.0.0.1",
+    "ports": "9402/TCP",
+    "selector": {
+     "app.kubernetes.io/component": "val-5",
+     "app.kubernetes.io/instance": "val-1",
+     "app.kubernetes.io/name": "val-5"
+    },
+    "type": "ClusterIP"
+   }
+  },
+  {
+   "name": "service-3",
+   "kind": "Service",
+   "apiVersion": "v1",
+   "namespace": "ns-1",
+   "uid": "00000000-0000-4000-8000-000000000104",
+   "createdAt": "2026-09-18T16:00:37Z",
+   "ageSeconds": 148450,
+   "status": "ClusterIP",
+   "ready": "2 port(s)",
+   "images": [],
+   "labels": {
+    "app": "val-7",
+    "app.kubernetes.io/component": "val-7",
+    "app.kubernetes.io/instance": "val-1",
+    "app.kubernetes.io/name": "val-7",
+    "app.kubernetes.io/version": "val-3"
+   },
+   "annotations": {},
+   "extra": {
+    "clusterIP": "10.0.0.1",
+    "externalIP": "10.0.0.1",
+    "ports": "443/TCP,9402/TCP",
+    "selector": {
+     "app.kubernetes.io/component": "val-7",
+     "app.kubernetes.io/instance": "val-1",
+     "app.kubernetes.io/name": "val-7"
+    },
+    "type": "ClusterIP"
+   }
+  },
+  {
+   "name": "service-4",
+   "kind": "Service",
+   "apiVersion": "v1",
+   "namespace": "ns-2",
+   "uid": "00000000-0000-4000-8000-000000000105",
+   "createdAt": "2026-09-20T09:13:08Z",
+   "ageSeconds": 99,
+   "status": "ClusterIP",
+   "ready": "1 port(s)",
+   "images": [],
+   "labels": {
+    "app.kubernetes.io/managed-by": "val-9",
+    "app.kubernetes.io/name": "val-10",
+    "label-169": "val-11",
+    "label-170": "val-12",
+    "label-171": "val-13"
+   },
+   "annotations": {},
+   "extra": {
+    "clusterIP": "10.0.0.1",
+    "externalIP": "10.0.0.1",
+    "ports": "80/TCP",
+    "selector": {
+     "label-172": "val-12"
+    },
+    "type": "ClusterIP"
+   }
+  },
+  {
+   "name": "service-5",
+   "kind": "Service",
+   "apiVersion": "v1",
+   "namespace": "ns-2",
+   "uid": "00000000-0000-4000-8000-000000000106",
+   "createdAt": "2026-09-20T09:14:44Z",
+   "ageSeconds": 3,
+   "status": "ClusterIP",
+   "ready": "1 port(s)",
+   "images": [],
+   "labels": {
+    "app.kubernetes.io/managed-by": "val-9",
+    "app.kubernetes.io/name": "val-10",
+    "label-173": "val-11",
+    "label-174": "val-15",
+    "label-175": "val-13"
+   },
+   "annotations": {},
+   "extra": {
+    "clusterIP": "10.0.0.1",
+    "externalIP": "10.0.0.1",
+    "ports": "80/TCP",
+    "selector": {
+     "label-176": "val-15"
+    },
+    "type": "ClusterIP"
+   }
+  },
+  {
+   "name": "service-6",
+   "kind": "Service",
+   "apiVersion": "v1",
+   "namespace": "ns-3",
+   "uid": "00000000-0000-4000-8000-000000000107",
+   "createdAt": "2026-09-20T08:48:02Z",
+   "ageSeconds": 1605,
+   "status": "ClusterIP",
+   "ready": "1 port(s)",
+   "images": [],
+   "labels": {
+    "app.kubernetes.io/managed-by": "val-9",
+    "app.kubernetes.io/name": "val-10",
+    "label-177": "val-17",
+    "label-178": "val-18",
+    "label-179": "val-19"
+   },
+   "annotations": {},
+   "extra": {
+    "clusterIP": "10.0.0.1",
+    "externalIP": "10.0.0.1",
+    "ports": "80/TCP",
+    "selector": {
+     "label-180": "val-18"
+    },
+    "type": "ClusterIP"
+   }
+  },
+  {
+   "name": "service-7",
+   "kind": "Service",
+   "apiVersion": "v1",
+   "namespace": "ns-4",
+   "uid": "00000000-0000-4000-8000-000000000108",
+   "createdAt": "2026-09-20T06:48:45Z",
+   "ageSeconds": 8762,
+   "status": "ClusterIP",
+   "ready": "1 port(s)",
+   "images": [],
+   "labels": {
+    "app.kubernetes.io/managed-by": "val-9",
+    "app.kubernetes.io/name": "val-10",
+    "label-181": "val-21",
+    "label-182": "val-22",
+    "label-183": "val-23"
+   },
+   "annotations": {},
+   "extra": {
+    "clusterIP": "10.0.0.1",
+    "externalIP": "10.0.0.1",
+    "ports": "80/TCP",
+    "selector": {
+     "label-184": "val-22"
+    },
+    "type": "ClusterIP"
+   }
+  },
+  {
+   "name": "service-8",
+   "kind": "Service",
+   "apiVersion": "v1",
+   "namespace": "ns-4",
+   "uid": "00000000-0000-4000-8000-000000000109",
+   "createdAt": "2026-09-20T06:50:15Z",
+   "ageSeconds": 8672,
+   "status": "LoadBalancer",
+   "ready": "1 port(s)",
+   "images": [],
+   "labels": {
+    "app.kubernetes.io/managed-by": "val-9",
+    "app.kubernetes.io/name": "val-10",
+    "label-185": "val-21",
+    "label-186": "val-25",
+    "label-187": "val-23"
+   },
+   "annotations": {},
+   "extra": {
+    "clusterIP": "10.0.0.1",
+    "externalIP": "10.0.0.1",
+    "ports": "26000:32110/TCP",
+    "selector": {
+     "label-188": "val-25"
+    },
+    "type": "LoadBalancer"
+   }
+  },
+  {
+   "name": "service-9",
+   "kind": "Service",
+   "apiVersion": "v1",
+   "namespace": "default",
+   "uid": "00000000-0000-4000-8000-000000000110",
+   "createdAt": "2026-09-13T21:35:58Z",
+   "ageSeconds": 560329,
+   "status": "ClusterIP",
+   "ready": "1 port(s)",
+   "images": [],
+   "labels": {
+    "component": "val-114",
+    "label-189": "val-115"
+   },
+   "annotations": {},
+   "extra": {
+    "clusterIP": "10.0.0.1",
+    "externalIP": "10.0.0.1",
+    "ports": "443/TCP",
+    "type": "ClusterIP"
+   }
+  },
+  {
+   "name": "service-10",
+   "kind": "Service",
+   "apiVersion": "v1",
+   "namespace": "default",
+   "uid": "00000000-0000-4000-8000-000000000111",
+   "createdAt": "2026-09-19T09:45:59Z",
+   "ageSeconds": 84528,
+   "status": "ClusterIP",
+   "ready": "1 port(s)",
+   "images": [],
+   "labels": {
+    "app.kubernetes.io/instance": "val-116",
+    "app.kubernetes.io/managed-by": "val-117",
+    "app.kubernetes.io/name": "val-116"
+   },
+   "annotations": {},
+   "extra": {
+    "clusterIP": "10.0.0.1",
+    "externalIP": "10.0.0.1",
+    "ports": "80/TCP",
+    "selector": {
+     "app.kubernetes.io/instance": "val-116",
+     "app.kubernetes.io/name": "val-116"
+    },
+    "type": "ClusterIP"
+   }
+  },
+  {
+   "name": "service-11",
+   "kind": "Service",
+   "apiVersion": "v1",
+   "namespace": "ns-5",
+   "uid": "00000000-0000-4000-8000-000000000112",
+   "createdAt": "2026-09-17T20:37:53Z",
+   "ageSeconds": 218214,
+   "status": "ClusterIP",
+   "ready": "1 port(s)",
+   "images": [],
+   "labels": {
+    "app.kubernetes.io/instance": "val-27",
+    "app.kubernetes.io/managed-by": "val-56",
+    "app.kubernetes.io/name": "val-27",
+    "app.kubernetes.io/version": "val-102",
+    "label-190": "val-103"
+   },
+   "annotations": {},
+   "extra": {
+    "clusterIP": "10.0.0.1",
+    "externalIP": "10.0.0.1",
+    "ports": "8080/TCP",
+    "selector": {
+     "app.kubernetes.io/instance": "val-27",
+     "app.kubernetes.io/name": "val-27"
+    },
+    "type": "ClusterIP"
+   }
+  },
+  {
+   "name": "service-12",
+   "kind": "Service",
+   "apiVersion": "v1",
+   "namespace": "kube-system",
+   "uid": "00000000-0000-4000-8000-000000000113",
+   "createdAt": "2026-09-13T21:36:04Z",
+   "ageSeconds": 560323,
+   "status": "ClusterIP",
+   "ready": "3 port(s)",
+   "images": [],
+   "labels": {
+    "label-191": "val-29",
+    "label-192": "true",
+    "app.kubernetes.io/name": "val-104",
+    "label-193": "val-105"
+   },
+   "annotations": {},
+   "extra": {
+    "clusterIP": "10.0.0.1",
+    "externalIP": "10.0.0.1",
+    "ports": "53/UDP,53/TCP,9153/TCP",
+    "selector": {
+     "label-194": "val-29"
+    },
+    "type": "ClusterIP"
+   }
+  },
+  {
+   "name": "service-13",
+   "kind": "Service",
+   "apiVersion": "v1",
+   "namespace": "kube-system",
+   "uid": "00000000-0000-4000-8000-000000000114",
+   "createdAt": "2026-09-13T21:36:06Z",
+   "ageSeconds": 560321,
+   "status": "ClusterIP",
+   "ready": "1 port(s)",
+   "images": [],
+   "labels": {
+    "label-195": "true",
+    "app.kubernetes.io/name": "val-118",
+    "label-196": "val-119"
+   },
+   "annotations": {},
+   "extra": {
+    "clusterIP": "10.0.0.1",
+    "externalIP": "10.0.0.1",
+    "ports": "443/TCP",
+    "selector": {
+     "label-197": "val-39"
+    },
+    "type": "ClusterIP"
+   }
+  },
+  {
+   "name": "service-14",
+   "kind": "Service",
+   "apiVersion": "v1",
+   "namespace": "kube-system",
+   "uid": "00000000-0000-4000-8000-000000000115",
+   "createdAt": "2026-09-13T21:36:37Z",
+   "ageSeconds": 560290,
+   "status": "LoadBalancer",
+   "ready": "2 port(s)",
+   "images": [],
+   "labels": {
+    "app.kubernetes.io/instance": "val-55",
+    "app.kubernetes.io/managed-by": "val-56",
+    "app.kubernetes.io/name": "val-36",
+    "label-198": "val-57"
+   },
+   "annotations": {},
+   "extra": {
+    "clusterIP": "10.0.0.1",
+    "externalIP": "10.0.0.1",
+    "ports": "80:31310/TCP,443:30531/TCP",
+    "selector": {
+     "app.kubernetes.io/instance": "val-55",
+     "app.kubernetes.io/name": "val-36"
+    },
+    "type": "LoadBalancer"
+   }
+  },
+  {
+   "name": "service-15",
+   "kind": "Service",
+   "apiVersion": "v1",
+   "namespace": "ns-6",
+   "uid": "00000000-0000-4000-8000-000000000116",
+   "createdAt": "2026-09-18T15:42:08Z",
+   "ageSeconds": 149559,
+   "status": "LoadBalancer",
+   "ready": "3 port(s)",
+   "images": [],
+   "labels": {},
+   "annotations": {},
+   "extra": {
+    "clusterIP": "10.0.0.1",
+    "externalIP": "10.0.0.1",
+    "ports": "25:31567/TCP,465:30828/TCP,993:30834/TCP",
+    "selector": {
+     "app": "val-43"
+    },
+    "type": "LoadBalancer"
+   }
+  },
+  {
+   "name": "service-16",
+   "kind": "Service",
+   "apiVersion": "v1",
+   "namespace": "ns-6",
+   "uid": "00000000-0000-4000-8000-000000000117",
+   "createdAt": "2026-09-18T15:42:08Z",
+   "ageSeconds": 149559,
+   "status": "ClusterIP",
+   "ready": "1 port(s)",
+   "images": [],
+   "labels": {},
+   "annotations": {},
+   "extra": {
+    "clusterIP": "None",
+    "externalIP": "10.0.0.1",
+    "ports": "25/TCP",
+    "selector": {
+     "app": "val-43"
+    },
+    "type": "ClusterIP"
+   }
+  },
+  {
+   "name": "service-17",
+   "kind": "Service",
+   "apiVersion": "v1",
+   "namespace": "ns-6",
+   "uid": "00000000-0000-4000-8000-000000000118",
+   "createdAt": "2026-09-18T15:43:41Z",
+   "ageSeconds": 149466,
+   "status": "ClusterIP",
+   "ready": "1 port(s)",
+   "images": [],
+   "labels": {},
+   "annotations": {},
+   "extra": {
+    "clusterIP": "10.0.0.1",
+    "externalIP": "10.0.0.1",
+    "ports": "80/TCP",
+    "selector": {
+     "app": "val-61"
+    },
+    "type": "ClusterIP"
+   }
+  },
+  {
+   "name": "service-18",
+   "kind": "Service",
+   "apiVersion": "v1",
+   "namespace": "ns-7",
+   "uid": "00000000-0000-4000-8000-000000000119",
+   "createdAt": "2026-09-13T21:50:55Z",
+   "ageSeconds": 559432,
+   "status": "LoadBalancer",
+   "ready": "1 port(s)",
+   "images": [],
+   "labels": {},
+   "annotations": {},
+   "extra": {
+    "clusterIP": "10.0.0.1",
+    "externalIP": "10.0.0.1",
+    "ports": "25565:32688/TCP",
+    "selector": {
+     "app": "val-47"
+    },
+    "type": "LoadBalancer"
+   }
+  },
+  {
+   "name": "service-19",
+   "kind": "Service",
+   "apiVersion": "v1",
+   "namespace": "ns-8",
+   "uid": "00000000-0000-4000-8000-000000000120",
+   "createdAt": "2026-09-18T13:35:51Z",
+   "ageSeconds": 157136,
+   "status": "ClusterIP",
+   "ready": "1 port(s)",
+   "images": [],
+   "labels": {
+    "app.kubernetes.io/name": "val-66",
+    "app.kubernetes.io/part-of": "val-66"
+   },
+   "annotations": {},
+   "extra": {
+    "clusterIP": "10.0.0.1",
+    "externalIP": "10.0.0.1",
+    "ports": "80/TCP",
+    "selector": {
+     "app.kubernetes.io/name": "val-66"
+    },
+    "type": "ClusterIP"
+   }
+  },
+  {
+   "name": "service-20",
+   "kind": "Service",
+   "apiVersion": "v1",
+   "namespace": "ns-9",
+   "uid": "00000000-0000-4000-8000-000000000121",
+   "createdAt": "2026-09-19T15:40:15Z",
+   "ageSeconds": 63272,
+   "status": "ClusterIP",
+   "ready": "1 port(s)",
+   "images": [],
+   "labels": {
+    "app.kubernetes.io/name": "val-9",
+    "app.kubernetes.io/part-of": "val-9"
+   },
+   "annotations": {},
+   "extra": {
+    "clusterIP": "10.0.0.1",
+    "externalIP": "10.0.0.1",
+    "ports": "80/TCP",
+    "selector": {
+     "app.kubernetes.io/name": "val-9"
+    },
+    "type": "ClusterIP"
+   }
+  },
+  {
+   "name": "service-19",
+   "kind": "Service",
+   "apiVersion": "v1",
+   "namespace": "ns-10",
+   "uid": "00000000-0000-4000-8000-000000000122",
+   "createdAt": "2026-09-18T13:29:01Z",
+   "ageSeconds": 157546,
+   "status": "ClusterIP",
+   "ready": "1 port(s)",
+   "images": [],
+   "labels": {
+    "app.kubernetes.io/name": "val-66"
+   },
+   "annotations": {},
+   "extra": {
+    "clusterIP": "10.0.0.1",
+    "externalIP": "10.0.0.1",
+    "ports": "80/TCP",
+    "selector": {
+     "app.kubernetes.io/name": "val-66"
+    },
+    "type": "ClusterIP"
+   }
+  },
+  {
+   "name": "ingress-1",
+   "kind": "Ingress",
+   "apiVersion": "networking.k8s.io/v1",
+   "namespace": "ns-2",
+   "uid": "00000000-0000-4000-8000-000000000123",
+   "createdAt": "2026-09-20T09:13:08Z",
+   "ageSeconds": 99,
+   "status": "Ready",
+   "ready": "1 hôte(s)",
+   "images": [],
+   "labels": {
+    "app.kubernetes.io/managed-by": "val-9",
+    "app.kubernetes.io/name": "val-10",
+    "label-199": "val-11",
+    "label-200": "val-12",
+    "label-201": "val-13"
+   },
+   "annotations": {},
+   "extra": {
+    "address": "host-1.example.org,host-2.example.org",
+    "backends": [
+     "service-4"
+    ],
+    "class": "traefik",
+    "hosts": "host-3.example.org",
+    "ports": "80,443",
+    "tls": true
+   }
+  },
+  {
+   "name": "ingress-2",
+   "kind": "Ingress",
+   "apiVersion": "networking.k8s.io/v1",
+   "namespace": "ns-2",
+   "uid": "00000000-0000-4000-8000-000000000124",
+   "createdAt": "2026-09-20T09:14:44Z",
+   "ageSeconds": 3,
+   "status": "Ready",
+   "ready": "1 hôte(s)",
+   "images": [],
+   "labels": {
+    "app.kubernetes.io/managed-by": "val-9",
+    "app.kubernetes.io/name": "val-10",
+    "label-202": "val-11",
+    "label-203": "val-15",
+    "label-204": "val-13"
+   },
+   "annotations": {},
+   "extra": {
+    "address": "host-1.example.org,host-2.example.org",
+    "backends": [
+     "service-5"
+    ],
+    "class": "traefik",
+    "hosts": "host-4.example.org",
+    "ports": "80,443",
+    "tls": true
+   }
+  },
+  {
+   "name": "ingress-3",
+   "kind": "Ingress",
+   "apiVersion": "networking.k8s.io/v1",
+   "namespace": "ns-3",
+   "uid": "00000000-0000-4000-8000-000000000125",
+   "createdAt": "2026-09-20T08:48:02Z",
+   "ageSeconds": 1605,
+   "status": "Ready",
+   "ready": "1 hôte(s)",
+   "images": [],
+   "labels": {
+    "app.kubernetes.io/managed-by": "val-9",
+    "app.kubernetes.io/name": "val-10",
+    "label-205": "val-17",
+    "label-206": "val-18",
+    "label-207": "val-19"
+   },
+   "annotations": {},
+   "extra": {
+    "address": "host-1.example.org,host-2.example.org",
+    "backends": [
+     "service-6"
+    ],
+    "class": "traefik",
+    "hosts": "host-5.example.org",
+    "ports": "80,443",
+    "tls": true
+   }
+  },
+  {
+   "name": "ingress-4",
+   "kind": "Ingress",
+   "apiVersion": "networking.k8s.io/v1",
+   "namespace": "ns-4",
+   "uid": "00000000-0000-4000-8000-000000000126",
+   "createdAt": "2026-09-20T06:48:46Z",
+   "ageSeconds": 8761,
+   "status": "Ready",
+   "ready": "1 hôte(s)",
+   "images": [],
+   "labels": {
+    "app.kubernetes.io/managed-by": "val-9",
+    "app.kubernetes.io/name": "val-10",
+    "label-208": "val-21",
+    "label-209": "val-22",
+    "label-210": "val-23"
+   },
+   "annotations": {},
+   "extra": {
+    "address": "host-1.example.org,host-2.example.org",
+    "backends": [
+     "service-7"
+    ],
+    "class": "traefik",
+    "hosts": "host-6.example.org",
+    "ports": "80,443",
+    "tls": true
+   }
+  },
+  {
+   "name": "ingress-5",
+   "kind": "Ingress",
+   "apiVersion": "networking.k8s.io/v1",
+   "namespace": "ns-6",
+   "uid": "00000000-0000-4000-8000-000000000127",
+   "createdAt": "2026-09-18T15:43:41Z",
+   "ageSeconds": 149466,
+   "status": "Pending",
+   "ready": "1 hôte(s)",
+   "images": [],
+   "labels": {},
+   "annotations": {},
+   "extra": {
+    "address": "",
+    "backends": [
+     "service-17"
+    ],
+    "class": "nginx",
+    "hosts": "host-7.example.org",
+    "ports": "80,443",
+    "tls": true
+   }
+  },
+  {
+   "name": "ingress-6",
+   "kind": "Ingress",
+   "apiVersion": "networking.k8s.io/v1",
+   "namespace": "ns-8",
+   "uid": "00000000-0000-4000-8000-000000000128",
+   "createdAt": "2026-09-18T13:35:51Z",
+   "ageSeconds": 157136,
+   "status": "Ready",
+   "ready": "1 hôte(s)",
+   "images": [],
+   "labels": {
+    "app.kubernetes.io/name": "val-66",
+    "app.kubernetes.io/part-of": "val-66"
+   },
+   "annotations": {},
+   "extra": {
+    "address": "host-1.example.org,host-2.example.org",
+    "backends": [
+     "service-19"
+    ],
+    "class": "traefik",
+    "hosts": "host-8.example.org",
+    "ports": "80",
+    "tls": false
+   }
+  },
+  {
+   "name": "ingress-7",
+   "kind": "Ingress",
+   "apiVersion": "networking.k8s.io/v1",
+   "namespace": "ns-9",
+   "uid": "00000000-0000-4000-8000-000000000129",
+   "createdAt": "2026-09-19T15:40:15Z",
+   "ageSeconds": 63272,
+   "status": "Ready",
+   "ready": "1 hôte(s)",
+   "images": [],
+   "labels": {
+    "app.kubernetes.io/name": "val-9",
+    "app.kubernetes.io/part-of": "val-9"
+   },
+   "annotations": {},
+   "extra": {
+    "address": "host-1.example.org,host-2.example.org",
+    "backends": [
+     "service-20"
+    ],
+    "class": "traefik",
+    "hosts": "host-9.example.org",
+    "ports": "80,443",
+    "tls": true
+   }
+  },
+  {
+   "name": "persistentvolumeclaim-1",
+   "kind": "PersistentVolumeClaim",
+   "apiVersion": "v1",
+   "namespace": "ns-2",
+   "uid": "00000000-0000-4000-8000-000000000130",
+   "createdAt": "2026-09-20T09:13:08Z",
+   "ageSeconds": 100,
+   "status": "Bound",
+   "ready": "5Gi",
+   "images": [],
+   "labels": {
+    "app.kubernetes.io/managed-by": "val-9",
+    "app.kubernetes.io/name": "val-10",
+    "label-211": "val-11",
+    "label-212": "val-12",
+    "label-213": "val-13"
+   },
+   "annotations": {},
+   "extra": {
+    "accessModes": "ReadWriteOnce",
+    "capacity": "5Gi",
+    "storageClass": "local-path",
+    "volume": "persistentvolume-1",
+    "volumeMode": "x"
+   }
+  },
+  {
+   "name": "persistentvolumeclaim-2",
+   "kind": "PersistentVolumeClaim",
+   "apiVersion": "v1",
+   "namespace": "ns-2",
+   "uid": "00000000-0000-4000-8000-000000000131",
+   "createdAt": "2026-09-20T09:14:44Z",
+   "ageSeconds": 4,
+   "status": "Pending",
+   "ready": "2Gi",
+   "images": [],
+   "labels": {
+    "app.kubernetes.io/managed-by": "val-9",
+    "app.kubernetes.io/name": "val-10",
+    "label-214": "val-11",
+    "label-215": "val-15",
+    "label-216": "val-13"
+   },
+   "annotations": {},
+   "extra": {
+    "accessModes": "ReadWriteOnce",
+    "capacity": "2Gi",
+    "storageClass": "local-path",
+    "volume": "persistentvolume-2",
+    "volumeMode": "x"
+   }
+  },
+  {
+   "name": "persistentvolumeclaim-3",
+   "kind": "PersistentVolumeClaim",
+   "apiVersion": "v1",
+   "namespace": "ns-3",
+   "uid": "00000000-0000-4000-8000-000000000132",
+   "createdAt": "2026-09-20T08:48:02Z",
+   "ageSeconds": 1606,
+   "status": "Bound",
+   "ready": "10Gi",
+   "images": [],
+   "labels": {
+    "app.kubernetes.io/managed-by": "val-9",
+    "app.kubernetes.io/name": "val-10",
+    "label-217": "val-17",
+    "label-218": "val-18",
+    "label-219": "val-19"
+   },
+   "annotations": {},
+   "extra": {
+    "accessModes": "ReadWriteOnce",
+    "capacity": "10Gi",
+    "storageClass": "local-path",
+    "volume": "persistentvolume-3",
+    "volumeMode": "x"
+   }
+  },
+  {
+   "name": "persistentvolumeclaim-4",
+   "kind": "PersistentVolumeClaim",
+   "apiVersion": "v1",
+   "namespace": "ns-4",
+   "uid": "00000000-0000-4000-8000-000000000133",
+   "createdAt": "2026-09-20T06:48:45Z",
+   "ageSeconds": 8763,
+   "status": "Bound",
+   "ready": "10Gi",
+   "images": [],
+   "labels": {
+    "app.kubernetes.io/managed-by": "val-9",
+    "app.kubernetes.io/name": "val-10",
+    "label-220": "val-21",
+    "label-221": "val-22",
+    "label-222": "val-23"
+   },
+   "annotations": {},
+   "extra": {
+    "accessModes": "ReadWriteOnce",
+    "capacity": "10Gi",
+    "storageClass": "local-path",
+    "volume": "persistentvolume-4",
+    "volumeMode": "x"
+   }
+  },
+  {
+   "name": "persistentvolumeclaim-5",
+   "kind": "PersistentVolumeClaim",
+   "apiVersion": "v1",
+   "namespace": "ns-4",
+   "uid": "00000000-0000-4000-8000-000000000134",
+   "createdAt": "2026-09-20T06:50:14Z",
+   "ageSeconds": 8674,
+   "status": "Bound",
+   "ready": "10Gi",
+   "images": [],
+   "labels": {
+    "app.kubernetes.io/managed-by": "val-9",
+    "app.kubernetes.io/name": "val-10",
+    "label-223": "val-21",
+    "label-224": "val-25",
+    "label-225": "val-23"
+   },
+   "annotations": {},
+   "extra": {
+    "accessModes": "ReadWriteOnce",
+    "capacity": "10Gi",
+    "storageClass": "local-path",
+    "volume": "persistentvolume-5",
+    "volumeMode": "x"
+   }
+  },
+  {
+   "name": "persistentvolumeclaim-6",
+   "kind": "PersistentVolumeClaim",
+   "apiVersion": "v1",
+   "namespace": "ns-6",
+   "uid": "00000000-0000-4000-8000-000000000135",
+   "createdAt": "2026-09-18T15:42:08Z",
+   "ageSeconds": 149560,
+   "status": "Bound",
+   "ready": "50Gi",
+   "images": [],
+   "labels": {
+    "app": "val-43"
+   },
+   "annotations": {},
+   "extra": {
+    "accessModes": "ReadWriteOnce",
+    "capacity": "50Gi",
+    "storageClass": "local-path",
+    "volume": "persistentvolume-6",
+    "volumeMode": "x"
+   }
+  },
+  {
+   "name": "persistentvolumeclaim-7",
+   "kind": "PersistentVolumeClaim",
+   "apiVersion": "v1",
+   "namespace": "ns-6",
+   "uid": "00000000-0000-4000-8000-000000000136",
+   "createdAt": "2026-09-18T15:43:41Z",
+   "ageSeconds": 149467,
+   "status": "Bound",
+   "ready": "2Gi",
+   "images": [],
+   "labels": {
+    "app": "val-61"
+   },
+   "annotations": {},
+   "extra": {
+    "accessModes": "ReadWriteOnce",
+    "capacity": "2Gi",
+    "storageClass": "local-path",
+    "volume": "persistentvolume-7",
+    "volumeMode": "x"
+   }
+  },
+  {
+   "name": "persistentvolumeclaim-8",
+   "kind": "PersistentVolumeClaim",
+   "apiVersion": "v1",
+   "namespace": "ns-7",
+   "uid": "00000000-0000-4000-8000-000000000137",
+   "createdAt": "2026-09-18T12:53:12Z",
+   "ageSeconds": 159696,
+   "status": "Bound",
+   "ready": "10Gi",
+   "images": [],
+   "labels": {
+    "app": "val-47"
+   },
+   "annotations": {},
+   "extra": {
+    "accessModes": "ReadWriteOnce",
+    "capacity": "10Gi",
+    "storageClass": "local-path",
+    "volume": "persistentvolume-8",
+    "volumeMode": "x"
+   }
+  },
+  {
+   "name": "persistentvolumeclaim-9",
+   "kind": "PersistentVolumeClaim",
+   "apiVersion": "v1",
+   "namespace": "ns-7",
+   "uid": "00000000-0000-4000-8000-000000000138",
+   "createdAt": "2026-09-19T09:14:17Z",
+   "ageSeconds": 86431,
+   "status": "Bound",
+   "ready": "10Gi",
+   "images": [],
+   "labels": {
+    "app": "val-47"
+   },
+   "annotations": {},
+   "extra": {
+    "accessModes": "ReadWriteOnce",
+    "capacity": "10Gi",
+    "storageClass": "local-path",
+    "volume": "persistentvolume-9",
+    "volumeMode": "x"
+   }
+  },
+  {
+   "name": "persistentvolumeclaim-10",
+   "kind": "PersistentVolumeClaim",
+   "apiVersion": "v1",
+   "namespace": "ns-9",
+   "uid": "00000000-0000-4000-8000-000000000139",
+   "createdAt": "2026-09-19T15:40:15Z",
+   "ageSeconds": 63273,
+   "status": "Bound",
+   "ready": "1Gi",
+   "images": [],
+   "labels": {
+    "app.kubernetes.io/name": "val-9",
+    "app.kubernetes.io/part-of": "val-9"
+   },
+   "annotations": {},
+   "extra": {
+    "accessModes": "ReadWriteOnce",
+    "capacity": "1Gi",
+    "storageClass": "local-path",
+    "volume": "persistentvolume-10",
+    "volumeMode": "x"
+   }
+  },
+  {
+   "name": "persistentvolumeclaim-11",
+   "kind": "PersistentVolumeClaim",
+   "apiVersion": "v1",
+   "namespace": "ns-9",
+   "uid": "00000000-0000-4000-8000-000000000140",
+   "createdAt": "2026-09-19T18:18:09Z",
+   "ageSeconds": 53799,
+   "status": "Bound",
+   "ready": "2Gi",
+   "images": [],
+   "labels": {
+    "app.kubernetes.io/name": "val-69",
+    "app.kubernetes.io/part-of": "val-9"
+   },
+   "annotations": {},
+   "extra": {
+    "accessModes": "ReadWriteOnce",
+    "capacity": "2Gi",
+    "storageClass": "local-path",
+    "volume": "persistentvolume-11",
+    "volumeMode": "x"
+   }
+  },
+  {
+   "name": "node-1",
+   "kind": "Node",
+   "apiVersion": "v1",
+   "uid": "00000000-0000-4000-8000-000000000141",
+   "createdAt": "2026-09-13T21:36:01Z",
+   "ageSeconds": 560327,
+   "status": "Ready",
+   "ready": "True",
+   "images": [],
+   "labels": {
+    "app.kubernetes.io/arch": "val-120",
+    "label-226": "val-121",
+    "app.kubernetes.io/os": "val-122",
+    "app.kubernetes.io/hostname": "val-123",
+    "label-227": "true",
+    "label-228": "val-121"
+   },
+   "annotations": {},
+   "extra": {
+    "allocatable": {
+     "cpu": "16",
+     "ephemeral-storage": "1063472585918",
+     "hugepages-1Gi": "0",
+     "hugepages-2Mi": "0",
+     "memory": "65936912Ki",
+     "pods": "110"
+    },
+    "architecture": "amd64",
+    "capacity": {
+     "cpu": "16",
+     "ephemeral-storage": "1093207840Ki",
+     "hugepages-1Gi": "0",
+     "hugepages-2Mi": "0",
+     "memory": "65936912Ki",
+     "pods": "110"
+    },
+    "containerRuntime": "containerd://2.3.4-k3s1.36",
+    "externalIP": "",
+    "internalIP": "10.0.0.1",
+    "kernel": "6.12.94+deb13-amd64",
+    "os": "Debian GNU/Linux 13 (trixie)",
+    "roles": "control-plane",
+    "schedulable": true,
+    "taints": [],
+    "version": "v1.36.4+k3s1"
+   }
+  },
+  {
+   "name": "node-2",
+   "kind": "Node",
+   "apiVersion": "v1",
+   "uid": "00000000-0000-4000-8000-000000000142",
+   "createdAt": "2026-09-17T18:12:06Z",
+   "ageSeconds": 226962,
+   "status": "Ready",
+   "ready": "True",
+   "images": [],
+   "labels": {
+    "app.kubernetes.io/arch": "val-120",
+    "label-229": "val-121",
+    "app.kubernetes.io/os": "val-122",
+    "app.kubernetes.io/hostname": "val-124",
+    "label-230": "val-121"
+   },
+   "annotations": {},
+   "extra": {
+    "allocatable": {
+     "cpu": "8",
+     "ephemeral-storage": "449665686381",
+     "hugepages-1Gi": "0",
+     "hugepages-2Mi": "0",
+     "memory": "16241412Ki",
+     "pods": "110"
+    },
+    "architecture": "amd64",
+    "capacity": {
+     "cpu": "8",
+     "ephemeral-storage": "462238576Ki",
+     "hugepages-1Gi": "0",
+     "hugepages-2Mi": "0",
+     "memory": "16241412Ki",
+     "pods": "110"
+    },
+    "containerRuntime": "containerd://2.3.4-k3s1.36",
+    "externalIP": "",
+    "internalIP": "10.0.0.1",
+    "kernel": "6.12.107+deb13-amd64",
+    "os": "Debian GNU/Linux 13 (trixie)",
+    "roles": "<none>",
+    "schedulable": true,
+    "taints": [],
+    "version": "v1.36.4+k3s1"
+   }
+  }
+ ],
+ "warnings": []
+}

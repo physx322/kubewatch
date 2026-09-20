@@ -133,8 +133,8 @@ délibérément prudentes :
 | `maintenanceWindow` | — | Fenêtre UTC `HH:MM-HH:MM` |
 
 Une politique par défaut, appliquée aux nouvelles surveillances, se règle une
-fois pour toutes dans l'onglet Réglages de l'écran Mises à jour : canal,
-intervalle et déploiement automatique.
+fois pour toutes dans l'écran Réglages, section « Mises à jour » : canal,
+intervalle, contrainte semver, préversions et déploiement automatique.
 
 ---
 

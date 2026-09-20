@@ -1,0 +1,378 @@
+/* ---------------------------------------------------------------------------
+   Écran « Déployer » : fil d'étapes, cartes, formulaires et barres de capacité.
+   Les couleurs viennent des jetons de tokens.css ; la pastille du catalogue
+   n'ajoute qu'une teinte, sa clarté suit le thème.
+   --------------------------------------------------------------------------- */
+.deploy {
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 auto;
+  min-height: 0;
+}
+.deploy p {
+  margin: 0;
+}
+.deploy-head {
+  flex: none;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 16px 18px 0;
+}
+.deploy-body {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow: auto;
+  padding: 14px 18px 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+.deploy-foot {
+  flex: none;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 18px;
+  border-top: 1px solid var(--border);
+  background: var(--bg-elev);
+}
+.deploy-intro {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.deploy-intro h2 {
+  font-size: var(--fs-l);
+}
+.deploy-ok {
+  color: var(--ok);
+}
+.deploy-err {
+  color: var(--err);
+}
+
+/* --- Fil d'étapes -------------------------------------------------------- */
+.deploy-steps {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 4px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid var(--border);
+}
+.deploy-steps-sep {
+  color: var(--fg-faint);
+  padding: 0 2px;
+}
+.deploy-step {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  height: 28px;
+  padding: 0 10px 0 4px;
+  border: 1px solid transparent;
+  border-radius: 999px;
+  background: none;
+  color: var(--fg-muted);
+  font: inherit;
+  font-size: var(--fs-s);
+  font-weight: 500;
+  cursor: pointer;
+}
+.deploy-step:hover:not(:disabled) {
+  background: var(--bg-hover);
+  color: var(--fg);
+}
+.deploy-step:disabled {
+  color: var(--fg-faint);
+  cursor: default;
+}
+.deploy-step:focus-visible {
+  outline: 2px solid var(--accent-ring);
+}
+.deploy-step.active {
+  color: var(--accent);
+  background: var(--accent-soft);
+}
+.deploy-step-num {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: var(--fs-xs);
+  font-weight: 600;
+  background: var(--bg-sunken);
+  color: var(--fg-muted);
+}
+.deploy-step.active .deploy-step-num {
+  background: var(--accent);
+  color: var(--fg-on-accent);
+}
+.deploy-step.done .deploy-step-num {
+  background: var(--ok-soft);
+  color: var(--ok);
+}
+
+/* --- Filtres du catalogue ------------------------------------------------ */
+.deploy-chip {
+  height: 24px;
+  padding: 0 10px;
+  border-radius: 999px;
+  border: 1px solid var(--border-strong);
+  background: var(--bg-elev);
+  color: var(--fg-muted);
+  font: inherit;
+  font-size: var(--fs-xs);
+  font-weight: 500;
+  cursor: pointer;
+  white-space: nowrap;
+}
+.deploy-chip:hover {
+  background: var(--bg-hover);
+  color: var(--fg);
+}
+.deploy-chip.active {
+  background: var(--accent-soft);
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+/* --- Grilles de cartes --------------------------------------------------- */
+.deploy-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(236px, 1fr));
+  gap: 10px;
+}
+.deploy-grid-sm {
+  grid-template-columns: repeat(auto-fill, minmax(186px, 1fr));
+}
+.deploy-card {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 6px;
+  min-width: 0;
+  padding: 10px 12px;
+  text-align: left;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--bg-elev);
+  color: var(--fg);
+  font: inherit;
+  cursor: pointer;
+  transition: border-color 0.12s, background 0.12s;
+}
+.deploy-card:hover {
+  border-color: var(--fg-faint);
+  background: var(--bg-hover);
+}
+.deploy-card:focus-visible {
+  outline: 2px solid var(--accent-ring);
+  outline-offset: 1px;
+}
+.deploy-card.selected {
+  border-color: var(--accent);
+  background: var(--accent-soft);
+  box-shadow: inset 0 0 0 1px var(--accent);
+}
+.deploy-card-desc {
+  color: var(--fg-muted);
+  white-space: normal;
+}
+
+/* Pastille : une teinte dérivée du nom, une clarté par thème. */
+.deploy-pastille {
+  --deploy-pastille-l: 0.56;
+  width: 28px;
+  height: 28px;
+  flex: none;
+  border-radius: 6px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 15px;
+  font-weight: 600;
+  background: oklch(var(--deploy-pastille-l) 0.13 var(--hue, 240));
+  color: var(--fg-on-accent);
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) .deploy-pastille {
+    --deploy-pastille-l: 0.78;
+  }
+}
+:root[data-theme="dark"] .deploy-pastille {
+  --deploy-pastille-l: 0.78;
+}
+
+/* --- Formulaires --------------------------------------------------------- */
+.deploy-form {
+  display: grid;
+  grid-template-columns: max-content minmax(0, 1fr);
+  gap: 8px 14px;
+  align-items: center;
+}
+.deploy-form > label {
+  font-size: var(--fs-s);
+  color: var(--fg-muted);
+}
+.deploy-range {
+  accent-color: var(--accent);
+  width: 180px;
+}
+.deploy-radios {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.deploy-radio {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 8px 10px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-s);
+  font-size: var(--fs-s);
+  cursor: pointer;
+}
+.deploy-radio:hover {
+  background: var(--bg-hover);
+}
+.deploy-radio.selected {
+  border-color: var(--accent);
+  background: var(--accent-soft);
+}
+.deploy-radio input {
+  accent-color: var(--accent);
+  margin: 2px 0 0;
+}
+.deploy-kv {
+  display: grid;
+  grid-template-columns: minmax(140px, 1fr) minmax(180px, 2fr) auto;
+  gap: 6px 8px;
+  align-items: center;
+  max-width: 720px;
+}
+
+/* --- Vérification -------------------------------------------------------- */
+.deploy-objects,
+.deploy-notes {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.deploy-objects li {
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: 8px;
+  font-size: var(--fs-s);
+}
+.deploy-objects li > svg {
+  color: var(--ok);
+  align-self: center;
+}
+.deploy-notes li {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  font-size: var(--fs-s);
+  white-space: normal;
+}
+.deploy-notes li > svg {
+  flex: none;
+  margin-top: 2px;
+}
+.deploy-note-danger > svg {
+  color: var(--err);
+}
+.deploy-note-warning > svg {
+  color: var(--warn);
+}
+.deploy-note-info > svg {
+  color: var(--info);
+}
+
+/* Verdict et barres de capacité : la couleur suit le verdict. */
+.deploy-fit-fits {
+  --fit-color: var(--ok);
+}
+.deploy-fit-tight {
+  --fit-color: var(--warn);
+}
+.deploy-fit-exceeds {
+  --fit-color: var(--err);
+}
+.deploy-fit-unknown {
+  --fit-color: var(--info);
+}
+.deploy-verdict {
+  color: var(--fit-color);
+}
+.deploy-axis {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.deploy-axis-bar {
+  position: relative;
+  height: 14px;
+  border-radius: 3px;
+  background: var(--bg-sunken);
+  overflow: hidden;
+}
+.deploy-axis-bar > span {
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  border-radius: 3px;
+  transition: width 0.3s;
+}
+.deploy-axis-bar > .added {
+  background: var(--fit-color);
+}
+.deploy-axis-bar > .used {
+  background: var(--fg-faint);
+  box-shadow: 2px 0 0 var(--bg-elev);
+}
+.deploy-legend {
+  color: var(--fg-muted);
+}
+.deploy-legend .sw {
+  display: inline-block;
+  width: 10px;
+  height: 10px;
+  border-radius: 2px;
+  vertical-align: -1px;
+  margin-right: 4px;
+}
+.deploy-legend .sw.used {
+  background: var(--fg-faint);
+}
+.deploy-legend .sw.added {
+  background: var(--fit-color);
+}
+.deploy-yaml {
+  display: flex;
+  height: 360px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-s);
+  overflow: hidden;
+}
+
+/* --- Résultat ------------------------------------------------------------ */
+.deploy .table th {
+  cursor: default;
+}
+.deploy .table th:hover {
+  color: var(--fg-muted);
+}
+.deploy .table tbody tr {
+  cursor: default;
+}

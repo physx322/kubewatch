@@ -1,0 +1,58 @@
+{
+  "$schema": "https://schema.tauri.app/config/2",
+  "productName": "KubeWatch",
+  "identifier": "io.kubewatch.KubeWatch",
+  "build": {
+    "frontendDist": "../../ui/dist",
+    "devUrl": "http://localhost:5173",
+    "beforeDevCommand": {
+      "script": "npm run dev",
+      "cwd": "../../ui"
+    },
+    "beforeBuildCommand": {
+      "script": "npm run build",
+      "cwd": "../../ui"
+    }
+  },
+  "app": {
+    "withGlobalTauri": false,
+    "windows": [
+      {
+        "label": "main",
+        "title": "KubeWatch",
+        "width": 1440,
+        "height": 900,
+        "minWidth": 960,
+        "minHeight": 620,
+        "resizable": true,
+        "center": true
+      }
+    ],
+    "security": {
+      "csp": "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' data:; connect-src ipc: http://ipc.localhost"
+    }
+  },
+  "bundle": {
+    "active": true,
+    "targets": [
+      "appimage",
+      "deb",
+      "rpm"
+    ],
+    "category": "DeveloperTool",
+    "shortDescription": "Pilotez vos clusters Kubernetes depuis votre poste",
+    "longDescription": "KubeWatch est une application de bureau pour explorer et piloter des clusters Kubernetes, avec un assistant IA relié au cluster.",
+    "icon": [
+      "icons/32x32.png",
+      "icons/128x128.png",
+      "icons/128x128@2x.png",
+      "icons/icon.icns",
+      "icons/icon.ico"
+    ],
+    "linux": {
+      "appimage": {
+        "bundleMediaFramework": false
+      }
+    }
+  }
+}

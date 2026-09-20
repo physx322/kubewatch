@@ -2,11 +2,21 @@
 # Intégration continue KubeWatch
 #
 # Le dépôt produit UN binaire :
-#   • kubewatch-desktop  — application de bureau (egui)  (crate crates/desktop)
+#   • kubewatch-desktop — backend Rust Tauri 2 (crates/desktop) qui embarque
+#     l'interface web React/TypeScript de ui/.
 #
 # Formatage, lint, tests multi-plateformes, MSRV, compilation du binaire sur
-# les trois systèmes, budget de taille et documentation.
-# Tout échec bloque la fusion.
+# les trois systèmes, budget de taille, documentation, et vérification de
+# l'interface web (types, bundle, test de fumée des écrans). Tout échec bloque
+# la fusion.
+#
+# Deux contraintes propres à Tauri :
+#   • sous Linux, la webview est liée à la compilation : webkit2gtk 4.1,
+#     javascriptcoregtk 4.1, libsoup 3 et GTK 3 sont indispensables ;
+#   • `tauri::generate_context!` exige que `ui/dist` existe. Un index.html vide
+#     suffit aux jobs qui ne font que compiler ou tester le Rust ; le job
+#     « build » construit la vraie interface, puisqu'il mesure la taille du
+#     binaire qui l'embarque.
 # ---------------------------------------------------------------------------
 name: CI
 
@@ -48,27 +58,14 @@ jobs:
         uses: actions/checkout@v7
 
       # ---------------------------------------------------------------------
-      # Dépendances système de l'application de bureau (Linux uniquement).
+      # Dépendances système (Linux uniquement).
       #
-      # CONSTAT VÉRIFIÉ SUR CE DÉPÔT : avec la résolution de features actuelle
-      # (eframe = wgpu + wayland + x11), aucune de ces bibliothèques n'est liée
-      # à l'édition de liens. Tout passe par dlopen au démarrage :
-      #   • wayland-backend est compilé avec la feature « dlopen », donc le
-      #     build.rs de wayland-sys sort immédiatement sans appeler pkg-config
-      #     (constaté : target/debug/build/wayland-sys-*/output est vide) ;
-      #   • x11-dl n'émet que « cargo:rustc-link-lib=dl » (libdl, dans la
-      #     glibc) et ouvre libX11/libXcursor/libXrandr/libXi à l'exécution ;
-      #   • xkbcommon-dl ouvre libxkbcommon(-x11) à l'exécution ;
-      #   • wgpu ouvre libvulkan.so.1 (ash) ou libEGL/libGL (khronos-egl).
+      # Ces paquets sont exigés à l'édition de liens : Tauri embarque la webview
+      # du système par webkit2gtk 4.1 (et javascriptcoregtk pour le moteur JS),
+      # dialogue avec elle par libsoup 3, et ouvre sa fenêtre avec GTK 3.
+      # ayatana-appindicator et librsvg sont réclamés par la chaîne de
+      # compilation de Tauri même sans icône de barre système.
       #
-      # On les installe malgré tout, pour deux raisons honnêtes :
-      #   1. si la feature « dlopen » disparaissait de la résolution, wayland-sys
-      #      repasserait par pkg-config et exigerait libwayland-dev à la
-      #      compilation — la CI casserait alors sans prévenir ;
-      #   2. les paquets -dev tirent les bibliothèques partagées .so.N dont le
-      #      binaire a besoin à l'exécution.
-      #
-      # Aucun webkit2gtk : KubeWatch n'embarque pas de webview.
       # `rfd` est compilé en mode xdg-portal et dialogue par DBus (zbus, en
       # Rust pur) : aucun paquet supplémentaire n'est requis pour lui.
       - name: Installer les dépendances système (Linux)
@@ -76,18 +73,18 @@ jobs:
           set -euo pipefail
           sudo apt-get update
           sudo apt-get install -y --no-install-recommends \
-            libxkbcommon-dev \
-            libxkbcommon-x11-dev \
-            libwayland-dev \
-            libx11-dev \
-            libxcursor-dev \
-            libxrandr-dev \
-            libxi-dev \
-            libgl1-mesa-dev \
-            libegl1-mesa-dev
-          # Sur Ubuntu 24.04, libgl1-mesa-dev et libegl1-mesa-dev sont des
-          # paquets de transition vers libgl-dev / libegl-dev (libglvnd) :
-          # les installer reste correct et tire les bons en-têtes.
+            libwebkit2gtk-4.1-dev \
+            libjavascriptcoregtk-4.1-dev \
+            libsoup-3.0-dev \
+            libgtk-3-dev \
+            libayatana-appindicator3-dev \
+            librsvg2-dev
+
+      - name: Préparer un dossier ui/dist minimal pour tauri-build
+        shell: bash
+        run: |
+          mkdir -p ui/dist
+          [ -f ui/dist/index.html ] || echo '<!doctype html><title>KubeWatch</title>' > ui/dist/index.html
 
       - name: Installer la toolchain Rust stable
         uses: dtolnay/rust-toolchain@stable
@@ -126,22 +123,25 @@ jobs:
         uses: actions/checkout@v7
 
       # Même liste que le job « lint » ; voir les commentaires détaillés
-      # ci-dessus. macOS et Windows fournissent Metal/Direct3D nativement.
+      # ci-dessus. macOS fournit WKWebView, Windows WebView2 : rien à installer.
       - name: Installer les dépendances système (Linux)
         if: runner.os == 'Linux'
         run: |
           set -euo pipefail
           sudo apt-get update
           sudo apt-get install -y --no-install-recommends \
-            libxkbcommon-dev \
-            libxkbcommon-x11-dev \
-            libwayland-dev \
-            libx11-dev \
-            libxcursor-dev \
-            libxrandr-dev \
-            libxi-dev \
-            libgl1-mesa-dev \
-            libegl1-mesa-dev
+            libwebkit2gtk-4.1-dev \
+            libjavascriptcoregtk-4.1-dev \
+            libsoup-3.0-dev \
+            libgtk-3-dev \
+            libayatana-appindicator3-dev \
+            librsvg2-dev
+
+      - name: Préparer un dossier ui/dist minimal pour tauri-build
+        shell: bash
+        run: |
+          mkdir -p ui/dist
+          [ -f ui/dist/index.html ] || echo '<!doctype html><title>KubeWatch</title>' > ui/dist/index.html
 
       - name: Installer la toolchain Rust stable
         uses: dtolnay/rust-toolchain@stable
@@ -177,15 +177,17 @@ jobs:
           set -euo pipefail
           sudo apt-get update
           sudo apt-get install -y --no-install-recommends \
-            libxkbcommon-dev \
-            libxkbcommon-x11-dev \
-            libwayland-dev \
-            libx11-dev \
-            libxcursor-dev \
-            libxrandr-dev \
-            libxi-dev \
-            libgl1-mesa-dev \
-            libegl1-mesa-dev
+            libwebkit2gtk-4.1-dev \
+            libjavascriptcoregtk-4.1-dev \
+            libsoup-3.0-dev \
+            libgtk-3-dev \
+            libayatana-appindicator3-dev \
+            librsvg2-dev
+
+      - name: Préparer un dossier ui/dist minimal pour tauri-build
+        run: |
+          mkdir -p ui/dist
+          [ -f ui/dist/index.html ] || echo '<!doctype html><title>KubeWatch</title>' > ui/dist/index.html
 
       - name: Installer Rust 1.85 (rust-version du workspace)
         uses: dtolnay/rust-toolchain@stable
@@ -230,15 +232,26 @@ jobs:
           set -euo pipefail
           sudo apt-get update
           sudo apt-get install -y --no-install-recommends \
-            libxkbcommon-dev \
-            libxkbcommon-x11-dev \
-            libwayland-dev \
-            libx11-dev \
-            libxcursor-dev \
-            libxrandr-dev \
-            libxi-dev \
-            libgl1-mesa-dev \
-            libegl1-mesa-dev
+            libwebkit2gtk-4.1-dev \
+            libjavascriptcoregtk-4.1-dev \
+            libsoup-3.0-dev \
+            libgtk-3-dev \
+            libayatana-appindicator3-dev \
+            librsvg2-dev
+
+      - name: Installer Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: ui/package-lock.json
+
+      # Ici, contrairement aux autres jobs, on construit la vraie interface :
+      # c'est elle que le binaire embarque, et dont la taille est mesurée plus
+      # bas.
+      - name: Construire l'interface web
+        run: npm ci --no-audit --no-fund && npx vite build
+        working-directory: ui
 
       - name: Installer la toolchain Rust stable
         uses: dtolnay/rust-toolchain@stable
@@ -270,8 +283,8 @@ jobs:
           Write-Host "kubewatch-desktop.exe produit."
 
       # Sur Linux uniquement : la liste des bibliothèques partagées exigées à
-      # l'édition de liens. Sert de garde-fou — si une dépendance système
-      # inattendue apparaît (X11 lié en dur, GTK, webkit…), elle se voit ici.
+      # l'édition de liens. Sert de garde-fou — une dépendance système
+      # inattendue se voit ici.
       - name: Lister les bibliothèques dynamiques requises (Linux)
         if: runner.os == 'Linux'
         run: |
@@ -282,9 +295,9 @@ jobs:
             echo '```'
             ldd target/release/kubewatch-desktop || true
             echo '```'
-            echo "_Wayland, X11, xkbcommon, Vulkan et EGL sont ouverts par"
-            echo "dlopen à l'exécution : ils n'apparaissent volontairement pas"
-            echo "dans cette liste._"
+            echo "_webkit2gtk, javascriptcoregtk, libsoup 3 et GTK 3 sont liés"
+            echo "à la compilation : ils doivent être présents sur la machine"
+            echo "qui exécute le binaire._"
           } >> "$GITHUB_STEP_SUMMARY"
 
       # ---------------------------------------------------------------------
@@ -296,9 +309,12 @@ jobs:
         if: runner.os == 'Linux'
         shell: bash
         env:
-          # Application de bureau : egui + wgpu + le moteur Kubernetes complet.
-          GUI_BUDGET_MIB: "60"
-          GUI_WARN_MIB: "45"
+          # Le moteur Kubernetes complet, plus l'interface web embarquée. La
+          # webview, elle, vient du système et ne pèse pas dans ce chiffre.
+          # Mesuré : 12,1 Mio (interface web embarquée comprise). Le seuil
+          # d'alerte laisse de la marge, le budget arrête une dérive franche.
+          GUI_BUDGET_MIB: "22"
+          GUI_WARN_MIB: "16"
         run: |
           set -euo pipefail
           status=0
@@ -354,15 +370,18 @@ jobs:
           set -euo pipefail
           sudo apt-get update
           sudo apt-get install -y --no-install-recommends \
-            libxkbcommon-dev \
-            libxkbcommon-x11-dev \
-            libwayland-dev \
-            libx11-dev \
-            libxcursor-dev \
-            libxrandr-dev \
-            libxi-dev \
-            libgl1-mesa-dev \
-            libegl1-mesa-dev
+            libwebkit2gtk-4.1-dev \
+            libjavascriptcoregtk-4.1-dev \
+            libsoup-3.0-dev \
+            libgtk-3-dev \
+            libayatana-appindicator3-dev \
+            librsvg2-dev
+
+      - name: Préparer un dossier ui/dist minimal pour tauri-build
+        shell: bash
+        run: |
+          mkdir -p ui/dist
+          [ -f ui/dist/index.html ] || echo '<!doctype html><title>KubeWatch</title>' > ui/dist/index.html
 
       - name: Installer la toolchain Rust stable
         uses: dtolnay/rust-toolchain@stable
@@ -380,6 +399,41 @@ jobs:
   # Métadonnées d'empaquetage : une entrée .desktop ou un fichier AppStream
   # invalide ne se voit qu'au moment d'empaqueter, c'est-à-dire trop tard.
   # -------------------------------------------------------------------------
+  ui:
+    name: Interface web (types et bundle)
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Récupérer le dépôt
+        uses: actions/checkout@v7
+
+      - name: Installer Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: ui/package-lock.json
+
+      - name: Installer les dépendances
+        run: npm ci --no-audit --no-fund
+        working-directory: ui
+
+      - name: Vérifier les types
+        run: npm run typecheck
+        working-directory: ui
+
+      - name: Produire le bundle
+        run: npx vite build
+        working-directory: ui
+
+      - name: Tests de fumée des écrans (jsdom, instantané anonymisé)
+        run: npm test
+        working-directory: ui
+
+      - name: Taille du bundle
+        run: du -sh dist && ls -la dist/assets
+        working-directory: ui
+
   packaging:
     name: Métadonnées de bureau
     runs-on: ubuntu-latest

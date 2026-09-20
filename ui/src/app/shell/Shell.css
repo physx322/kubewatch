@@ -1,0 +1,192 @@
+.shell {
+  display: grid;
+  grid-template-columns: var(--sidebar-w) minmax(0, 1fr) auto;
+  height: 100vh;
+  overflow: hidden;
+}
+
+/* --- Barre latérale ------------------------------------------------------ */
+.sidebar {
+  background: var(--sidebar-bg);
+  color: var(--sidebar-fg);
+  border-right: 1px solid var(--sidebar-border);
+  display: flex;
+  flex-direction: column;
+  padding: 10px 10px;
+  gap: 2px;
+}
+.sidebar-brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 6px 8px 14px;
+}
+.sidebar-brand img {
+  width: 28px;
+  height: 28px;
+  border-radius: 7px;
+}
+.sidebar-brand strong {
+  font-size: var(--fs-m);
+  letter-spacing: -0.01em;
+  color: #fff;
+}
+.sidebar-brand .xs {
+  color: var(--sidebar-fg-muted);
+}
+.nav-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 7px 10px;
+  border: none;
+  border-radius: var(--radius-s);
+  background: none;
+  color: var(--sidebar-fg);
+  font: inherit;
+  font-size: var(--fs-s);
+  font-weight: 500;
+  text-align: left;
+  cursor: pointer;
+  transition: background 0.12s, color 0.12s;
+}
+.nav-item:hover {
+  background: rgba(255, 255, 255, 0.06);
+  color: #fff;
+}
+.nav-item.active {
+  background: var(--sidebar-active);
+  color: #fff;
+}
+.nav-item.active svg {
+  color: var(--brand-400);
+}
+.nav-item .shortcut {
+  margin-left: auto;
+  font-size: 11px;
+  color: var(--sidebar-fg-muted);
+  opacity: 0;
+  transition: opacity 0.12s;
+}
+.nav-item:hover .shortcut {
+  opacity: 1;
+}
+.sidebar-spacer {
+  flex: 1;
+}
+.sidebar-section {
+  padding: 12px 10px 4px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--sidebar-fg-muted);
+}
+.sidebar-footer {
+  padding: 8px 10px 2px;
+  font-size: var(--fs-xs);
+  color: var(--sidebar-fg-muted);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+/* --- Colonne principale -------------------------------------------------- */
+.main {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  min-height: 0;
+  background: var(--bg);
+}
+.topbar {
+  height: var(--topbar-h);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 0 14px;
+  border-bottom: 1px solid var(--border);
+  background: var(--bg-elev);
+  flex: none;
+}
+.topbar .select {
+  max-width: 240px;
+}
+.topbar .search {
+  width: 300px;
+}
+.topbar-title {
+  font-weight: 600;
+  font-size: var(--fs-m);
+  margin-right: 6px;
+  white-space: nowrap;
+}
+.content {
+  flex: 1 1 auto;
+  min-height: 0;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+.page {
+  padding: 16px 18px;
+  overflow: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  flex: 1 1 auto;
+  min-height: 0;
+}
+.page-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.page-header h1 {
+  font-size: var(--fs-l);
+}
+
+/* --- Panneau de l'assistant ---------------------------------------------- */
+.assistant-col {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  border-left: 1px solid var(--border);
+  background: var(--bg-elev);
+}
+.assistant-resizer {
+  position: absolute;
+  left: -3px;
+  top: 0;
+  bottom: 0;
+  width: 6px;
+  cursor: col-resize;
+  z-index: 5;
+}
+.assistant-resizer:hover {
+  background: var(--accent-ring);
+}
+
+/* --- Indicateur de cluster ---------------------------------------------- */
+.cluster-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  height: 30px;
+  padding: 0 10px 0 8px;
+  border-radius: var(--radius-s);
+  border: 1px solid var(--border-strong);
+  background: var(--bg-elev);
+  font-size: var(--fs-s);
+  font-weight: 500;
+  max-width: 260px;
+}
+.cluster-pill select {
+  border: none;
+  background: transparent;
+  padding: 0 18px 0 0;
+  height: 28px;
+}

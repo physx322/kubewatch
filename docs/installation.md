@@ -2,7 +2,8 @@
 
 KubeWatch est **un exécutable autonome**, `kubewatch-desktop`. Il n'y a ni
 service à enregistrer, ni base de données à provisionner, ni interpréteur à
-installer. Vous copiez le fichier dans votre `PATH`, et vous le lancez.
+installer : l'interface est compilée d'avance et embarquée dans le binaire.
+Vous copiez le fichier dans votre `PATH`, et vous le lancez.
 
 - [Prérequis](#prérequis)
 - [Binaire précompilé](#binaire-précompilé)
@@ -21,11 +22,11 @@ installer. Vous copiez le fichier dans votre `PATH`, et vous le lancez.
 | --- | --- | --- |
 | Un kubeconfig | Oui, sauf connexion distante par URL + jeton | `~/.kube/config`, `$KUBECONFIG`, ou n'importe quel `.yml` que vous désignez |
 | Kubernetes 1.24+ | Oui | La découverte des types est dynamique, aucune version n'est codée en dur |
-| Un serveur graphique | Oui | Wayland ou X11 sous Linux ; natif sous macOS et Windows |
-| Un pilote Vulkan ou OpenGL | Oui | Mesa suffit, y compris en rendu logiciel |
+| Une session graphique | Oui | Wayland ou X11 sous Linux ; natif sous macOS et Windows |
+| La webview du système | Oui | WebKitGTK 4.1 et GTK 3 sous Linux (voir ci-dessous) ; fournie par le système sous macOS et Windows |
 | `kubectl` | Non | KubeWatch parle directement au serveur d'API |
-| `helm` | Seulement pour le rendu de charts | Cherché dans le `PATH`, ou désigné par `KUBEWATCH_HELM_BIN` |
-| metrics-server | Seulement pour les métriques | Sans lui, les colonnes CPU/mémoire disparaissent, sans erreur |
+| `helm` | Non | Le rendu de charts n'est pas exposé par l'application |
+| metrics-server | Seulement pour les métriques | Sans lui, les jauges CPU/mémoire et la prévision de capacité disparaissent, sans erreur |
 
 Sur une machine sans affichage, un serveur en SSH par exemple, KubeWatch ne
 démarre pas : c'est un client de poste de travail, sans mode texte. Pour les
@@ -33,34 +34,42 @@ scripts et les pipelines, `kubectl` reste l'outil.
 
 ### Bibliothèques d'exécution, sous Linux
 
-L'application charge ses bibliothèques graphiques à l'exécution, par `dlopen` —
-elles ne sont donc pas vérifiées à l'installation, et leur absence ne se
-manifeste qu'au lancement, par une fenêtre qui ne s'ouvre pas.
+Contrairement aux versions précédentes, ces bibliothèques ne sont **pas**
+chargées à la demande : elles sont **liées à l'édition de liens**. Leur absence
+ne se manifeste donc pas par une fenêtre qui ne s'ouvre pas, mais par un refus
+du chargeur dynamique, avec le nom du fichier manquant. C'est plus brutal, et
+plus clair.
 
-Sur un poste de travail équipé d'un bureau, tout est déjà là. Sur une machine
-minimale, il faut au minimum :
+La liste exacte se lit sur le binaire lui-même :
 
 ```sh
-# Debian / Ubuntu
-sudo apt-get install libwayland-client0 libxkbcommon0 libxkbcommon-x11-0 \
-  libx11-6 libxcursor1 libxrandr2 libxi6 libvulkan1 mesa-vulkan-drivers \
-  xdg-desktop-portal xdg-desktop-portal-gtk
+readelf -d kubewatch-desktop | grep NEEDED
+```
+
+Sur un poste de travail équipé d'un bureau GTK, tout est déjà là. Sur une
+machine minimale :
+
+```sh
+# Debian / Ubuntu  (sur Ubuntu 24.04 et Debian 13, certains de ces paquets
+# portent le suffixe « t64 » : libgtk-3-0t64, libglib2.0-0t64…)
+sudo apt-get install libwebkit2gtk-4.1-0 libjavascriptcoregtk-4.1-0 \
+  libsoup-3.0-0 libgtk-3-0 libgdk-pixbuf-2.0-0 libcairo2 libglib2.0-0 \
+  libdbus-1-3 xdg-desktop-portal xdg-desktop-portal-gtk
 
 # Fedora
-sudo dnf install wayland-libs-client libxkbcommon libxkbcommon-x11 libX11 \
-  libXcursor libXrandr libXi vulkan-loader mesa-vulkan-drivers \
-  xdg-desktop-portal xdg-desktop-portal-gtk
+sudo dnf install webkit2gtk4.1 libsoup3 gtk3 gdk-pixbuf2 cairo glib2 \
+  dbus-libs xdg-desktop-portal xdg-desktop-portal-gtk
 
 # Arch
-sudo pacman -S wayland libxkbcommon libxkbcommon-x11 libx11 libxcursor \
-  libxrandr libxi vulkan-icd-loader vulkan-radeon xdg-desktop-portal \
-  xdg-desktop-portal-gtk
+sudo pacman -S webkit2gtk-4.1 libsoup3 gtk3 gdk-pixbuf2 cairo glib2 dbus \
+  xdg-desktop-portal xdg-desktop-portal-gtk
 ```
 
 Le portail XDG (`xdg-desktop-portal` et l'implémentation de votre bureau) ne
-sert qu'aux sélecteurs de fichiers — « ouvrir un kubeconfig », « enregistrer un
-YAML ». Sans lui, le reste de l'application fonctionne, mais ces boîtes de
-dialogue n'apparaissent pas. La liste complète, par distribution, est dans
+sert qu'au sélecteur de fichiers — « Parcourir… » pour choisir un kubeconfig.
+Sans lui, le reste de l'application fonctionne, mais cette boîte de dialogue
+n'apparaît pas ; le chemin peut toujours être saisi à la main. La table
+complète des bibliothèques liées est dans
 [packaging/README.md](../packaging/README.md#dépendances-dexécution).
 
 ---
@@ -73,26 +82,32 @@ C'est la méthode recommandée : rien à compiler.
 
 | Plateforme | Archive | Contenu |
 | --- | --- | --- |
-| Linux x86-64 (glibc) | `kubewatch-<version>-x86_64-unknown-linux-gnu.tar.gz` | `kubewatch-desktop` + métadonnées de bureau |
-| Linux ARM64 (glibc) | `kubewatch-<version>-aarch64-unknown-linux-gnu.tar.gz` | `kubewatch-desktop` + métadonnées de bureau |
+| Linux x86-64 (glibc) | `kubewatch-<version>-x86_64-unknown-linux-gnu.tar.gz` | `kubewatch-desktop`, métadonnées de bureau, icône |
+| Linux ARM64 (glibc) | `kubewatch-<version>-aarch64-unknown-linux-gnu.tar.gz` | `kubewatch-desktop`, métadonnées de bureau, icône |
 | macOS Intel | `kubewatch-<version>-x86_64-apple-darwin.tar.gz` | `KubeWatch.app` |
 | macOS Apple Silicon | `kubewatch-<version>-aarch64-apple-darwin.tar.gz` | `KubeWatch.app` |
 | Windows x86-64 | `kubewatch-<version>-x86_64-pc-windows-msvc.zip` | `kubewatch-desktop.exe` |
 
-**Pourquoi pas de version musl.** Une application graphique
-ouvre Vulkan, OpenGL, Wayland, X11 et xkbcommon par `dlopen` au démarrage. Un
-binaire musl statique n'embarque pas le chargeur dynamique nécessaire : il
-démarrerait, puis échouerait à créer une fenêtre. Plutôt que de publier un
-artefact cassé, la cible est absente — et vous le savez avant de la chercher.
+Toutes contiennent aussi `LICENSE`, `README.md` et `CHANGELOG.md`. Les archives
+Linux ajoutent `io.kubewatch.KubeWatch.desktop`,
+`io.kubewatch.KubeWatch.metainfo.xml`, le dossier `icons/` et une copie de
+`packaging/README.md` sous le nom `INSTALL-packaging.md`.
+
+**Pourquoi pas de version musl.** L'interface s'affiche dans la webview du
+système : sous Linux, le binaire est lié à WebKitGTK, GTK 3, libsoup 3 et GLib,
+qui sont des bibliothèques partagées. Un exécutable statique ne peut pas les
+emporter, et n'aurait rien à afficher. Plutôt que de publier un artefact cassé,
+la cible est absente — et vous le savez avant de la chercher.
 
 **Pourquoi ARM64 Windows n'est pas publié.** La cible ne pourrait être compilée
 que de façon croisée depuis un runner x86-64, où rien ne permet de vérifier
 qu'une fenêtre s'ouvre. On ne publie pas un binaire graphique que personne n'a
 pu lancer.
 
-**Version de glibc.** Les binaires Linux glibc sont compilés sur Ubuntu 22.04 :
-ils exigent la **glibc 2.35 ou plus récente**. Sur une distribution plus
-ancienne, compilez l'application vous-même (voir
+**Version de glibc, version de WebKitGTK.** Les binaires Linux glibc sont
+compilés sur Ubuntu 22.04 : ils exigent la **glibc 2.35 ou plus récente**, et
+une WebKitGTK **4.1** (soit `libwebkit2gtk-4.1.so.0`, pas la série 4.0). Sur une
+distribution plus ancienne, compilez l'application vous-même (voir
 [Depuis les sources](#depuis-les-sources)).
 
 ### Linux
@@ -111,14 +126,20 @@ sudo install -Dm 0644 io.kubewatch.KubeWatch.desktop \
   /usr/share/applications/io.kubewatch.KubeWatch.desktop
 sudo install -Dm 0644 io.kubewatch.KubeWatch.metainfo.xml \
   /usr/share/metainfo/io.kubewatch.KubeWatch.metainfo.xml
+
+# L'icône
+sudo cp -r icons/hicolor /usr/share/icons/
+
 sudo update-desktop-database /usr/share/applications || true
+sudo gtk-update-icon-cache /usr/share/icons/hicolor || true
 
 kubewatch-desktop
 ```
 
-Aucune icône n'est livrée : l'entrée de menu s'affiche avec un pictogramme
-générique. Voir [packaging/README.md](../packaging/README.md#icône) pour en
-ajouter une.
+Pour une installation sans `sudo`, les mêmes fichiers vont dans
+`~/.local/bin`, `~/.local/share/applications`, `~/.local/share/metainfo` et
+`~/.local/share/icons` ; depuis un clone du dépôt, `make desktop-install` s'en
+charge. Voir [packaging/README.md](../packaging/README.md#icône).
 
 ### macOS
 
@@ -129,9 +150,11 @@ curl -sSfLO "https://github.com/kubewatch-io/kubewatch/releases/download/v${VERS
 tar xzf "kubewatch-${VERSION}-${ARCH}-apple-darwin.tar.gz"
 cd "kubewatch-${VERSION}-${ARCH}-apple-darwin"
 
-sudo install -m 0755 kubewatch /usr/local/bin/
 cp -R KubeWatch.app /Applications/
 ```
+
+L'archive macOS ne contient **que** le bundle : le binaire vit dans
+`KubeWatch.app/Contents/MacOS/`, il n'y a rien à copier dans `/usr/local/bin`.
 
 ### Windows (PowerShell)
 
@@ -197,9 +220,11 @@ deux systèmes vous le diront à leur manière (voir ci-dessous).
 kubewatch-desktop
 ```
 
-L'application lit `$KUBECONFIG`, puis `~/.kube/config`. Si aucun cluster n'est
-joignable, la fenêtre s'ouvre quand même : vous pouvez importer un kubeconfig ou
-déclarer une connexion distante depuis l'écran Réglages.
+La fenêtre s'ouvre tout de suite, même si aucun cluster n'est joignable : la
+reconnexion aux clusters enregistrés se fait en tâche de fond. Au premier
+démarrage, il n'y en a aucun — l'écran Clusters propose d'importer un
+kubeconfig (`$KUBECONFIG`, puis `~/.kube/config`) ou de déclarer une connexion
+distante par URL et jeton.
 
 ### macOS : quarantaine Gatekeeper
 
@@ -209,7 +234,6 @@ vérifié la somme SHA-256 et la signature cosign :
 
 ```sh
 xattr -dr com.apple.quarantine /Applications/KubeWatch.app
-xattr -d com.apple.quarantine /usr/local/bin/kubewatch
 ```
 
 C'est une manipulation à faire en connaissance de cause : elle désactive une
@@ -233,38 +257,73 @@ la sortie standard. Pour voir ses traces, lancez-le depuis un terminal avec
 
 ### Dépendances de compilation
 
-Rust 1.85 ou plus récent. Sous Linux, **aucune bibliothèque de développement
-n'est requise** avec la configuration actuelle du dépôt : les bibliothèques
-graphiques sont chargées à l'exécution, pas liées à la compilation. Ni GTK, ni
-Qt, ni webkit2gtk — KubeWatch n'embarque pas de webview.
+Compiler KubeWatch demande **deux chaînes d'outils** : celle de Rust pour le
+binaire, celle de Node pour l'interface.
 
-Si vous préférez la ceinture et les bretelles (et c'est ce que fait la CI) :
+| Outil | Version | Pourquoi |
+| --- | --- | --- |
+| Rust | 1.85 ou plus récent | Édition 2021, MSRV du workspace |
+| Node.js | 22 ou plus récent | Construire l'interface web de `ui/` |
+| npm | Celui de Node | `package-lock.json` fige les versions |
+| `tauri-cli` 2 | `cargo install tauri-cli --version '^2' --locked` | Nécessaire pour `make run` et `make bundles`, pas pour `make release` |
+
+Sous Linux, il faut en plus les bibliothèques de la webview. **Elles sont liées
+à la compilation** : sans elles, `cargo build` échoue à l'édition de liens.
 
 ```sh
-sudo apt-get install libxkbcommon-dev libxkbcommon-x11-dev libwayland-dev \
-  libx11-dev libxcursor-dev libxrandr-dev libxi-dev \
-  libgl1-mesa-dev libegl1-mesa-dev
+# Debian / Ubuntu
+sudo apt-get install libwebkit2gtk-4.1-dev libjavascriptcoregtk-4.1-dev \
+  libsoup-3.0-dev libgtk-3-dev libayatana-appindicator3-dev librsvg2-dev
+
+# Fedora
+sudo dnf install webkit2gtk4.1-devel libsoup3-devel gtk3-devel \
+  libappindicator-gtk3-devel librsvg2-devel
+
+# Arch
+sudo pacman -S webkit2gtk-4.1 libsoup3 gtk3 libayatana-appindicator librsvg
+
+# Void
+sudo xbps-install libwebkit2gtk41-devel libsoup3-devel gtk+3-devel
 ```
 
-Le raisonnement complet, avec la façon de le vérifier soi-même, est dans
-[packaging/README.md](../packaging/README.md#dépendances-de-compilation).
+C'est la liste qu'installe la CI, et c'est elle qui fait foi. Deux d'entre eux —
+`ayatana-appindicator` et `librsvg` — sont réclamés par `pkg-config` pendant la
+compilation sans que le binaire produit ne les lie : `readelf -d` ne les
+mentionne pas. Ils restent nécessaires pour compiler.
 
-### Compiler et installer
+`rfd`, la bibliothèque du sélecteur de fichiers, est compilée en mode
+`xdg-portal` et dialogue par D-Bus en Rust pur : aucun paquet supplémentaire
+n'est requis pour lui.
+
+### Compiler et lancer
 
 ```sh
-# Depuis le dépôt distant
-cargo install --git https://github.com/kubewatch-io/kubewatch --locked kubewatch-desktop
-
-# Depuis un clone local
 git clone https://github.com/kubewatch-io/kubewatch
 cd kubewatch
-make release            # le binaire, profil dist
-make install            # dans ~/.cargo/bin
-make desktop-install    # l'entrée de menu, pour l'utilisateur courant
+
+make setup      # dépendances npm de ui/
+make run        # la fenêtre, avec le rechargement à chaud de Vite
+make release    # le binaire optimisé (profil dist), interface incluse
+make install    # dans ~/.cargo/bin
+make dist       # l'archive du binaire nu, dans dist/
+make bundles    # AppImage, .deb et .rpm, dans dist/ (Linux)
+make appimage   # seulement l'AppImage
 ```
 
+`make release` construit d'abord `ui/dist`, puis le binaire :
+`tauri::generate_context!` exige que l'interface existe à la compilation.
+`make run` passe par `cargo tauri dev`, qui démarre Vite et ouvre la fenêtre
+dessus ; c'est le seul mode où l'interface n'est pas embarquée.
+
+`make bundles` et `make appimage` délèguent à `tauri build`. Contrairement au
+binaire nu, l'AppImage produit ainsi **embarque la webview** et ses dépendances,
+ce qui le rend portable d'une distribution à l'autre. Détails dans
+[packaging/README.md](../packaging/README.md#appimage-et-paquets-de-distribution).
+
 La publication sur crates.io n'est pas encore activée (variable de dépôt
-`PUBLISH_CRATES`) : `cargo install kubewatch-desktop` ne fonctionnera qu'ensuite.
+`PUBLISH_CRATES`) : `cargo install kubewatch-desktop` ne fonctionnera
+qu'ensuite. En attendant, `cargo install --path crates/desktop` exige que
+`ui/dist` ait été construit d'avance — `make install` s'en occupe.
 
 ### Compilation croisée
 
@@ -272,11 +331,10 @@ La publication sur crates.io n'est pas encore activée (variable de dépôt
 make release TARGET=aarch64-unknown-linux-gnu
 ```
 
-Pour l'application de bureau, préférez une compilation **native** sur la
-machine cible, ou un conteneur de la même architecture. Les images `cross` ne
-contiennent pas d'environnement graphique ; la compilation peut aboutir, mais
-rien n'y vérifie le résultat. La chaîne de release, elle, compile chaque cible
-graphique sur un runner de son architecture.
+Préférez une compilation **native** sur la machine cible, ou un conteneur de la
+même architecture : les bibliothèques de la webview doivent être présentes pour
+l'architecture visée, ce qu'une image `cross` ordinaire ne fournit pas. La
+chaîne de release compile chaque cible sur un runner de son architecture.
 
 ---
 
@@ -292,69 +350,63 @@ réinstaller l'archive de la nouvelle version, exactement comme la première foi
 ## Désinstallation
 
 ```sh
-# Binaires
-sudo rm -f /usr/local/bin/kubewatch /usr/local/bin/kubewatch-desktop
-# ou, si installés par cargo :
-cargo uninstall kubewatch kubewatch-desktop
+# Binaire
+sudo rm -f /usr/local/bin/kubewatch-desktop
+# ou, s'il a été installé par cargo :
+cargo uninstall kubewatch-desktop
 
-# Entrée de menu et métadonnées
+# Entrée de menu, métadonnées et icône
 sudo rm -f /usr/share/applications/io.kubewatch.KubeWatch.desktop \
-           /usr/share/metainfo/io.kubewatch.KubeWatch.metainfo.xml
+           /usr/share/metainfo/io.kubewatch.KubeWatch.metainfo.xml \
+           /usr/share/icons/hicolor/*/apps/io.kubewatch.KubeWatch.*
 # ou, pour une installation par utilisateur :
 make desktop-uninstall
 
-# État local : clusters enregistrés, surveillances, historique, jetons
-rm -rf ~/.local/share/kubewatch      # Linux
-rm -rf ~/Library/Application\ Support/kubewatch   # macOS
+# État local : clusters enregistrés, surveillants, historique, jetons, clés d'IA
+rm -rf ~/.local/share/kubewatch                    # Linux
+rm -rf ~/Library/Application\ Support/kubewatch    # macOS
 # Windows : %APPDATA%\kubewatch
 
-# Préférences de l'interface (thème, zoom, géométrie de la fenêtre)
-rm -rf ~/.local/share/KubeWatch      # Linux
-rm -rf ~/Library/Application\ Support/KubeWatch   # macOS
-# Windows : %APPDATA%\KubeWatch
-
-# Ancien fichier de configuration de la ligne de commande, s'il existe encore
-rm -f ~/.config/kubewatch/config.yaml
+# Données de la webview : préférences d'affichage et caches, aucun secret
+rm -rf ~/.local/share/io.kubewatch.KubeWatch       # Linux
 ```
 
-Le dossier d'état contient des secrets (jetons GitHub, jetons de cluster) :
-supprimez-le si vous désinstallez pour de bon.
+Sur macOS, supprimez aussi `/Applications/KubeWatch.app`.
+
+Le dossier d'état contient des secrets (jetons GitHub, jetons de cluster, clés
+d'API des fournisseurs d'IA) : supprimez-le si vous désinstallez pour de bon.
 
 ---
 
 ## Diagnostic
 
-### Symptômes fréquents
-
-| Symptôme | Piste |
-| --- | --- |
-| Colonnes CPU/mémoire vides | metrics-server absent : `kubectl top nodes` échoue aussi |
-| `403` sur une action | Droits du kubeconfig insuffisants |
-| `le binaire « helm » est introuvable` | Installez `helm`, ou utilisez le générateur de manifestes intégré |
-| `429` / `rateLimited` sur le catalogue ou les mises à jour | Renseignez un jeton GitHub dans l'onglet Réglages de l'écran Mises à jour |
-
-### L'application de bureau
-
-Lancez-la depuis un terminal pour voir ce qu'elle raconte :
+Lancez l'application depuis un terminal pour voir ce qu'elle raconte :
 
 ```sh
 RUST_LOG=debug kubewatch-desktop
 ```
 
+### Symptômes fréquents
+
 | Symptôme | Piste |
 | --- | --- |
-| `neither WAYLAND_DISPLAY nor WAYLAND_SOCKET nor DISPLAY is set` | Aucune session graphique : vous êtes en SSH ou en console |
-| Aucune fenêtre, erreur d'adaptateur wgpu | Aucun pilote Vulkan : installez `mesa-vulkan-drivers`, ou forcez OpenGL avec `WGPU_BACKEND=gl` |
-| Fenêtre noire, ou rendu incohérent | Essayez l'autre backend : `WGPU_BACKEND=vulkan` ou `WGPU_BACKEND=gl` |
-| Deux cartes graphiques, mauvaise sélection | `WGPU_POWER_PREF=low` (économie) ou `high` (performance) |
+| `error while loading shared libraries: libwebkit2gtk-4.1.so.0` | La webview n'est pas installée, ou seule la série 4.0 l'est : voir [Bibliothèques d'exécution](#bibliothèques-dexécution-sous-linux) |
+| Erreur analogue sur `libsoup-3.0.so.0`, `libgtk-3.so.0`, `libjavascriptcoregtk-4.1.so.0` | Même cause, même remède : `readelf -d kubewatch-desktop` liste tout ce qui manque |
+| Aucune fenêtre, `GDK_BACKEND`/`DISPLAY` dans le message | Aucune session graphique : vous êtes en SSH ou en console |
+| « Parcourir… » ne fait rien | `xdg-desktop-portal` absent ou non démarré ; saisissez le chemin du kubeconfig à la main |
+| Jauges CPU/mémoire vides, prévision de capacité indisponible | metrics-server absent : `kubectl top nodes` échoue aussi |
+| `403` sur une action | Droits du kubeconfig insuffisants |
+| `429` / `rateLimited` sur les registres ou les mises à jour | Renseignez un jeton GitHub dans la section « Mises à jour » de l'écran Réglages |
 | La fenêtre ne se rattache pas à l'icône du lanceur | `StartupWMClass` du `.desktop` ne correspond pas à l'`app_id` réel — voir [packaging/README.md](../packaging/README.md#construire-un-paquet-de-distribution) |
-| « Ouvrir un fichier » ne fait rien | `xdg-desktop-portal` absent ou non démarré |
-| Machine virtuelle ou WSL sans GPU | Installez le rendu logiciel (`mesa-vulkan-drivers` fournit lavapipe), ou `WGPU_BACKEND=gl` avec `LIBGL_ALWAYS_SOFTWARE=1` |
+| L'assistant répond « fournisseur injoignable » | Adresse de base erronée, ou serveur local (LM Studio, Ollama…) non démarré |
 
-Ces variables (`WGPU_BACKEND`, `WGPU_POWER_PREF`) sont lues par wgpu lui-même,
-pas par KubeWatch : elles fonctionnent avec la configuration par défaut de
-l'application. Valeurs acceptées par `WGPU_BACKEND` : `vulkan`, `gl`, `dx12`,
-`metal`.
+### Compiler échoue
+
+| Message | Piste |
+| --- | --- |
+| `The system library 'webkit2gtk-4.1' required by crate 'webkit2gtk-sys' was not found` | Les paquets `-dev` manquent : voir [Dépendances de compilation](#dépendances-de-compilation) |
+| `frontendDist` introuvable, ou `ui/dist` vide | Construisez l'interface d'abord : `make release` le fait, `cargo build` seul ne le fait pas |
+| `tauri-cli absent` | `cargo install tauri-cli --version '^2' --locked` |
 
 Voir aussi [configuration.md](configuration.md), [interface.md](interface.md) et
 [security.md](security.md).

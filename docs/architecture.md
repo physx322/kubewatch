@@ -3,8 +3,8 @@
 Comment KubeWatch est construit, et pourquoi il l'est ainsi.
 
 - [Vue d'ensemble](#vue-densemble)
-- [Les quatre crates](#les-quatre-crates)
-- [Le pont asynchrone](#le-pont-asynchrone)
+- [Les cinq crates](#les-cinq-crates)
+- [Le pont : commandes et canaux](#le-pont--commandes-et-canaux)
 - [Flux : lister des ressources](#flux--lister-des-ressources)
 - [Flux : journaux et terminal](#flux--journaux-et-terminal)
 - [Flux : détection d'une mise à jour](#flux--détection-dune-mise-à-jour)
@@ -17,61 +17,73 @@ Comment KubeWatch est construit, et pourquoi il l'est ainsi.
 ## Vue d'ensemble
 
 ```
-                 ┌──────────────────────────────┐
-                 │   binaire kubewatch-desktop  │
-                 │   fenêtre native (egui)      │
-                 └───────────────┬──────────────┘
-                                 │
-                 ┌───────────────▼──────────────┐
-                 │      crate  desktop          │
-                 │                              │
-                 │  app.rs      boucle eframe   │
-                 │  state.rs    AppState, vues  │
-                 │  views/      8 écrans        │
-                 │  widgets/    toasts, confirm,│
-                 │              logs, terminal, │
-                 │              éditeur YAML    │
-                 │  icons.rs    police Phosphor │
-                 │  backend/    LE PONT         │
-                 │    ├ command.rs  Command     │
-                 │    ├ event.rs    Event       │
-                 │    └ worker.rs   runtime     │
-                 └───────────────┬──────────────┘
-                                 │
-    ┌────────────────────────────┴───────────────────────────────────────┐
-    │                                                                    │
-   ┌▼────────────────┐   ┌──────────────────┐   ┌────────────────────┐
-   │ kubewatch-core  │   │  kubewatch-hub   │   │ kubewatch-updater  │
-   │                 │   │                  │   │                    │
-   │ client connexion│   │ registry images  │   │ github  releases   │
-   │ discovery types │   │ charts ArtifactH │   │ policy  semver     │
-   │ cluster handles │   │ catalog intégré  │   │ store   état 0600  │
-   │ resource CRUD   │   │ deploy manifests │   │ scan    inventaire │
-   │ apply  SSA/diff │   │                  │   │ rollout set-image  │
-   │ logs exec pf    │   └────────┬─────────┘   │ engine  orchestre  │
-   │ metrics events  │            │             └─────────┬──────────┘
-   └────────┬────────┘            │                       │
-            │                     │                       │
-        kube-rs                reqwest                 reqwest
-        (rustls)               (rustls)                (rustls)
-            │                     │                       │
-            ▼                     ▼                       ▼
-   ┌─────────────────┐   ┌──────────────────┐   ┌────────────────────┐
-   │  API server(s)  │   │ Docker Hub, GHCR │   │   api.github.com   │
-   │   Kubernetes    │   │ Quay, ArtifactHub│   │                    │
-   └─────────────────┘   └──────────────────┘   └────────────────────┘
+             ┌───────────────────────────────────────────────┐
+             │        binaire  kubewatch-desktop             │
+             │   fenêtre Tauri 2 → webview du système        │
+             └───────────────────────┬───────────────────────┘
+                                     │
+             ┌───────────────────────▼───────────────────────┐
+             │   ui/   interface web  (React 19 + Vite)      │
+             │   construite d'avance, embarquée dans le      │
+             │   binaire à la compilation                    │
+             └───────────────────────┬───────────────────────┘
+                 invoke("…")         │        Channel<…>
+                 commandes typées    │        journaux, terminal,
+                 Result<T, String>   │        réponse de l'assistant
+             ┌───────────────────────▼───────────────────────┐
+             │           crate  desktop  (backend Tauri)     │
+             │                                               │
+             │  main.rs       construit l'application,       │
+             │                déclare les commandes          │
+             │  state.rs      AppState géré par Tauri        │
+             │  commands/     app, clusters, resources,      │
+             │                streams, hub, updater, ai      │
+             │  assistant.rs  message système, outils        │
+             │                de lecture du cluster          │
+             │  util.rs       dossier d'état, rustls         │
+             └───────────────────────┬───────────────────────┘
+                                     │
+    ┌──────────────┬─────────────────┴──────────────┬──────────────────┐
+    │              │                                │                  │
+┌───▼─────────┐ ┌──▼───────────────┐ ┌──────────────▼─────┐ ┌──────────▼──────┐
+│kubewatch-   │ │ kubewatch-hub    │ │ kubewatch-updater  │ │ kubewatch-ai    │
+│core         │ │                  │ │                    │ │                 │
+│             │ │ registry images  │ │ github  releases   │ │ message commun  │
+│client       │ │ charts ArtifactH │ │ policy  semver     │ │ anthropic       │
+│discovery    │ │ catalog intégré  │ │ scan    inventaire │ │ openai (+compat)│
+│cluster      │ │ deploy manifestes│ │ rollout set-image  │ │ sse   flux      │
+│resource CRUD│ │ sizing empreinte │ │ store   état 0600  │ │ agent boucle    │
+│apply SSA/dif│ │                  │ │ engine  orchestre  │ │ store  ai.json  │
+│logs exec pf │ └────────┬─────────┘ └─────────┬──────────┘ └────────┬────────┘
+│metrics event│          │                     │                     │
+└──────┬──────┘          │                     │                     │
+       │                 │                     │                     │
+   kube-rs            reqwest               reqwest               reqwest
+   (rustls)           (rustls)              (rustls)              (rustls)
+       │                 │                     │                     │
+       ▼                 ▼                     ▼                     ▼
+┌──────────────┐ ┌────────────────┐ ┌──────────────────┐ ┌──────────────────┐
+│ API server(s)│ │Docker Hub, GHCR│ │  api.github.com  │ │ api.anthropic.com│
+│  Kubernetes  │ │Quay,ArtifactHub│ │                  │ │ api.openai.com   │
+│              │ │                │ │                  │ │ serveur local    │
+└──────────────┘ └────────────────┘ └──────────────────┘ └──────────────────┘
 ```
 
-L'application ne contient aucune logique Kubernetes : tout passe par les
-fonctions de `core`, `hub` et `updater`, testables sans fenêtre. Un bouton ne
-fait rien de plus qu'appeler l'une d'elles depuis le fil du backend.
+Le backend ne contient aucune logique Kubernetes : tout passe par les fonctions
+de `core`, `hub` et `updater`, testables sans fenêtre. Une commande Tauri ne
+fait rien de plus que résoudre le cluster, appeler l'une d'elles, et renvoyer le
+résultat.
+
+L'interface, elle, ne parle jamais au cluster : elle n'a ni client HTTP, ni
+identifiants, ni accès au système de fichiers. Elle appelle des commandes et
+reçoit des messages sur des canaux.
 
 Aucun serveur, aucun port d'écoute, aucun agent dans le cluster, aucune ligne
 de commande : c'est un client de poste de travail, au même titre que `kubectl`.
 
 ---
 
-## Les quatre crates
+## Les cinq crates
 
 ### `kubewatch-core` — tout ce qui parle à Kubernetes
 
@@ -117,100 +129,168 @@ toujours dans la bibliothèque, mais **plus aucun binaire ne l'appelle** : il n'
 a plus de serveur HTTP pour recevoir la requête. Voir
 [updates.md](updates.md#le-webhook-github-a-été-retiré).
 
+### `kubewatch-ai` — l'assistant, sans rien savoir de Kubernetes
+
+Un modèle de conversation commun (`ChatMessage`, `Part` : texte, appel d'outil,
+résultat d'outil), deux dialectes de fournisseur — l'API Messages d'Anthropic
+et l'API Chat Completions d'OpenAI, ce second dialecte servant aussi aux
+serveurs locaux compatibles (LM Studio, Ollama, llama.cpp, Jan…) — un
+analyseur SSE incrémental, et une boucle d'agent : le modèle répond en flux,
+demande des outils, l'application les exécute, les résultats repartent, jusqu'à
+la réponse finale ou au plafond de tours. Les outils sont décrits par un
+`ToolSpec` et exécutés par un `ToolExecutor` fourni par l'application : le
+crate ne dépend d'aucun autre crate de KubeWatch. Les profils (fournisseur,
+adresse, modèle, clé) vivent dans `ai.json`, en `0600` ; la clé n'est jamais
+renvoyée à l'interface, seule sa présence l'est.
+
 ### `kubewatch-desktop` — l'application
+
+Le seul binaire du projet, `kubewatch-desktop` : un backend Tauri 2 qui embarque
+l'interface web de `ui/`.
 
 | Module | Rôle |
 | --- | --- |
-| `app` | Implémente `eframe::App` : `logic()` draine les évènements, `ui()` dessine |
-| `state` | `AppState` : la totalité de ce qui est affiché, plus les sous-états par écran |
-| `views/` | Huit écrans (`overview`, `resources`, `graph`, `yaml`, `deploy`, `hub`, `updates`, `settings`) et le panneau de détail |
-| `widgets/` | Notifications, boîtes de confirmation, vue de journaux, terminal, éditeur YAML |
-| `backend/` | Le pont asynchrone : `Command`, `Event`, et le `Backend` qui les relie |
-| `theme`, `format`, `icons` | Palette, mise en forme (durées, quantités, âges) et icônes (police Phosphor, nommées par rôle) |
+| `main` | Installe le fournisseur rustls et les traces, construit l'application Tauri, déclare les commandes, recharge les clusters en tâche de fond, ferme les flux à la destruction de la fenêtre |
+| `state` | `AppState`, géré par Tauri et injecté dans chaque commande : `ClusterManager`, `Store`, `HubClient`, `UpdateEngine`, `AiStore`, flux ouverts, conversations en cours |
+| `commands/` | Les commandes exposées à l'interface, par domaine : `app`, `clusters`, `resources`, `streams`, `hub`, `updater`, `ai` |
+| `assistant` | Le message système de l'assistant et ses sept outils de lecture du cluster, implémentés sur `ToolExecutor` |
+| `util` | Dossier d'état, fournisseur cryptographique, troncature et mise en forme des âges |
+
+`crates/desktop/tauri.conf.json` décrit la fenêtre (1440 × 900, minimum
+960 × 620, centrée), l'identifiant `io.kubewatch.KubeWatch`, la CSP, les cibles
+d'empaquetage (AppImage, `.deb`, `.rpm`) et les deux commandes npm que
+`tauri-cli` lance avant de compiler ou de démarrer. `capabilities/default.json`
+n'accorde à la fenêtre `main` que `core:default` : aucun plugin Tauri
+supplémentaire n'est activé.
+
+### `ui/` — l'interface
+
+Une application **React 19 + TypeScript** construite par **Vite**. Elle est
+compilée d'avance dans `ui/dist`, que `tauri::generate_context!` embarque dans
+le binaire : l'exécutable livré ne lit aucun fichier d'interface sur le disque.
+
+| Chemin | Rôle |
+| --- | --- |
+| `src/api/client.ts` | Une fonction typée par commande ; les erreurs deviennent des `Error` au message français ; les flux passent par un `Channel` |
+| `src/api/types.ts`, `hub.ts`, `updates.ts` | Types miroirs des structures Rust, en camelCase |
+| `src/app/store.ts` | État global (zustand), partiellement persisté dans le `localStorage` de la webview |
+| `src/app/queries.ts` | Hooks React Query partagés et cycle de vie du démarrage |
+| `src/app/shell/` | Barre latérale, barre supérieure, notifications |
+| `src/views/` | Un fichier par écran |
+| `src/assistant/` | Le panneau de l'assistant et son état de conversation |
+| `src/components/` | Table triable, dialogue, confirmation, menu, éditeur YAML (CodeMirror), terminal (xterm.js), rendu Markdown |
 
 ---
 
-## Le pont asynchrone
+## Le pont : commandes et canaux
 
-C'est la pièce centrale, et la seule vraiment nouvelle depuis le pivot.
+C'est la pièce centrale : tout ce que fait l'interface passe par là, et rien
+d'autre ne la relie au cœur Rust.
 
-**Le problème.** egui est *immediate mode* et synchrone : à chaque image, la
-totalité de l'interface est redessinée par un appel de fonction qui doit rendre
-la main en quelques millisecondes. `kube`, lui, est asynchrone et lent à
-l'échelle humaine : une liste de pods peut prendre 300 ms, un cluster
-injoignable peut prendre 30 secondes avant d'échouer. Appeler l'un depuis
-l'autre — même une seule fois, même « juste pour essayer » — gèlerait la fenêtre.
+**Le problème.** L'interface tourne dans une webview, dans son propre processus,
+en JavaScript. Le cœur Kubernetes est en Rust, asynchrone, et lent à l'échelle
+humaine : une liste de pods peut prendre 300 ms, un cluster injoignable peut
+mettre trente secondes avant d'échouer. Les deux ne partagent aucune mémoire.
 
-**La solution.** Deux files de messages et un runtime tokio qui vit à côté.
+**La solution.** Deux mécanismes, et deux seulement.
 
 ```
-        fil d'interface (egui)                 runtime tokio (N fils)
-   ─────────────────────────────          ─────────────────────────────
-                                    Command
-    backend.send(Command::…)  ──────────────────▶  une tâche par commande
-              │                  (mpsc unbounded)          │
-              │                                            │ core / hub / updater
-              │                                            ▼
-    backend.drain() ◀───────────────────────────  tx.send(Event::…)
-              │                   Event                    │
-              │              (std::sync::mpsc)             │
-              │                                            ▼
-    applique sur AppState                      ctx.request_repaint()
-              │                                    réveille la fenêtre
-              ▼
-    views::*::show(ui, &mut st, &backend)
+        interface (webview, JS)              backend Tauri (tokio)
+   ─────────────────────────────         ─────────────────────────────
+                                 invoke
+    api.resources.list(…)  ───────────────▶  #[tauri::command] async fn
+              │               une requête IPC          │
+              │                                        │ core / hub / updater
+              │                                        ▼
+    await → T   ◀───────────────────────────  Result<T, String>
+              │            réponse ou message d'erreur
+
+
+    api.logs.start(…, onEvent) ──────────▶  tâche tokio
+              │                                        │
+              │            Channel<LogEvent>           ▼
+    onEvent(ev) ◀───────────────────────────  on_event.send(LogEvent::…)
+              │                                        │
+    api.logs.stop(id) ───────────────────▶  AppState::abort_stream(id)
 ```
+
+### Les commandes
+
+Chaque commande est une fonction annotée `#[tauri::command]`, déclarée dans
+`tauri::generate_handler![…]` et appelée depuis l'interface par `invoke`.
+`crates/desktop/src/commands/mod.rs` en fixe les conventions :
+
+- chaque commande renvoie `Result<T, String>` ; l'erreur est **un message
+  français prêt à afficher**, pas un type à interpréter ;
+- un argument `cluster` vide désigne le cluster courant ;
+- les arguments et les résultats sont sérialisés en JSON, avec les mêmes noms
+  qu'en TypeScript (camelCase).
+
+Le catalogue va de `app_info` à `ai_cancel`, en passant par `list_resources`,
+`apply_yaml`, `diff_yaml`, `drain_node`, `hub_deploy` ou `updates_check` : une
+commande par action de l'interface, sans commande fourre-tout.
+
+### L'`AppState`
+
+`AppState::new` est construit au démarrage et confié à Tauri (`app.manage`), qui
+l'injecte ensuite dans chaque commande sous la forme d'un `State<'_, AppState>`.
+Il réunit le `ClusterManager`, le `Store` du détecteur de mises à jour, le
+`HubClient`, l'`UpdateEngine`, l'`AiStore`, les flux ouverts et les
+conversations en cours.
+
+Deux propriétés méritent d'être notées :
+
+1. **Aucune entrée/sortie réseau au démarrage.** `AppState::new` ne fait que
+   lire les fichiers d'état. La reconnexion aux clusters enregistrés part dans
+   une tâche de fond, parce qu'un cluster injoignable met jusqu'à trente
+   secondes à répondre et que la fenêtre doit s'afficher tout de suite. Quand
+   elle aboutit, le backend émet l'évènement `clusters-changed` et l'interface
+   recharge sa liste.
+2. **Les défaillances du démarrage ne tuent rien.** Un fichier d'état illisible,
+   un client HTTP qui ne se construit pas : chaque cas ajoute un message à
+   `startup_warnings`, que la première commande `app_info` remet à l'interface,
+   qui l'affiche en notification. `hub` et `engine` sont des `Option` ; les
+   commandes qui en dépendent renvoient une erreur explicite au lieu de
+   paniquer. Toute l'interface reste utilisable sans qu'aucun cluster ne soit
+   joignable, et c'est une exigence, pas un effet de bord.
+
+### Les canaux
+
+Trois choses ne tiennent pas dans une réponse unique : les journaux, la session
+interactive et la réponse de l'assistant. Elles passent par un **`Channel`**
+Tauri, créé par l'interface et transmis en argument de la commande qui démarre
+le flux. Le backend y pousse des évènements sérialisés ; l'interface les reçoit
+dans le rappel qu'elle a fourni.
 
 ```rust
-pub struct Backend {
-    tx: tokio::sync::mpsc::UnboundedSender<Command>,
-    rx: std::sync::mpsc::Receiver<Event>,
-    rt: tokio::runtime::Runtime,   // gardé en vie pour la durée de l'application
-}
-
-impl Backend {
-    pub fn new(ctx: egui::Context, state_dir: std::path::PathBuf) -> anyhow::Result<Self>;
-    pub fn send(&self, cmd: Command);    // ne bloque jamais
-    pub fn drain(&self) -> Vec<Event>;   // vide la file, appelé une fois par image
-}
+#[tauri::command]
+pub async fn start_logs(
+    app: AppHandle,
+    state: State<'_, AppState>,
+    cluster: String,
+    pod: ResourceRef,
+    opts: LogOptions,
+    on_event: Channel<LogEvent>,
+) -> Result<u64, String>
 ```
 
-Quatre propriétés, et chacune compte :
+### Les identifiants
 
-1. **`send` ne bloque jamais.** La file de commandes est non bornée : déposer un
-   message est une écriture en mémoire. Si le cluster met trente secondes à
-   répondre, c'est la tâche tokio qui attend, pas la fenêtre.
-2. **`drain` ne bloque jamais non plus.** Il vide ce qui est arrivé et rend la
-   main immédiatement. Appelé une fois par image, dans `logic()`, avant tout
-   dessin.
-3. **Le worker réveille la fenêtre.** `egui::Context` est `Send + Sync` et
-   clonable. Après chaque `Event` émis, le worker appelle
-   `ctx.request_repaint()` : l'application dort tant qu'il ne se passe rien, et
-   se réveille à la milliseconde où une réponse arrive. Pas de boucle à 60 Hz
-   qui tourne dans le vide, pas de sondage.
-4. **Chaque commande longue porte un `RequestId`**, repris dans l'`Event`
-   correspondant. L'interface ignore les réponses dont l'identifiant n'est plus
-   celui qu'elle attend. Sans cela, changer d'écran pendant qu'une requête est
-   en vol ferait apparaître, quelques secondes plus tard, la liste des pods
-   par-dessus l'écran du hub. `AppState::pending` associe chaque identifiant en
-   vol à son libellé, ce qui alimente l'indicateur d'activité.
+Un flux qui démarre renvoie un **identifiant**, tiré d'un compteur atomique de
+l'`AppState`, et l'entrée correspondante est rangée dans
+`AppState::streams` avec le `AbortHandle` de sa tâche. L'interface se sert de
+cet identifiant pour tout le reste : `exec_input`, `exec_resize`, `stop_logs`,
+`stop_exec`. `abort_stream` interrompt la tâche, et la session interactive avec
+elle.
 
-**Le worker ne panique jamais.** Chaque exécution de commande est enveloppée et
-ses erreurs sont converties en `Event::Failed { id, message }`, avec un message
-français lisible. Une commande qui échoue affiche une notification ; elle ne
-tue ni le fil, ni la file, ni l'application. Le principe vaut aussi pour
-l'absence de cluster : toute l'interface reste utilisable sans qu'aucun cluster
-ne soit joignable, et c'est une exigence, pas un effet de bord.
+C'est ce qui rend les flux **interruptibles sans ambiguïté** : ouvrir les
+journaux d'un pod puis ceux d'un autre ne mélange pas les deux, parce que chaque
+flux écrit dans son propre canal et s'arrête sur son propre identifiant.
+L'assistant suit la même règle, avec un `chat_id` choisi par l'interface et
+rendu par `ai_cancel`.
 
-**Les vues ne font aucun appel réseau.** Leur signature l'interdit :
-
-```rust
-pub fn show(ui: &mut egui::Ui, st: &mut AppState, backend: &Backend)
-```
-
-Une vue lit `st`, dessine, et envoie éventuellement une `Command`. Elle n'a
-accès ni à un client Kubernetes, ni à un runtime, ni à un `await`. La règle est
-tenue par le type, pas par la discipline.
+Quand la fenêtre est détruite, `AppState::abort_all` ferme tous les flux et
+toutes les conversations : rien ne survit à la fermeture.
 
 ---
 
@@ -219,74 +299,73 @@ tenue par le type, pas par la discipline.
 L'utilisateur choisit le type « deployments » dans l'écran Ressources.
 
 ```
-image N        views::resources::show
-               └─ le ComboBox change de valeur
-                  st.selected_kind = "deployments"
-                  let id = st.next_id();
-                  st.pending.insert(id, "Liste des deployments");
-                  backend.send(Command::ListResources { id, cluster, kind, opts })
-               (l'image se termine normalement : rien n'a bloqué)
+interface      useQuery({
+                 queryKey: ["resources", cluster, "deployments", namespace, selector],
+                 queryFn:  () => api.resources.list(cluster, "deployments", opts),
+               })
+               └─ invoke("list_resources", { cluster, kind, opts })
 
-               ┌ runtime tokio ──────────────────────────────────────┐
-               │ cluster.resolve("deployments")  -> ApiResource      │
-               │ resource::list(&handle, &ar, &opts).await           │
-               │ tx.send(Event::Resources { id, cluster, kind, page})│
-               │ ctx.request_repaint()                              │
-               └────────────────────────────────────────────────────┘
+backend        #[tauri::command] list_resources
+               ├─ state.handle(&cluster)        -> ClusterHandle
+               ├─ handle.resolve_kind("deployments") -> ApiResource
+               ├─ resource::list(&handle, &ar, &opts).await
+               └─ Ok(ObjectListPage { items, continueToken, … })
 
-image N+k      app::logic
-               └─ backend.drain() -> [Event::Resources { id, … }]
-                  si st.pending.shift_remove(&id).is_some() {
-                      st.rows = page.items;     // sinon : réponse obsolète,
-                  }                             // ignorée en silence
-image N+k      app::ui  -> le tableau se redessine avec les nouvelles lignes
+interface      React Query range la page sous sa clé, le tableau se redessine
 ```
 
-Le tri et le filtre (`st.filter`, `st.sort`) s'appliquent **localement**, sur
-les lignes déjà reçues : taper dans le champ de recherche ne déclenche aucune
-requête. Le sélecteur de labels (`st.label_selector`), lui, part au serveur,
-parce que c'est l'API qui sait l'évaluer.
+La **clé de requête** joue le rôle que tenait autrefois un identifiant de
+requête : une réponse arrivée en retard est rangée sous sa propre clé, jamais
+par-dessus une autre. Changer de type, de cluster ou de namespace change la
+clé, donc la réponse tardive du type précédent n'écrase rien.
 
-Le rafraîchissement automatique (`st.auto_refresh`, `st.refresh_every`,
-`st.last_refresh`) renvoie simplement la même commande à intervalle régulier.
-S'il reste déjà une requête du même type en vol, elle n'est pas doublée.
+Le tri et le filtre s'appliquent **localement**, sur les lignes déjà reçues :
+taper dans le champ de recherche ne déclenche aucune requête. Le sélecteur de
+labels, lui, fait partie de la clé et part au serveur, parce que c'est l'API qui
+sait l'évaluer.
+
+Le rafraîchissement automatique est le `refetchInterval` de React Query,
+conditionné au commutateur de la barre supérieure ; il renvoie simplement la
+même commande à intervalle régulier, sans jamais doubler une requête déjà en
+vol.
 
 ---
 
 ## Flux : journaux et terminal
 
-Ce sont les seuls flux **continus**, et le pont les traite comme n'importe quoi
-d'autre : une commande, puis une suite d'évènements portant le même identifiant.
+Ce sont les seuls flux **continus** côté cluster, et le pont les traite comme
+tout le reste : une commande pour ouvrir, un canal pour recevoir, un identifiant
+pour arrêter.
 
 ```
-Command::StartLogs { id, cluster, pod, opts }
-   └─ tâche tokio : logs::stream(&handle, &pod, &opts)
-        pour chaque ligne :  Event::LogLine { id, line }  + request_repaint()
-        à la fin         :  Event::LogEnded { id }
+api.logs.start(cluster, pod, opts, onEvent)  ──▶  start_logs -> id
+    tâche tokio : logs::stream(&handle, &pod, &opts)
+      pour chaque lot :  LogEvent::Lines { lines }
+      à la fin        :  LogEvent::Ended { error: Option<String> }
 
-Command::StopLogs { id }
-   └─ la tâche est annulée ; l'interface cesse d'accepter les LogLine de cet id
+api.logs.stop(id)                            ──▶  stop_logs(id) : la tâche est
+                                                  interrompue, l'entrée retirée
 ```
 
-Le terminal fonctionne de la même façon, dans les deux sens :
-`Command::StartExec` ouvre la session, `Command::ExecInput` pousse les frappes,
-`Command::ExecResize` transmet la nouvelle taille du TTY, `Event::ExecOutput`
-rapporte ce que le conteneur écrit, et `Event::ExecEnded` clôt la session.
+Les lignes sont **regroupées par lots** : au plus une émission toutes les 40 ms,
+ou dès que 500 lignes se sont accumulées. Sans cela, un pod bavard saturerait le
+pont IPC à lui seul. L'interface refait le même geste de son côté, avec un
+tampon borné à 20 000 lignes : la mémoire ne croît pas indéfiniment, et le
+défilement automatique se décroche dès qu'on remonte dans l'historique.
 
-Le `RequestId` joue ici son rôle le plus visible : si vous ouvrez les journaux
-d'un pod, puis ceux d'un autre, les lignes en retard du premier portent l'ancien
-identifiant et sont jetées. Sans cela, les deux flux se mélangeraient à l'écran.
-
-La vue de journaux conserve un tampon borné : un pod bavard ne fait pas croître
-la mémoire indéfiniment, et le défilement automatique se coupe dès que vous
-remontez dans l'historique.
+Le terminal fonctionne dans les deux sens. `start_exec` ouvre la session avec un
+TTY et renvoie son identifiant ; `exec_input` pousse les frappes, encodées en
+base64 ; `exec_resize` transmet la nouvelle taille de la grille ;
+`ExecEvent::Output` rapporte ce que le conteneur écrit, en base64 lui aussi ;
+`ExecEvent::Ended` clôt la session. L'émulation ANSI est celle de **xterm.js**,
+côté interface : le backend ne fait que transporter des octets.
 
 ---
 
 ## Flux : détection d'une mise à jour
 
 ```
-Command::UpdatesCheck { id }
+api.updates.check()  ──▶  updates_check
    └─ UpdateEngine::check_all()
         pour chaque surveillance activée :
           1. lit l'objet ciblé dans le cluster, extrait l'image du conteneur
@@ -294,14 +373,18 @@ Command::UpdatesCheck { id }
           3. interroge la source : releases GitHub, tags du registre, ou chart
           4. la politique tranche : canal, contrainte, exclusions
           5. si autoApply et fenêtre de maintenance ouverte : rollout::apply()
-        Event::Findings { id, findings }
+   ◀─ Vec<UpdateFinding>
 ```
+
+C'est une commande ordinaire : elle rend la main quand tout est fini, et
+l'interface affiche un indicateur d'activité pendant ce temps. Rien n'est
+poussé sur un canal, parce qu'il n'y a qu'un résultat à rendre.
 
 Les déploiements automatiques sont **séquentiels** : deux rollouts simultanés
 sur le même cluster rendraient les diagnostics illisibles. Un échec est
 journalisé sans interrompre les suivants.
 
-Il n'y a plus de boucle d'ordonnancement dans le produit : une vérification part
+Il n'y a pas de boucle d'ordonnancement dans le produit : une vérification part
 du bouton de l'écran Mises à jour, et de lui seul — voir
 [updates.md](updates.md#vérifications-régulières).
 
@@ -313,59 +396,84 @@ du bouton de l'écran Mises à jour, et de lui seul — voir
 | --- | --- | --- |
 | Clusters enregistrés | `<state_dir>/clusters.json` | JSON, `0600`, écriture atomique |
 | Surveillances, détections, historique, jetons | `<state_dir>/updater.json` | JSON, `0600`, écriture atomique |
-| Préférences de l'application (thème, zoom, écran courant, cluster courant) | stockage `eframe` | RON, écrit à la fermeture |
-| Géométrie de la fenêtre, état des panneaux | stockage `eframe` (feature `persistence`) | RON, même fichier |
+| Profils et réglages de l'assistant | `<state_dir>/ai.json` | JSON, `0600`, écriture atomique |
+| Préférences de l'interface (thème, cluster, namespace par cluster, écran, rafraîchissement, panneau de l'assistant) | `localStorage` de la webview, clé `kubewatch-ui` | JSON |
 | Catalogue des types | mémoire | `Arc<RwLock<ResourceCatalog>>` par cluster |
-| Sessions logs et exec | mémoire | Tâches tokio, canaux `mpsc` |
+| Sessions logs et exec | mémoire | Tâches tokio, canaux Tauri |
+| Conversations de l'assistant | mémoire | Perdues à la fermeture |
 | `AppState` | mémoire | Reconstruit à chaque démarrage à partir des fichiers ci-dessus |
 
-Aucune base de données, aucun serveur d'état externe : deux fichiers JSON
+Aucune base de données, aucun serveur d'état externe : trois fichiers JSON
 suffisent. Corollaire assumé : **une seule instance à la fois** écrit ces
 fichiers. Lancer deux fois l'application et enregistrer depuis les deux peut
 faire perdre la modification la plus ancienne ; l'écriture atomique
 (fichier temporaire puis renommage) garantit seulement qu'aucun fichier ne sera
 jamais tronqué.
 
+La géométrie de la fenêtre n'est pas conservée : `tauri.conf.json` fixe une
+taille de départ et la fenêtre s'ouvre centrée à chaque lancement.
+
 ---
 
 ## Choix techniques
 
-### egui plutôt qu'une webview
+### Une webview, et ce qu'elle coûte
 
-Une webview (Tauri, Electron, wry) aurait imposé un moteur de rendu HTML —
-50 à 150 Mio de dépendances système sous Linux, une surface d'attaque
-considérable, et une chaîne d'approvisionnement JavaScript à auditer. egui rend
-avec le GPU, tient dans le binaire, et n'a besoin d'aucun navigateur installé.
-Il n'y a **pas** de webkit2gtk dans les dépendances, et c'est délibéré.
+KubeWatch affiche son interface dans une **webview** pilotée par Tauri 2. Ce
+choix a un prix, et il est réel.
 
-Le mode immédiat a un coût : chaque image redessine tout, donc tout doit être
-rapide. C'est précisément ce qui rend le pont asynchrone obligatoire, et donc ce
-qui garantit qu'aucune opération réseau ne peut se glisser dans le fil
-d'interface — l'architecture interdit la faute au lieu de la surveiller.
+Ce qu'il coûte :
 
-### eframe 0.36, backend wgpu, Wayland et X11
+- **une dépendance à webkit2gtk sous Linux**, liée à la compilation et exigée à
+  l'exécution. Le binaire lie `libwebkit2gtk-4.1`, `libjavascriptcoregtk-4.1`,
+  `libsoup-3.0`, `libgtk-3`, `libgdk-3`, `libgdk_pixbuf-2.0`, `libcairo`,
+  `libglib-2.0`, `libgobject-2.0`, `libgio-2.0` et `libdbus-1`. Ce ne sont pas
+  des bibliothèques ouvertes à l'exécution que l'on peut ignorer : leur absence
+  empêche déjà la compilation. Les paquets sont énumérés dans
+  [installation.md](installation.md#dépendances-de-compilation) et
+  [packaging/README.md](../packaging/README.md#dépendances-dexécution) ;
+- **une chaîne d'approvisionnement npm à auditer**, en plus de celle de Cargo.
+  L'interface dépend de React, Vite, React Query, zustand, CodeMirror, xterm.js,
+  react-markdown, d3-force et des icônes Phosphor. `package-lock.json` fige les
+  versions, mais l'écosystème reste ce qu'il est ;
+- **pas de binaire musl**, pour la même raison qu'avant, mais par un autre
+  chemin : la webview et GTK sont des bibliothèques partagées du système.
 
-`wgpu` cible Vulkan, Metal, Direct3D 12 et OpenGL avec le même code. Les deux
-backends de fenêtrage Linux sont compilés : l'application fonctionne en session
-Wayland comme en session X11, sans variante de binaire.
+Ce qu'il apporte, et c'est ce pour quoi il a été retenu :
 
-Les bibliothèques graphiques sont chargées par `dlopen` à l'exécution, pas liées
-à la compilation. Conséquence utile : compiler ne demande aucun paquet `-dev`.
-Conséquence à connaître : une bibliothèque manquante ne se voit qu'au lancement,
-et c'est pour cela que
-[packaging/README.md](../packaging/README.md#dépendances-dexécution) les
-énumère.
+- **le Markdown de l'assistant**, rendu correctement — listes, tableaux, blocs
+  de code coloriés, avec un bouton qui ouvre un bloc YAML dans la console ;
+- **un éditeur de code complet** (CodeMirror : coloration YAML, pliage,
+  sélection multiple) plutôt qu'une zone de texte ;
+- **un vrai émulateur de terminal** (xterm.js), qui gère les séquences ANSI, les
+  applications plein écran et le redimensionnement ;
+- **une itération rapide sur l'interface** : `make run` ouvre la fenêtre avec le
+  rechargement à chaud de Vite ; changer un écran ne recompile pas le Rust.
 
-Conséquence assumée aussi : **pas de binaire musl pour l'application**. Un
-exécutable statique n'a pas de chargeur dynamique, donc pas de `dlopen`, donc
-pas de fenêtre.
+La contrepartie est contenue par la configuration, pas par la confiance : la
+webview ne charge **aucun contenu distant**. La CSP déclarée dans
+`tauri.conf.json` restreint `default-src` et `script-src` à `'self'`, et
+`connect-src` au seul canal IPC. Voir
+[security.md](security.md#la-webview-et-son-contenu).
 
-### Un runtime tokio gardé en vie
+### Tauri 2 plutôt qu'un navigateur embarqué
 
-`Backend` possède le `tokio::runtime::Runtime` et le garde vivant aussi
-longtemps que l'application. Le détruire fermerait les tâches en cours — flux de
-journaux, session de terminal — au moment le plus inattendu. Il est construit une
-fois, au démarrage, avec `enable_all()`.
+Tauri utilise la webview **fournie par le système** au lieu d'en embarquer une.
+Le binaire n'inclut donc pas de moteur de rendu : il s'y lie. Sous Linux, c'est
+WebKitGTK ; la CI ne pose aucun paquet système sur macOS ni sur Windows, où la
+webview fait partie du système.
+
+Conséquence assumée : le rendu dépend de la version de WebKitGTK installée.
+`vite.config.ts` cible en conséquence `safari13` partout sauf sous Windows, et
+`chrome105` sous Windows.
+
+### Le runtime asynchrone est celui de Tauri
+
+Il n'y a plus de runtime tokio construit et gardé en vie à la main. Tauri en
+fournit un : les commandes `async` s'y exécutent, `tauri::async_runtime::spawn`
+y dépose les tâches de démarrage, et `tokio::spawn` celles des flux. Une
+commande `async` qui attend trente secondes n'immobilise que sa propre tâche ;
+la fenêtre, elle, est dans un autre processus.
 
 ### rustls plutôt qu'OpenSSL
 
@@ -375,8 +483,8 @@ recompilation à chaque mise à jour d'OpenSSL.
 `kube` compile rustls avec `ring`, `reqwest` avec `aws-lc-rs` : deux
 fournisseurs cohabitent dans le binaire, et rustls refuse alors de choisir seul.
 Le fournisseur doit donc être installé explicitement **au démarrage, avant toute
-connexion TLS** — faute de quoi la première requête panique. L'application le
-fait au démarrage, dans `app.rs`, avant d'ouvrir la fenêtre.
+connexion TLS** — faute de quoi la première requête panique. C'est la toute
+première instruction de `main()`, avant même l'initialisation des traces.
 
 ### Profil release optimisé pour la taille
 
@@ -391,19 +499,18 @@ strip = "symbols"    # ni symboles ni informations de débogage
 
 Un tableau de bord n'est pas un calculateur : le temps passé à attendre l'API
 server domine largement tout gain d'`opt-level = 3`. La CI mesure le binaire à
-chaque build et échoue au-delà de 60 Mio : il embarque egui, wgpu et le moteur
-Kubernetes complet.
+chaque build et échoue au-delà d'un budget fixé dans le workflow.
 
 ### Erreurs typées, traduites une seule fois
 
-Chaque crate définit son `Error` (`thiserror`) avec sa chaîne de causes.
-L'application les convertit en `Event::Failed { message }`, affiché en
-notification. La logique métier n'a
-jamais à savoir où son erreur sera lue.
+Chaque crate définit son `Error` (`thiserror`) avec sa chaîne de causes. La
+commande Tauri les convertit en `String` — la seule frontière où la traduction
+a lieu — et l'interface les relève en `Error` JavaScript, affichées en
+notification. La logique métier n'a jamais à savoir où son erreur sera lue.
 
 ### `#![forbid(unsafe_code)]`
 
-Dans les quatre crates. Une console d'administration n'a aucune raison de
+Dans les cinq crates. Une console d'administration n'a aucune raison de
 manipuler de la mémoire non vérifiée.
 
 ---
@@ -412,12 +519,13 @@ manipuler de la mémoire non vérifiée.
 
 | Absent | Pourquoi |
 | --- | --- |
-| Serveur HTTP, API REST, interface web | Retirés au profit de l'application native : moins de surface d'écoute, aucune authentification à réinventer, aucun jeton à protéger |
-| Webview (Tauri, Electron) | Un moteur HTML complet pour afficher des tableaux ; egui rend la même chose avec le GPU et sans dépendance système |
-| Base de données | Deux fichiers JSON suffisent ; une base briserait l'autonomie des binaires |
+| Serveur HTTP, API REST, interface web servie sur le réseau | Retirés au profit de l'application de bureau : moins de surface d'écoute, aucune authentification à réinventer, aucun jeton à protéger. L'interface est du HTML, mais elle ne quitte jamais le binaire |
+| Contenu distant dans la webview | La CSP restreint `default-src` et `script-src` à `'self'` et `connect-src` au canal IPC : aucune page, aucun script et aucune ressource ne vient du réseau |
+| Base de données | Trois fichiers JSON suffisent ; une base briserait l'autonomie du binaire |
 | Comptes utilisateurs | Le contrôle d'accès de Kubernetes, c'est le RBAC ; en dupliquer une version approximative créerait une fausse sécurité |
 | Moteur de gabarits Helm | Helm existe et fait autorité ; KubeWatch délègue à son binaire plutôt que d'en produire une imitation divergente |
 | Agent dans le cluster | L'API server expose déjà tout ce qui est nécessaire |
 | Ordonnanceur intégré | Il vivait dans le serveur ; systemd, cron et le Planificateur de tâches font ce travail mieux et survivent aux redémarrages |
-| Binaire musl de l'application | Un exécutable statique ne peut pas `dlopen` Vulkan, Wayland ni X11 : l'artefact serait inutilisable |
+| Binaire musl de l'application | La webview, GTK et leurs dépendances sont des bibliothèques partagées du système : l'artefact statique serait inutilisable |
+| Écriture dans le cluster par l'assistant | Ses sept outils sont en lecture seule ; il propose un manifeste ou une commande, c'est vous qui l'appliquez |
 | Télémétrie | Aucune donnée ne quitte votre machine, sauf vers votre cluster et vers les services que vous interrogez explicitement |

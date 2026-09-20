@@ -76,6 +76,11 @@ make deny       # licences, sources, interdictions
 make packaging-check  # validation de l'entrée .desktop et du fichier AppStream
 make release    # binaire optimisé (profil dist)
 make dist       # archive .tar.gz + .sha256 dans dist/
+make appimage   # AppImage + .sha256 dans dist/ (Linux)
+make bundles    # AppImage, .deb et .rpm (Linux)
+make setup      # dépendances npm de l'interface (ui/)
+make ui-check   # types TypeScript de l'interface
+make ui-test    # test de fumée : chaque écran monté dans un DOM simulé
 make ci         # enchaîne lint, test, release, packaging-check, audit
 make clean      # nettoyage
 ```
@@ -90,7 +95,9 @@ Quelques variables utiles : `TARGET=aarch64-unknown-linux-gnu make release`,
 | `crates/core` | accès Kubernetes : connexion, découverte, ressources, apply, logs, exec, port-forward, métriques, évènements |
 | `crates/hub` | registres d'images, charts Helm, catalogue d'applications, génération de manifestes |
 | `crates/updater` | détection d'updates GitHub et registre, politiques SemVer, rollouts, webhooks |
-| `crates/desktop` | le binaire `kubewatch-desktop` : application egui/eframe, pont asynchrone, écrans, widgets |
+| `crates/ai` | assistant IA : fournisseurs Anthropic, OpenAI et compatibles OpenAI (LM Studio, Ollama…), flux SSE, boucle d'outils, réglages `ai.json` |
+| `crates/desktop` | le binaire `kubewatch-desktop` : backend Tauri 2, commandes exposées à l'interface, flux, outils de lecture du cluster pour l'assistant |
+| `ui/` | l'interface : React 19 + TypeScript + Vite, embarquée dans le binaire (voir `ui/README.md`) |
 | `packaging/` | entrée de menu freedesktop, métadonnées AppStream, recettes d'empaquetage |
 | `docs/` | documentation |
 

@@ -1,0 +1,303 @@
+/* ---------------------------------------------------------------------------
+   Écran Topologie : barre de couches, légende, scène SVG, infobulle, détail.
+   Tout passe par les jetons : le thème sombre est automatique.
+   --------------------------------------------------------------------------- */
+.topo {
+  position: relative;
+}
+.topo .toolbar.wrap {
+  flex-wrap: wrap;
+  row-gap: 6px;
+}
+.topo-layers {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 14px;
+  padding: 6px 12px;
+  border-bottom: 1px solid var(--border);
+  background: var(--bg-elev);
+  flex: none;
+}
+.topo-layers .vdivider,
+.topo-legend .vdivider {
+  height: 16px;
+  align-self: center;
+}
+.topo-legend {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 14px;
+  padding: 6px 12px;
+  border-bottom: 1px solid var(--border);
+  background: var(--bg-elev);
+  color: var(--fg-muted);
+  font-size: var(--fs-xs);
+  flex: none;
+}
+.topo-swatch {
+  display: inline-block;
+  width: 10px;
+  height: 10px;
+  border-radius: 2px;
+  background: var(--fg-faint);
+}
+.topo-swatch.tone-ok {
+  background: var(--ok);
+}
+.topo-swatch.tone-warn {
+  background: var(--warn);
+}
+.topo-swatch.tone-err {
+  background: var(--err);
+}
+.topo-legend-line {
+  color: var(--fg-muted);
+  flex: none;
+}
+
+/* --- Scène ---------------------------------------------------------------- */
+.topo-area {
+  flex: 1 1 auto;
+  display: flex;
+  min-height: 0;
+  min-width: 0;
+}
+.topo-canvas {
+  flex: 1 1 auto;
+  min-width: 0;
+  position: relative;
+  overflow: hidden;
+  background: var(--bg);
+}
+.topo-svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+  cursor: grab;
+  touch-action: none;
+  font-family: var(--font);
+}
+.topo-svg.panning {
+  cursor: grabbing;
+}
+.topo-svg.moving {
+  cursor: move;
+}
+.topo-svg text {
+  user-select: none;
+  pointer-events: none;
+}
+
+/* Tons partagés par les cartes (fill), l'infobulle et la légende (color). */
+.topo-canvas .tone-ok,
+.topo-tip .tone-ok {
+  fill: var(--ok);
+  color: var(--ok);
+}
+.topo-canvas .tone-warn,
+.topo-tip .tone-warn {
+  fill: var(--warn);
+  color: var(--warn);
+}
+.topo-canvas .tone-err,
+.topo-tip .tone-err {
+  fill: var(--err);
+  color: var(--err);
+}
+.topo-canvas .tone-info,
+.topo-tip .tone-info {
+  fill: var(--info);
+  color: var(--info);
+}
+.topo-canvas .tone-neutral,
+.topo-tip .tone-neutral {
+  fill: var(--fg-faint);
+  color: var(--fg-muted);
+}
+
+/* --- Liens ---------------------------------------------------------------- */
+.topo-edge {
+  fill: none;
+  stroke: var(--fg-faint);
+  stroke-width: 1.3;
+  stroke-linecap: round;
+  vector-effect: non-scaling-stroke;
+  opacity: 0.75;
+  transition: opacity 0.12s;
+}
+.topo-edge.e-selects,
+.topo-edge.e-routes {
+  stroke-dasharray: 7 4;
+}
+.topo-edge.e-schedules,
+.topo-edge.e-mounts,
+.topo-edge.e-uses {
+  stroke-dasharray: 2 4;
+}
+.topo-edge.active {
+  stroke: var(--accent);
+  stroke-width: 2.2;
+  opacity: 1;
+}
+.topo-edge.dim {
+  stroke-width: 1;
+  opacity: 0.22;
+}
+.topo-legend .topo-edge {
+  stroke: currentColor;
+  stroke-width: 1.5;
+  opacity: 1;
+}
+
+/* --- Cartes --------------------------------------------------------------- */
+.topo-node {
+  cursor: pointer;
+  transition: opacity 0.12s;
+}
+.topo-node.dim {
+  opacity: 0.32;
+}
+.topo-card {
+  fill: var(--bg-elev);
+  stroke: var(--border-strong);
+  stroke-width: 1;
+  vector-effect: non-scaling-stroke;
+}
+.topo-node.hovered .topo-card {
+  fill: var(--bg-hover);
+  stroke: var(--fg-faint);
+}
+.topo-node.focused .topo-card {
+  fill: var(--accent-soft);
+  stroke: var(--accent);
+  stroke-width: 2;
+}
+.topo-node.unknown .topo-card {
+  stroke-dasharray: 4 3;
+}
+.topo-stripe {
+  fill: var(--fg-faint);
+}
+.topo-family,
+.topo-ready {
+  font-size: 11px;
+  fill: var(--fg-muted);
+}
+.topo-name {
+  font-size: 13px;
+  font-weight: 500;
+  fill: var(--fg);
+}
+.topo-status {
+  font-size: 11px;
+  font-weight: 500;
+}
+.topo-pin {
+  fill: var(--accent);
+  stroke: var(--bg-elev);
+  stroke-width: 1.5;
+  vector-effect: non-scaling-stroke;
+}
+
+/* --- Infobulle ------------------------------------------------------------ */
+.topo-tip {
+  position: absolute;
+  z-index: 5;
+  max-width: 340px;
+  min-width: 200px;
+  padding: 8px 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  background: var(--bg-elev);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  font-size: var(--fs-xs);
+  pointer-events: none;
+  animation: topo-tip-in 0.12s 0.35s ease-out both;
+}
+@keyframes topo-tip-in {
+  from {
+    opacity: 0;
+    transform: translateY(-2px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+.topo-tip-title {
+  font-weight: 600;
+  font-size: var(--fs-s);
+  word-break: break-all;
+}
+.topo-tip-warn {
+  color: var(--warn);
+}
+.topo-kv {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 2px 12px;
+  align-items: baseline;
+  min-width: 0;
+}
+.topo-kv .truncate {
+  display: block;
+}
+
+/* --- Panneau de détail ---------------------------------------------------- */
+.topo-detail {
+  flex: 0 0 360px;
+  max-width: 46%;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  border-left: 1px solid var(--border);
+  background: var(--bg-elev);
+}
+.topo-kv-list {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.topo-kv-row {
+  display: grid;
+  grid-template-columns: 110px minmax(0, 1fr);
+  gap: 10px;
+  align-items: center;
+  font-size: var(--fs-s);
+  word-break: break-word;
+}
+.topo-section-title {
+  font-size: var(--fs-xs);
+  font-weight: 600;
+  color: var(--fg-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+.topo-link {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  padding: 5px 8px;
+  border: 1px solid transparent;
+  border-radius: var(--radius-s);
+  background: none;
+  color: var(--fg);
+  font: inherit;
+  font-size: var(--fs-s);
+  text-align: left;
+  cursor: pointer;
+  min-width: 0;
+}
+.topo-link:hover {
+  background: var(--bg-hover);
+  border-color: var(--border);
+}
+.topo-link > .muted {
+  flex: 0 0 96px;
+}

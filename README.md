@@ -155,6 +155,24 @@ disparaissent proprement : ce n'est pas une erreur, et l'application le dit.
   occupée, part ajoutée, capacité restante, et les remarques qui évitent un pod
   bloqué au démarrage.
 
+### Assistant IA
+
+Un panneau (Ctrl+J) relié au fournisseur de votre choix : **Claude** (API
+Anthropic), **ChatGPT** (API OpenAI) ou **un modèle local** via n'importe quel
+serveur compatible OpenAI — LM Studio, Ollama, llama.cpp, Jan… Plusieurs
+profils, liste des modèles du fournisseur, clés conservées dans le dossier
+d'état en `0600`.
+
+L'assistant connaît le contexte de l'écran (cluster, namespace, objet
+sélectionné et son YAML) et dispose d'**outils en lecture seule** — synthèse du
+cluster, namespaces, listes d'objets, manifestes, évènements, journaux,
+métriques — qu'il enchaîne lui-même : « pourquoi ce pod redémarre ? » déclenche
+la lecture de l'objet, de ses évènements puis de ses journaux. Il ne modifie
+jamais rien ; les manifestes qu'il propose s'ouvrent d'un clic dans la console
+YAML. Ce qu'il lit part chez le fournisseur : pour un cluster sensible,
+préférez un modèle local ou désactivez les outils
+([docs/security.md](docs/security.md#ce-qui-sort-de-votre-machine)).
+
 ### Détecteur de mises à jour
 
 - Sources : **GitHub Releases**, **registre de conteneurs** (tags OCI),
@@ -277,13 +295,19 @@ Le modèle de menace complet est dans [docs/security.md](docs/security.md).
 # Le shim rustup peut être cassé : pointez directement la toolchain
 export PATH=~/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin:$PATH
 
-cargo build --workspace                       # ou : make build
-cargo run -p kubewatch-desktop                # ou : make run
-cargo watch -w crates -x 'run -p kubewatch-desktop'   # ou : make dev (relance à chaque sauvegarde)
-cargo test --workspace --all-features         # ou : make test
-cargo fmt --all && cargo clippy --workspace --all-targets -- -D warnings
-make ci                                       # reproduit l'essentiel de la CI
+make setup     # dépendances npm de l'interface (une fois)
+make run       # lance l'application : Vite pour l'interface, Tauri pour le binaire
+make build     # compile le workspace en debug
+make test      # tests Rust, puis test de fumée des écrans
+make lint      # fmt --check puis clippy -D warnings
+make bundles   # AppImage, .deb et .rpm (Linux)
+make ci        # reproduit l'essentiel de la CI
 ```
+
+Il faut **Rust 1.85+**, **Node.js 22+** et `tauri-cli` 2
+(`cargo install tauri-cli --version '^2' --locked`). Sous Linux, les
+bibliothèques de développement de webkit2gtk 4.1, libsoup 3 et GTK 3 sont
+nécessaires : voir [docs/installation.md](docs/installation.md#depuis-les-sources).
 
 Structure du workspace :
 
@@ -295,17 +319,24 @@ kubewatch/
 │   ├── hub/       kubewatch-hub     — registres d'images, charts, catalogue,
 │   │                                  générateur de manifestes
 │   ├── updater/   kubewatch-updater — GitHub, politiques semver, rollout
-│   └── desktop/   kubewatch-desktop — application egui/eframe : pont asynchrone,
-│                                      état, vues, widgets
-├── packaging/     entrée .desktop, métadonnées AppStream, recettes d'empaquetage
+│   ├── ai/        kubewatch-ai      — assistant IA : Anthropic, OpenAI, serveurs
+│   │                                  compatibles OpenAI, flux SSE, boucle d'outils
+│   └── desktop/   kubewatch-desktop — l'application : backend Tauri 2, commandes
+│                                      exposées à l'interface, outils de l'assistant
+├── ui/            l'interface : React 19, TypeScript, Vite (embarquée dans le binaire)
+├── packaging/     entrée .desktop, métadonnées AppStream, icône, recettes d'empaquetage
 └── docs/          documentation
 ```
 
-L'interface est écrite en **egui 0.36** en mode immédiat, avec le backend
-**wgpu** et les features `wayland` + `x11`. Le cœur asynchrone (`kube`, `tokio`)
-tourne dans un fil séparé et communique avec la fenêtre par deux files de
-messages : aucune requête réseau ne s'exécute sur le fil d'interface. Le détail
-est dans [docs/architecture.md](docs/architecture.md).
+L'application est un **backend Rust Tauri 2** qui embarque une **interface web
+React** à la compilation. Le cœur (`kube`, `tokio`) tourne dans le runtime
+asynchrone du backend ; l'interface ne parle jamais au cluster elle-même, elle
+appelle des commandes typées et reçoit les flux (journaux, terminal, réponse de
+l'assistant) par des canaux. Sous Linux, la fenêtre est une webview WebKitGTK :
+c'est la seule dépendance système notable.
+
+Le détail est dans [docs/architecture.md](docs/architecture.md) et
+[ui/README.md](ui/README.md).
 
 ---
 

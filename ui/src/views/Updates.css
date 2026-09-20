@@ -1,0 +1,181 @@
+/* Écran « Mises à jour » : onglets, cartes de détection, formulaire de surveillant. */
+
+.updates-note {
+  font-size: var(--fs-xs);
+  color: var(--fg-faint);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.updates-tabs .tab .badge {
+  height: 16px;
+  padding: 0 5px;
+}
+
+.updates-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+/* --- Détections ---------------------------------------------------------- */
+.findings {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.finding {
+  background: var(--bg-elev);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 12px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.finding.applied {
+  opacity: 0.7;
+}
+.finding-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.finding-versions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  font-family: var(--font-mono);
+  font-size: var(--fs-s);
+  user-select: text;
+}
+.finding-versions .arrow {
+  color: var(--fg-faint);
+}
+.finding-versions strong {
+  color: var(--accent);
+}
+.finding-image {
+  font-family: var(--font-mono);
+  font-size: var(--fs-xs);
+  color: var(--fg-muted);
+  user-select: text;
+  word-break: break-all;
+}
+.finding-notes {
+  border: 1px solid var(--border);
+  border-radius: var(--radius-s);
+  background: var(--bg-sunken);
+}
+.finding-notes > summary {
+  cursor: pointer;
+  padding: 6px 10px;
+  font-size: var(--fs-s);
+  color: var(--fg-muted);
+  list-style: none;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.finding-notes > summary::-webkit-details-marker {
+  display: none;
+}
+.finding-notes > summary:hover {
+  color: var(--fg);
+}
+.finding-notes > summary svg {
+  transition: transform 0.12s;
+}
+.finding-notes[open] > summary {
+  border-bottom: 1px solid var(--border);
+}
+.finding-notes[open] > summary svg {
+  transform: rotate(90deg);
+}
+.finding-notes-body {
+  max-height: 280px;
+  overflow: auto;
+  padding: 10px 12px;
+}
+.finding-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* --- Inventaire et suggestions ------------------------------------------ */
+.suggestions {
+  max-height: 300px;
+  overflow: auto;
+}
+.suggestion {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 6px 12px;
+  border-bottom: 1px solid var(--border);
+  font-size: var(--fs-s);
+  cursor: pointer;
+}
+.suggestion:last-child {
+  border-bottom: none;
+}
+.suggestion:hover {
+  background: var(--bg-hover);
+}
+.suggestion input {
+  accent-color: var(--accent);
+  margin: 0;
+}
+
+/* --- Résultat d'un déploiement ------------------------------------------- */
+.rollout-kv {
+  display: grid;
+  grid-template-columns: max-content 1fr;
+  gap: 6px 14px;
+  font-size: var(--fs-s);
+  align-items: baseline;
+}
+.rollout-kv .k {
+  color: var(--fg-muted);
+  font-size: var(--fs-xs);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+.rollout-kv .v {
+  user-select: text;
+  word-break: break-all;
+}
+
+/* --- Formulaire de surveillant ------------------------------------------ */
+.updates-form-title {
+  font-size: var(--fs-xs);
+  font-weight: 700;
+  color: var(--fg-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  padding-top: 4px;
+}
+.updates-form-title:not(:first-child) {
+  border-top: 1px solid var(--border);
+  padding-top: 12px;
+  margin-top: 4px;
+}
+.updates-form-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+.updates-form-grid .span-2 {
+  grid-column: 1 / -1;
+}
+@media (max-width: 720px) {
+  .updates-form-grid {
+    grid-template-columns: 1fr;
+  }
+}

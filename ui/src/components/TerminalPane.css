@@ -1,0 +1,49 @@
+/* Terminal interactif : barre d'outils, zone xterm.js et surcouche d'accueil. */
+.term-pane {
+  flex: 1 1 auto;
+  min-height: 0;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.term-alert {
+  margin: 8px 8px 0;
+}
+
+.term-host {
+  position: relative;
+  flex: 1 1 auto;
+  min-height: 0;
+  background: var(--log-bg);
+  overflow: hidden;
+}
+
+/* L'élément mesuré par l'addon fit : dimensions explicites, sans marge interne. */
+.term-xterm {
+  position: absolute;
+  inset: 6px 8px;
+}
+
+.term-xterm .xterm {
+  height: 100%;
+}
+
+/* Surcouche tant qu'aucune session n'a été ouverte. */
+.term-overlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 20px;
+  text-align: center;
+  color: var(--log-fg);
+  background: color-mix(in srgb, var(--log-bg) 80%, transparent);
+  font-size: var(--fs-s);
+}
+.term-overlay svg {
+  color: var(--fg-faint);
+}

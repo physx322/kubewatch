@@ -36,10 +36,17 @@ SHA256SUMS.pem
 .env
 .env.local
 
-# Outils front éventuels (précaution)
+# Outils front
 node_modules/
 .parcel-cache/
 .vite/
+
+# Interface web (Tauri) : dépendances et bundle produit par Vite
+ui/node_modules/
+ui/dist/
+ui/tests/smoke/.bundle.cjs
+# Schémas et permissions générés par tauri-build
+crates/desktop/gen/
 
 # Éditeurs et systèmes
 .DS_Store

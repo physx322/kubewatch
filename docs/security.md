@@ -11,6 +11,7 @@ Ce document dit ce qui est protégé, ce qui ne l'est pas, et où sont vos secre
 - [Modèle de menace](#modèle-de-menace)
 - [Portée des privilèges](#portée-des-privilèges)
 - [Aucune surface d'écoute](#aucune-surface-découte)
+- [La webview et son contenu](#la-webview-et-son-contenu)
 - [Stockage local des secrets](#stockage-local-des-secrets)
 - [Les secrets à l'écran](#les-secrets-à-lécran)
 - [Ignorer la vérification TLS](#ignorer-la-vérification-tls)
@@ -51,6 +52,7 @@ protéger, et plus de service à durcir.
 | Fichier d'état corrompu par une coupure | Écriture atomique : fichier temporaire, puis renommage |
 | Fuite d'un secret dans un affichage ou une notification | Les jetons stockés sont remplacés par `••••••` dès qu'ils sont réaffichés |
 | Interception du trafic vers le cluster ou les registres | TLS obligatoire par défaut, via rustls, avec vérification du certificat |
+| Chargement de code ou de contenu distant dans l'interface | CSP restrictive déclarée dans `crates/desktop/tauri.conf.json` : `default-src` et `script-src` limités à `'self'`, `connect-src` au seul canal IPC |
 | Archive de release altérée | Sommes SHA-256 publiées et signées par cosign (identité OIDC du workflow) |
 | Dépendance vulnérable | `cargo audit` (RustSec), `cargo deny`, `cargo vet`, en CI quotidienne |
 
@@ -163,12 +165,69 @@ aucun binaire ne l'appelle — voir
 
 ---
 
+## La webview et son contenu
+
+L'interface de KubeWatch est une page web, affichée par la webview du système —
+WebKitGTK sous Linux. C'est la contrepartie de l'éditeur de code, du terminal et
+du Markdown de l'assistant, et elle mérite d'être regardée en face.
+
+**Rien ne vient du réseau.** L'interface est compilée d'avance et **embarquée
+dans le binaire** : elle est servie depuis la mémoire du processus, pas depuis
+un serveur ni depuis un fichier modifiable. Aucun CDN, aucune police distante,
+aucun script tiers chargé au démarrage.
+
+**Une CSP l'impose, elle ne se contente pas de l'espérer.** Elle est déclarée
+dans `crates/desktop/tauri.conf.json` et posée sur chaque page :
+
+```
+default-src 'self';
+script-src  'self';
+style-src   'self' 'unsafe-inline';
+img-src     'self' data: blob:;
+font-src    'self' data:;
+connect-src ipc: http://ipc.localhost
+```
+
+Ce que cela veut dire, point par point :
+
+- **aucun script distant** ne peut être chargé, et aucun script injecté depuis
+  une adresse extérieure ne s'exécuterait ;
+- **aucune requête réseau depuis la page** : `connect-src` n'autorise que le
+  canal IPC de Tauri. Une réponse de l'assistant qui contiendrait un `fetch()`
+  ne joindrait rien. Tout le trafic sortant part du **Rust**, où il est visible,
+  typé et limité aux destinations listées plus bas ;
+- **aucune image distante** : le catalogue d'applications embarqué porte des URL
+  d'icônes vers `cdn.simpleicons.org`, mais l'interface ne les affiche pas — les
+  cartes du catalogue utilisent une pastille dessinée localement — et `img-src`
+  les refuserait de toute façon. Ces URL sont mentionnées ici parce qu'elles
+  figurent dans le code, pas parce qu'elles génèrent du trafic ;
+- `style-src` accepte `'unsafe-inline'`, ce qu'exigent les styles calculés par
+  React. C'est le seul assouplissement, et il ne permet pas d'exécuter du code.
+
+**Les permissions de Tauri sont réduites au strict nécessaire.**
+`crates/desktop/capabilities/default.json` n'accorde à la fenêtre `main` que
+`core:default` : évènements, canaux et fenêtre. Aucun plugin de système de
+fichiers, de shell ou de processus n'est activé ; l'interface ne peut donc rien
+faire d'autre qu'appeler les commandes que le Rust expose. Deux d'entre elles
+touchent au système, et toutes deux sont bornées : `pick_file` ouvre le
+sélecteur de fichiers de votre bureau, et `open_url` **refuse toute adresse qui
+ne commence pas par `http://` ou `https://`** avant de la confier à votre
+navigateur.
+
+**Ce que cela ne protège pas.** La webview reste un moteur de rendu HTML
+complet, avec sa propre surface d'attaque, et c'est celui du système : sa
+sécurité dépend de la mise à jour de WebKitGTK par votre distribution. C'est un
+argument de plus pour tenir le poste à jour.
+
+---
+
 ## Stockage local des secrets
 
 | Fichier | Contenu sensible |
 | --- | --- |
 | `<state_dir>/clusters.json` | Jetons de service, certificats et clés clientes des clusters distants |
 | `<state_dir>/updater.json` | Jeton GitHub, secret de webhook résiduel |
+| `<state_dir>/ai.json` | Clés d'API des fournisseurs d'IA (Anthropic, OpenAI, serveur compatible) |
 | `~/.kube/config` | Le vôtre, lu mais jamais modifié |
 
 Emplacements exacts : voir
@@ -179,12 +238,15 @@ Garanties d'écriture :
 - **écriture atomique** : fichier temporaire dans le même dossier, puis
   renommage ; une interruption ne laisse jamais un fichier tronqué ;
 - **permissions `0600`** sous Unix — lecture et écriture par le propriétaire
-  seul — appliquées aux deux fichiers d'état, dans un dossier créé en `0700` ;
+  seul — appliquées aux trois fichiers d'état, dans un dossier créé en `0700` ;
 - aucun secret n'est écrit dans les traces, quel que soit le niveau de
   `RUST_LOG`.
 
 ```sh
+ls -ld ~/.local/share/kubewatch/
+# drwx------ 2 vous vous  … /home/vous/.local/share/kubewatch/
 ls -l ~/.local/share/kubewatch/
+# -rw------- 1 vous vous  … ai.json
 # -rw------- 1 vous vous  … clusters.json
 # -rw------- 1 vous vous  … updater.json
 ```
@@ -195,10 +257,12 @@ sont dans les mêmes fichiers JSON. Sous Windows, les permissions POSIX ne
 s'appliquent pas et les fichiers héritent des ACL de votre profil. Traitez ces
 fichiers comme votre kubeconfig — parce que c'est exactement ce qu'ils valent.
 
-La case « Enregistrer la connexion sur le disque », décochée dans l'écran
-Réglages, garde un cluster **en mémoire uniquement** : rien n'est écrit, le
-cluster disparaît à l'arrêt. C'est le choix à retenir pour un jeton de courte
-durée.
+**Un cluster ajouté est toujours écrit.** L'écran Clusters n'offre pas d'option
+« garder en mémoire pour cette session » : import de kubeconfig comme connexion
+distante, la spécification part dans `clusters.json`, jeton compris. Pour un
+jeton de courte durée, la seule façon de ne pas le laisser derrière soi est de
+retirer le cluster quand vous avez fini — ou de travailler dans un dossier
+d'état jetable avec `KUBEWATCH_STATE_DIR`.
 
 ---
 
@@ -207,10 +271,11 @@ durée.
 Il faut distinguer deux choses, parce qu'elles ne se comportent pas pareil.
 
 **Les secrets de KubeWatch lui-même sont masqués.** Le jeton GitHub et le secret
-de webhook sont remplacés par `••••••` partout où ils sont réaffichés, dans
-l'onglet Réglages de l'écran Mises à jour. Renvoyer le masque tel quel conserve la
-valeur existante au lieu de l'écraser : vous pouvez modifier un autre réglage
-sans retaper votre jeton, et sans risquer de l'effacer.
+de webhook sont remplacés par `••••••` partout où ils sont réaffichés, dans la
+section « Mises à jour » de l'écran Réglages ; il en va de même de la clé d'API
+d'un profil d'assistant. Renvoyer le masque tel quel conserve la valeur
+existante au lieu de l'écraser : vous pouvez modifier un autre réglage sans
+retaper votre jeton, et sans risquer de l'effacer.
 
 **Les Secrets de Kubernetes, eux, ne le sont pas — délibérément.** Le
 comportement dépend de ce que vous demandez :
@@ -233,9 +298,10 @@ donnez pas `get` sur `secrets`.
 
 ## Ignorer la vérification TLS
 
-La case « ignorer la vérification TLS » du formulaire de connexion distante,
-dans l'écran Réglages, désactive **réellement** la vérification du certificat du
-serveur pour ce cluster. Ce n'est pas un avertissement de forme.
+La case « Ignorer la vérification TLS du serveur (déconseillé) » du formulaire
+« Connexion à un serveur d'API », dans l'écran Clusters, désactive
+**réellement** la vérification du certificat du serveur pour ce cluster. Ce
+n'est pas un avertissement de forme.
 
 Concrètement, une fois cochée :
 
@@ -270,16 +336,12 @@ télémétrie**, aucun rapport d'erreur automatique, aucun appel au démarrage.
 | Votre API server Kubernetes | En permanence pendant l'usage | Vos identifiants du kubeconfig, les requêtes que vous déclenchez | C'est le produit ; sans cela il n'y a rien à afficher |
 | `api.github.com` | Vérification d'une surveillance GitHub, suggestions | Le nom du dépôt interrogé, votre jeton GitHub s'il est configuré | N'enregistrez pas de surveillance de type `githubRelease` |
 | `hub.docker.com`, `registry-1.docker.io`, `ghcr.io`, `quay.io`, ou le registre que vous visez | Recherche, liste de tags, inspection d'image, surveillance de type registre | Le nom de l'image, les identifiants de registre si vous en avez fourni | N'utilisez pas l'écran Hub ; n'enregistrez pas de surveillance de type registre |
-| `artifacthub.io` | Recherche de charts Helm et lecture de leurs `values.yaml` | Le terme recherché, le nom du chart | N'utilisez pas la recherche de charts |
-| `cdn.simpleicons.org` | Jamais aujourd'hui (voir ci-dessous) | Rien | Sans objet |
+| `artifacthub.io` | Recherche de charts Helm | Le terme recherché | N'utilisez pas l'onglet Charts Helm |
+| `api.anthropic.com`, `api.openai.com`, ou le serveur compatible OpenAI que vous désignez (LM Studio, Ollama…) | Chaque question posée à l'assistant IA | Votre question et l'historique de la conversation ; le contexte de l'écran : nom du cluster, namespace, objet sélectionné **et son YAML** ; et, si les outils sont activés, tout ce que le modèle demande à lire : listes d'objets, manifestes, évènements, **journaux de pods**, métriques. Un Secret Kubernetes lu par l'assistant part en clair (base64) chez le fournisseur. | Ne configurez aucun fournisseur ; ou désactivez les outils dans les réglages ; ou pointez un **modèle local** pour que rien ne quitte votre machine |
+| `cdn.simpleicons.org` | Jamais (voir [La webview et son contenu](#la-webview-et-son-contenu)) | Rien | Sans objet |
+| Le site que vous ouvrez depuis un lien | Quand vous cliquez un lien de l'interface ou d'une réponse de l'assistant | Rien de plus que ce qu'envoie votre navigateur : la page ne s'ouvre pas dans KubeWatch, mais dans le navigateur du système | Ne cliquez pas |
 
-Quatre précisions qui comptent :
-
-- **Le catalogue d'applications contient des URL d'icônes** pointant vers
-  `cdn.simpleicons.org`. Ce ne sont que des données : l'application ne compile
-  aucun chargeur d'images HTTP (`egui_extras` n'a que les features `image` et
-  `syntect`), donc aucune de ces URL n'est récupérée. Elles sont mentionnées ici
-  parce qu'elles figurent dans le code, pas parce qu'elles génèrent du trafic.
+Trois précisions qui comptent :
 
 - **Aucune donnée de votre cluster ne part vers ces services.** Ce sont des
   requêtes de lecture publiques : « quelles sont les versions de nginx ? ».
@@ -328,6 +390,8 @@ Ce qui est en place, vérifiable dans
 - **`cargo deny`** : licences autorisées, sources autorisées, interdictions,
   doublons (`deny.toml`) — aucune dépendance sous copyleft fort ;
 - **`cargo vet`**, informatif tant qu'il n'est pas initialisé ;
+- **`package-lock.json`** pour l'interface : les versions npm sont figées, et la
+  CI installe avec `npm ci`, qui refuse de s'écarter du verrou ;
 - **CodeQL** sur les workflows GitHub Actions ;
 - **sommes SHA-256 signées par cosign** à chaque release, en mode *keyless* :
   l'identité du workflow est attestée par OIDC auprès de Fulcio, et aucune clé
@@ -335,6 +399,13 @@ Ce qui est en place, vérifiable dans
 
 Ce qui **n'est pas** en place, et qu'il faut savoir :
 
+- **Aucun audit automatique des dépendances npm.** `cargo audit` couvre la
+  moitié Rust ; rien d'équivalent ne tourne sur l'arbre de `ui/`. C'est le prix
+  d'une interface web, et il est énoncé plutôt que passé sous silence.
+  L'interface étant compilée d'avance et confinée par la CSP, une dépendance
+  compromise ne pourrait pas joindre le réseau depuis la page — mais elle
+  aurait accès à tout ce que l'interface affiche, et pourrait appeler les
+  commandes que le backend expose.
 - **Pas de notarisation Apple, pas de signature Authenticode.** Les binaires
   déclencheront Gatekeeper et SmartScreen. La vérification cosign est votre
   seule garantie d'origine — faites-la.
@@ -364,12 +435,25 @@ Ce qui **n'est pas** en place, et qu'il faut savoir :
    depuis la console YAML est envoyé tel quel à l'API server, seul arbitre.
 6. **Aucun journal d'audit local.** Ce qui a été fait depuis l'application n'est
    traçable que dans le journal d'audit du cluster.
-7. **Aucune identité applicative.** L'application ne sait pas qui est devant
+7. **L'assistant IA envoie des données du cluster au fournisseur choisi**, à
+   chaque question : ce que vous sélectionnez et ce que ses outils lisent
+   (jusqu'aux journaux et aux Secrets). Pour un cluster sensible, utilisez un
+   modèle local, ou désactivez les outils. Ses réponses sont des suggestions :
+   rien n'est appliqué sans un clic de votre part.
+8. **Aucune identité applicative.** L'application ne sait pas qui est devant
    l'écran : elle sait seulement sous quel compte système elle tourne.
-8. **Les binaires ne sont pas signés au sens du système d'exploitation.**
-9. **Une seule instance à la fois** doit écrire les fichiers d'état ; deux
-   processus qui écrivent en parallèle peuvent perdre la modification la plus
-   ancienne.
+9. **Les binaires ne sont pas signés au sens du système d'exploitation.**
+10. **Une seule instance à la fois** doit écrire les fichiers d'état ; deux
+    processus qui écrivent en parallèle peuvent perdre la modification la plus
+    ancienne.
+11. **L'interface s'affiche dans la webview du système**, dont la sécurité
+    dépend des mises à jour de votre distribution. La CSP interdit tout contenu
+    et tout appel réseau depuis la page, mais le moteur de rendu reste une
+    surface d'attaque qui n'appartient pas au projet.
+12. **Les dépendances npm de l'interface ne sont pas auditées automatiquement**,
+    contrairement aux dépendances Rust.
+13. **Un cluster ajouté est systématiquement écrit sur le disque** : il n'existe
+    pas de connexion valable pour la seule session en cours.
 
 ---
 
@@ -381,9 +465,12 @@ Avant d'utiliser KubeWatch sur un cluster qui compte :
       puissant dont vous disposez.
 - [ ] `kubectl auth can-i --list` a été relu pour ce contexte.
 - [ ] `pods/exec` et `get secrets` ne sont accordés que si vous en avez l'usage.
-- [ ] Les fichiers d'état sont bien en `0600` (`ls -l`), et le fichier de
-      configuration aussi si vous en avez créé un.
-- [ ] `--insecure` n'est utilisé sur aucun cluster de production.
+- [ ] Les fichiers d'état sont bien en `0600` et leur dossier en `0700`
+      (`ls -l`, `ls -ld`).
+- [ ] La case « Ignorer la vérification TLS du serveur » n'est cochée sur aucun
+      cluster de production.
+- [ ] Les clusters dont vous n'avez plus l'usage ont été retirés : leur jeton
+      reste sinon dans `clusters.json`.
 - [ ] Le jeton GitHub est un jeton *fine-grained* sans aucune permission.
 - [ ] Le journal d'audit de l'API server est actif — c'est lui qui fait foi.
 - [ ] L'archive téléchargée a été vérifiée : `sha256sum -c` **et**
@@ -401,5 +488,5 @@ de l'onglet *Security* du dépôt
 qui ouvre un avis privé.
 
 Merci d'inclure : la version concernée, les étapes de reproduction, l'impact
-constaté, et le contexte (système, session graphique, mode de connexion au
-cluster).
+constaté, et le contexte (système, session graphique, version de la webview du
+système, mode de connexion au cluster).

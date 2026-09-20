@@ -17,9 +17,14 @@ N'éditez à la main que la section « Non publié », et de préférence pas du
 ### Changements incompatibles
 
 - **KubeWatch devient une application de bureau native.** Le produit se compose
-  désormais d'un seul binaire, `kubewatch-desktop` (interface graphique
-  egui/eframe, rendu wgpu). Le mode serveur et la ligne de commande ont été
-  retirés.
+  désormais d'un seul binaire, `kubewatch-desktop` : un backend Rust Tauri 2 qui
+  embarque une interface web (React, TypeScript) construite depuis `ui/`. Le
+  mode serveur, la ligne de commande et la première interface native écrite en
+  egui ont été retirés.
+- **Nouvelles dépendances sous Linux.** La fenêtre est une webview du système :
+  webkit2gtk 4.1, javascriptcoregtk 4.1, libsoup 3 et GTK 3 sont nécessaires à
+  la compilation comme à l'exécution. Construire depuis les sources demande en
+  outre Node.js 22+ et `tauri-cli` 2.
 - Le dossier d'état et le format des données sont **inchangés** : les clusters
   enregistrés et les surveillances d'une installation existante sont repris
   tels quels. Le fichier `config.yaml` de la ligne de commande n'est plus lu.
@@ -54,6 +59,41 @@ N'éditez à la main que la section « Non publié », et de préférence pas du
 
 ### Nouveautés
 
+- **Interface entièrement nouvelle** (`ui/`, React 19 + TypeScript + Vite),
+  servie par le backend Tauri : barre latérale, barre de cluster et de
+  namespace, recherche globale (Ctrl+K), thème clair/sombre ou système,
+  raccourcis Ctrl+1…7, Ctrl+, et Ctrl+R. Les écrans : vue d'ensemble, clusters
+  (import de kubeconfig par contexte, connexion distante), ressources (table par
+  type, panneau de détail avec YAML éditable, évènements, journaux en flux,
+  terminal, actions : redimensionner, redémarrer, retour arrière, image,
+  cordon/drain, suppression), console YAML (simulation, différences,
+  application, suppression), topologie, hub, déploiement, mises à jour,
+  réglages. `make run` lance le tout avec rechargement à chaud ;
+  `make bundles` produit AppImage, `.deb` et `.rpm`.
+- **Test de fumée des écrans** : `make ui-test` monte chacun d'eux dans un DOM
+  simulé sur un instantané de cluster anonymisé, et échoue si l'un lève une
+  erreur au rendu. Il attrape ce que le vérificateur de types ne voit pas : les
+  écarts entre les types déclarés et le JSON réellement produit par le backend.
+- **Assistant IA** (`crates/ai`, panneau Ctrl+J dans l'application Tauri) :
+  dialogue en flux avec **Claude** (API Anthropic), **ChatGPT** (API OpenAI)
+  ou **un modèle local** via tout serveur compatible OpenAI (LM Studio, Ollama,
+  llama.cpp, Jan…). Plusieurs profils, liste des modèles du fournisseur, clés
+  conservées dans `ai.json` (0600) et jamais renvoyées à l'interface. L'assistant
+  reçoit le contexte de l'écran (cluster, namespace, objet sélectionné) et
+  dispose d'**outils en lecture seule** sur le cluster — synthèse, namespaces,
+  listes d'objets, YAML, évènements, journaux, métriques — qu'il enchaîne
+  lui-même pour diagnostiquer ; il ne modifie jamais rien : les YAML qu'il
+  propose s'ouvrent d'un clic dans la console YAML. Refus et troncatures du
+  fournisseur sont affichés tels quels.
+- **`make appimage`** produit un AppImage autonome pour Linux
+  (`dist/KubeWatch-<version>-<arch>.AppImage`, avec son `.sha256`). Il
+  n'embarque aucune bibliothèque graphique ni aucune information de mise à
+  jour : le système hôte fournit Vulkan, Wayland, X11 et xkbcommon, comme pour
+  le binaire nu.
+- **Une icône d'application est livrée** (`packaging/icons/hicolor/`, SVG et
+  PNG 256 px), reprise du dessin que la fenêtre affiche déjà. Les archives
+  Linux l'embarquent et `make desktop-install` l'installe dans le thème
+  d'icônes de l'utilisateur.
 - **Écran « Topologie » (`Ctrl+3`)** : le graphe des objets du cluster et de
   leurs liens — Ingress → Service → Deployment / StatefulSet / DaemonSet /
   CronJob → Pod → nœud, volumes persistants, ConfigMaps et Secrets. Les liens
@@ -69,13 +109,11 @@ N'éditez à la main que la section « Non publié », et de préférence pas du
   Côté cœur, `ObjectSummary` porte désormais les propriétaires (`owners`), et
   les résumés de pods et d'ingress exposent volumes, ConfigMaps, Secrets et
   backends.
-- **Icônes Phosphor** : l'interface embarque la police d'icônes
-  [Phosphor](https://phosphoricons.com/) (crate `egui-phosphor`, variante
-  *Regular*, licence MIT). Navigation, bandeaux de notification, boutons de
-  fermeture, tri des colonnes, verdicts et avertissements utilisent des
-  pictogrammes dessinés d'un même trait plutôt que des glyphes Unicode inégaux
-  d'une police à l'autre. Les icônes sont centralisées et nommées par rôle
-  dans `crates/desktop/src/icons.rs`. Le binaire grossit d'environ 490 Kio.
+- **Icônes Phosphor** : l'interface utilise le jeu d'icônes
+  [Phosphor](https://phosphoricons.com/) (paquet `@phosphor-icons/react`,
+  licence MIT). Navigation, bandeaux de notification, boutons de fermeture, tri
+  des colonnes, verdicts et avertissements portent des pictogrammes dessinés
+  d'un même trait plutôt que des glyphes Unicode inégaux d'une police à l'autre.
 - **Écran « Déployer » (`Ctrl+5`)** : un assistant en quatre étapes — choisir
   l'application (catalogue embarqué ou image quelconque, dont les ports et les
   variables sont lus dans le registre), la régler (profil de taille, mode

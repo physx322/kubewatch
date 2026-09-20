@@ -1,0 +1,162 @@
+.assistant {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-height: 0;
+}
+.assistant-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  border-bottom: 1px solid var(--border);
+  flex: none;
+}
+.assistant-header .title {
+  display: flex;
+  flex-direction: column;
+  line-height: 1.2;
+}
+.assistant-body {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow: auto;
+  padding: 14px 14px 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.msg-user {
+  align-self: flex-end;
+  max-width: 88%;
+  background: var(--accent-soft);
+  color: var(--fg);
+  border-radius: 12px 12px 3px 12px;
+  padding: 8px 12px;
+  white-space: pre-wrap;
+  user-select: text;
+  font-size: var(--fs);
+}
+.msg-assistant {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  max-width: 100%;
+}
+.tool-card {
+  border: 1px solid var(--border);
+  border-radius: var(--radius-s);
+  background: var(--bg-sunken);
+  font-size: var(--fs-xs);
+}
+.tool-card summary {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 8px;
+  cursor: pointer;
+  list-style: none;
+  color: var(--fg-muted);
+}
+.tool-card summary::-webkit-details-marker {
+  display: none;
+}
+.tool-card summary .name {
+  font-family: var(--font-mono);
+  color: var(--fg);
+  font-weight: 600;
+}
+.tool-card summary .args {
+  font-family: var(--font-mono);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  flex: 1;
+  min-width: 0;
+}
+.tool-card pre {
+  margin: 0;
+  padding: 6px 8px;
+  border-top: 1px solid var(--border);
+  font-family: var(--font-mono);
+  font-size: 11px;
+  white-space: pre-wrap;
+  word-break: break-word;
+  max-height: 260px;
+  overflow: auto;
+  user-select: text;
+}
+.thinking {
+  border-left: 2px solid var(--border-strong);
+  padding: 2px 8px;
+  color: var(--fg-muted);
+  font-size: var(--fs-xs);
+  white-space: pre-wrap;
+  max-height: 160px;
+  overflow: auto;
+}
+.thinking summary {
+  cursor: pointer;
+  color: var(--fg-faint);
+}
+.assistant-welcome {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  color: var(--fg-muted);
+  font-size: var(--fs-s);
+}
+.assistant-welcome .prompts {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.assistant-welcome .prompts button {
+  text-align: left;
+  justify-content: flex-start;
+  height: auto;
+  padding: 7px 10px;
+  white-space: normal;
+  line-height: 1.35;
+}
+.assistant-context {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  padding: 6px 12px 0;
+  flex: none;
+}
+.assistant-input {
+  display: flex;
+  gap: 8px;
+  padding: 8px 12px 6px;
+  align-items: flex-end;
+  flex: none;
+}
+.assistant-input textarea {
+  flex: 1;
+  min-height: 38px;
+  max-height: 160px;
+  resize: none;
+  font-size: var(--fs);
+  line-height: 1.4;
+  padding: 8px 10px;
+}
+.assistant-footer {
+  padding: 0 12px 8px;
+  font-size: var(--fs-xs);
+  color: var(--fg-faint);
+  display: flex;
+  gap: 8px;
+  flex: none;
+}
+.cursor-blink::after {
+  content: "▍";
+  animation: blink 1s steps(2) infinite;
+  color: var(--accent);
+}
+@keyframes blink {
+  50% {
+    opacity: 0;
+  }
+}

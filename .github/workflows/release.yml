@@ -16,12 +16,16 @@
 #
 # Chaque archive contient le binaire `kubewatch-desktop` (sur macOS, un bundle
 # `KubeWatch.app`), la licence, la documentation et, sous Linux, les
-# métadonnées freedesktop. Cinq cibles : Linux glibc et macOS en x86-64 et
-# ARM64, Windows x86-64. Pas de musl : une application graphique charge
-# Vulkan, OpenGL, Wayland, X11 et xkbcommon par `dlopen` à l'exécution, ce
-# qu'un exécutable statique ne sait pas faire. Pas d'ARM64 Windows : la cible
-# ne pourrait être compilée que de façon croisée, sans rien pour vérifier
-# qu'une fenêtre s'ouvre.
+# métadonnées freedesktop et l'icône. Le binaire embarque l'interface web de
+# `ui/`, construite juste avant lui ; la webview, elle, vient du système.
+# Cinq cibles : Linux glibc et macOS en x86-64 et ARM64, Windows x86-64. Pas de
+# musl : le binaire est lié à webkit2gtk et à GTK 3, qu'un exécutable statique
+# ne sait pas embarquer. Pas d'ARM64 Windows : la cible ne pourrait être
+# compilée que de façon croisée, sans rien pour vérifier qu'une fenêtre
+# s'ouvre.
+#
+# Les paquets .AppImage, .deb et .rpm ne sont pas publiés ici : ils se
+# construisent avec `make bundles` (tauri build). Voir packaging/README.md.
 #
 #   push sur master ──> autotag : pose vX.Y.Z si la version est nouvelle ─┐
 #   tag vX.Y.Z ────────────────────────────────────────────────────────────┤
@@ -312,26 +316,33 @@ jobs:
         with:
           ref: ${{ needs.create-release.outputs.tag }}
 
-      # Voir .github/workflows/ci.yml pour le détail de chaque paquet. Résumé :
-      # avec la résolution de features actuelle, ces bibliothèques sont ouvertes
-      # par dlopen à l'exécution et ne sont pas liées à la compilation ; les
-      # paquets -dev restent installés comme filet de sécurité et pour tirer les
-      # .so.N correspondants.
+      # Dépendances de la webview, liées à la compilation. Voir
+      # .github/workflows/ci.yml pour le détail.
       - name: Installer les dépendances système (Linux)
         if: runner.os == 'Linux'
         run: |
           set -euo pipefail
           sudo apt-get update
           sudo apt-get install -y --no-install-recommends \
-            libxkbcommon-dev \
-            libxkbcommon-x11-dev \
-            libwayland-dev \
-            libx11-dev \
-            libxcursor-dev \
-            libxrandr-dev \
-            libxi-dev \
-            libgl1-mesa-dev \
-            libegl1-mesa-dev
+            libwebkit2gtk-4.1-dev \
+            libjavascriptcoregtk-4.1-dev \
+            libsoup-3.0-dev \
+            libgtk-3-dev \
+            libayatana-appindicator3-dev \
+            librsvg2-dev
+
+      - name: Installer Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: ui/package-lock.json
+
+      # L'interface est embarquée dans le binaire à la compilation : elle doit
+      # être construite avant lui, sans quoi `tauri::generate_context!` échoue.
+      - name: Construire l'interface web
+        run: npm ci --no-audit --no-fund && npx vite build
+        working-directory: ui
 
       - name: Installer la toolchain Rust stable
         uses: dtolnay/rust-toolchain@stable
@@ -363,6 +374,7 @@ jobs:
           install -m 0755 "target/${TARGET}/dist/${GUI_BIN_NAME}" "dist/${PKG}/${GUI_BIN_NAME}"
           install -m 0644 packaging/io.kubewatch.KubeWatch.desktop "dist/${PKG}/io.kubewatch.KubeWatch.desktop"
           install -m 0644 "packaging/${BUNDLE_ID}.metainfo.xml" "dist/${PKG}/${BUNDLE_ID}.metainfo.xml"
+          cp -r packaging/icons "dist/${PKG}/icons"
           install -m 0644 packaging/README.md "dist/${PKG}/INSTALL-packaging.md"
           install -m 0644 LICENSE "dist/${PKG}/LICENSE"
           if [ -f README.md ]; then
@@ -579,15 +591,12 @@ jobs:
           set -euo pipefail
           sudo apt-get update
           sudo apt-get install -y --no-install-recommends \
-            libxkbcommon-dev \
-            libxkbcommon-x11-dev \
-            libwayland-dev \
-            libx11-dev \
-            libxcursor-dev \
-            libxrandr-dev \
-            libxi-dev \
-            libgl1-mesa-dev \
-            libegl1-mesa-dev
+            libwebkit2gtk-4.1-dev \
+            libjavascriptcoregtk-4.1-dev \
+            libsoup-3.0-dev \
+            libgtk-3-dev \
+            libayatana-appindicator3-dev \
+            librsvg2-dev
 
       - name: Installer la toolchain Rust stable
         if: vars.PUBLISH_CRATES == 'true'
@@ -596,14 +605,18 @@ jobs:
       - name: Publier les crates sur crates.io
         # Étape désactivée par défaut : définir la variable de dépôt
         # PUBLISH_CRATES=true pour l'activer. L'ordre suit les dépendances
-        # internes (core, hub, updater, puis l'application), chaque crate devant
-        # être visible dans l'index avant que le suivant ne puisse être vérifié.
+        # internes, chaque crate devant être visible dans l'index avant que le
+        # suivant ne puisse être vérifié.
+        #
+        # `kubewatch-desktop` n'y figure pas : c'est une application, déclarée
+        # `publish = false`, et sa compilation exige l'interface web de `ui/`,
+        # qui ne fait pas partie du crate.
         if: vars.PUBLISH_CRATES == 'true'
         env:
           CARGO_REGISTRY_TOKEN: ${{ secrets.CARGO_REGISTRY_TOKEN }}
         run: |
           set -euo pipefail
-          for crate in kubewatch-core kubewatch-hub kubewatch-updater kubewatch-desktop; do
+          for crate in kubewatch-core kubewatch-hub kubewatch-updater kubewatch-ai; do
             echo "::group::cargo publish -p $crate"
             if cargo publish -p "$crate" --locked; then
               echo "$crate publié."

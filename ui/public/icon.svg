@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Icône de KubeWatch : un carré arrondi bleu portant un « K ».
+
+  Ce dessin reproduit à l'identique l'icône de fenêtre calculée par
+  crates/desktop/src/app.rs (fn app_icon) : mêmes proportions sur une grille
+  de 64, même dégradé (#115e96 vers #38bdf8), mêmes trois segments.
+  Les versions matricielles de packaging/icons/hicolor/<taille>/ sont
+  produites à partir de ce fichier par « make icons ».
+-->
+<svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 64 64">
+  <defs>
+    <linearGradient id="fond" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#115e96"/>
+      <stop offset="1" stop-color="#38bdf8"/>
+    </linearGradient>
+  </defs>
+  <rect x="2" y="2" width="60" height="60" rx="13" ry="13" fill="url(#fond)"/>
+  <path d="M20 16 V48 M21 33 L42 16 M21 33 L42 48"
+        fill="none" stroke="#ffffff" stroke-width="5"
+        stroke-linecap="round" stroke-linejoin="round"/>
+</svg>

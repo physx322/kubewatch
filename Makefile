@@ -2,13 +2,18 @@
 # KubeWatch — raccourcis de développement
 #
 #   make            affiche cette aide
+#   make setup      installe les dépendances npm de l'interface web
+#   make run        lance l'application avec rechargement à chaud (Vite + Tauri)
 #   make build      compile le workspace en debug
-#   make run        lance l'application de bureau
-#   make dev        idem, recompilée et relancée à chaque sauvegarde (cargo-watch)
+#   make test       tests Rust et test de fumée des écrans
 #   make dist       produit l'archive de distribution du poste courant
+#   make appimage   produit un AppImage (Linux)
+#   make bundles    produit AppImage, .deb et .rpm (Linux)
 #
-# Le dépôt produit un seul binaire :
-#   • kubewatch-desktop  — application de bureau (egui)  (crates/desktop)
+# Le dépôt produit un seul binaire, kubewatch-desktop (crates/desktop) :
+# un backend Rust Tauri 2 qui embarque l'interface web de ui/ (React, Vite).
+# L'interface doit donc être construite avant le binaire ; les cibles ci-dessous
+# s'en chargent.
 #
 # TOOLCHAIN — si le shim `rustup` est cassé (cargo introuvable ou en erreur),
 # exportez le chemin de la toolchain avant d'appeler make :
@@ -21,6 +26,7 @@
 # ---------------------------------------------------------------------------
 
 CARGO   ?= cargo
+NPM     ?= npm
 # Nom du produit : préfixe des archives de distribution.
 PKG     := kubewatch
 GUI_BIN := kubewatch-desktop
@@ -36,15 +42,31 @@ TARGET_FLAG := $(if $(TARGET),--target $(TARGET),)
 OUT_DIR  := target/$(if $(TARGET),$(TARGET)/,)$(PROFILE)
 GUI_PATH := $(OUT_DIR)/$(GUI_BIN)
 
+# Icône, dans la disposition d'un thème freedesktop (packaging/icons/hicolor).
+ICON_SVG := packaging/icons/hicolor/scalable/apps/$(APP_ID).svg
+ICON_PNG := packaging/icons/hicolor/256x256/apps/$(APP_ID).png
+
 # Emplacements d'installation par utilisateur (aucun sudo nécessaire).
 PREFIX      ?= $(HOME)/.local
 DESKTOP_DIR := $(PREFIX)/share/applications
 METAINFO_DIR := $(PREFIX)/share/metainfo
+ICONS_DIR   := $(PREFIX)/share/icons/hicolor
+
+# tauri-cli : le sous-commande de cargo si elle est installée, sinon le binaire
+# autonome `cargo-tauri`. Surchargeable : make bundles TAURI=/chemin/cargo-tauri
+ifeq ($(origin TAURI),undefined)
+TAURI := $(if $(shell command -v cargo-tauri 2>/dev/null),cargo-tauri,$(CARGO) tauri)
+endif
+# Paquets produits par `tauri build`, en profil release. L'architecture au sens
+# AppImage est le premier composant du triplet : x86_64, aarch64.
+BUNDLE_DIR    := target/$(if $(TARGET),$(TARGET)/,)release/bundle
+APPIMAGE_ARCH := $(firstword $(subst -, ,$(TRIPLE)))
 
 .DEFAULT_GOAL := help
-.PHONY: help build release run dev test lint fmt fmt-check fmt-nightly clippy \
-        audit deny dist clean install uninstall doc ci packaging-check \
-        desktop-install desktop-uninstall
+.PHONY: help setup build release run dev test check lint fmt fmt-check \
+        fmt-nightly clippy audit deny dist appimage bundles icons clean \
+        install uninstall doc ci packaging-check desktop-install \
+        desktop-uninstall ui-install ui-check ui-test ui-build ui-dist
 
 help: ## Affiche la liste des cibles disponibles
 	@printf 'KubeWatch %s — cibles disponibles :\n\n' '$(VERSION)'
@@ -53,23 +75,26 @@ help: ## Affiche la liste des cibles disponibles
 		| awk 'BEGIN {FS = ":.*?## "}; {printf "  \033[36m%-18s\033[0m %s\n", $$1, $$2}'
 	@printf '\nVariables : CARGO=%s PROFILE=%s PREFIX=%s\n' '$(CARGO)' '$(PROFILE)' '$(PREFIX)'
 
-build: ## Compile le workspace en mode debug
+setup: ui-install ## Installe les dépendances de développement (npm de ui/)
+	@printf 'Prêt. « make run » lance l'"'"'application.\n'
+
+build: ui-dist ## Compile le workspace en mode debug
 	$(CARGO) build --workspace
 
-release: ## Compile le binaire optimisé (profil dist)
+release: ui-build ## Compile le binaire optimisé (profil dist), interface incluse
 	$(CARGO) build --locked --profile $(PROFILE) $(TARGET_FLAG) -p $(GUI_BIN)
 	@ls -lh $(GUI_PATH)
 
-run: ## Lance l'application de bureau (RUST_LOG=debug pour les traces)
-	RUST_LOG=$${RUST_LOG:-info} $(CARGO) run -p $(GUI_BIN)
+run: dev ## Lance l'application avec rechargement à chaud (alias de dev)
 
-dev: ## Recompile et relance l'application à chaque sauvegarde (cargo-watch)
-	@$(CARGO) watch --version >/dev/null 2>&1 \
-		|| { echo "cargo-watch absent : cargo install cargo-watch --locked"; exit 1; }
-	RUST_LOG=$${RUST_LOG:-info} $(CARGO) watch -w crates -w Cargo.toml -x 'run -p $(GUI_BIN)'
+dev: ui-install ## Lance l'application : Vite pour l'interface, Tauri pour le binaire
+	@$(TAURI) --version >/dev/null 2>&1 \
+		|| { echo "tauri-cli absent : cargo install tauri-cli --version '^2' --locked"; exit 1; }
+	cd crates/desktop && RUST_LOG=$${RUST_LOG:-info} $(TAURI) dev
 
-test: ## Exécute la suite de tests du workspace
+test: ui-dist ## Exécute les tests Rust puis le test de fumée des écrans
 	$(CARGO) test --workspace --all-features
+	$(MAKE) ui-test
 
 lint: fmt-check clippy ## Vérifie le formatage puis exécute clippy
 
@@ -82,10 +107,10 @@ fmt-nightly: ## Formate en appliquant aussi le regroupement des imports (nightly
 fmt-check: ## Vérifie le formatage sans modifier les fichiers
 	$(CARGO) fmt --all -- --check
 
-clippy: ## Lint strict : tout avertissement est une erreur
+clippy: ui-dist ## Lint strict : tout avertissement est une erreur
 	$(CARGO) clippy --workspace --all-targets --all-features -- -D warnings
 
-doc: ## Génère la documentation du workspace
+doc: ui-dist ## Génère la documentation du workspace
 	RUSTDOCFLAGS="-D warnings" $(CARGO) doc --workspace --no-deps --all-features
 
 audit: ## Recherche les vulnérabilités connues (cargo-audit)
@@ -101,12 +126,12 @@ packaging-check: ## Valide l'entrée .desktop et les métadonnées AppStream
 		|| { echo "desktop-file-validate absent : installez desktop-file-utils"; exit 1; }
 	@command -v appstreamcli >/dev/null 2>&1 \
 		|| { echo "appstreamcli absent : installez appstream"; exit 1; }
-	desktop-file-validate packaging/$(BIN).desktop
+	desktop-file-validate packaging/$(APP_ID).desktop
 	appstreamcli validate --no-net packaging/$(APP_ID).metainfo.xml
 
-ci: lint test release packaging-check audit ## Reproduit localement l'essentiel de la CI
+ci: lint ui-check test release packaging-check audit ## Reproduit localement l'essentiel de la CI
 
-dist: release ## Produit l'archive de distribution (dist/kubewatch-<version>-<cible>.tar.gz)
+dist: release ## Produit l'archive du binaire nu (dist/kubewatch-<version>-<cible>.tar.gz)
 	@set -eu; \
 	pkg="$(PKG)-$(VERSION)-$(TRIPLE)"; \
 	rm -rf "dist/$$pkg"; \
@@ -115,6 +140,7 @@ dist: release ## Produit l'archive de distribution (dist/kubewatch-<version>-<ci
 	cp LICENSE "dist/$$pkg/"; \
 	cp packaging/$(APP_ID).desktop "dist/$$pkg/"; \
 	cp packaging/$(APP_ID).metainfo.xml "dist/$$pkg/"; \
+	cp -r packaging/icons "dist/$$pkg/icons"; \
 	[ -f README.md ] && cp README.md "dist/$$pkg/" || true; \
 	[ -f CHANGELOG.md ] && cp CHANGELOG.md "dist/$$pkg/" || true; \
 	tar -C dist -czf "dist/$$pkg.tar.gz" "$$pkg"; \
@@ -122,25 +148,92 @@ dist: release ## Produit l'archive de distribution (dist/kubewatch-<version>-<ci
 	cd dist && (sha256sum "$$pkg.tar.gz" 2>/dev/null || shasum -a 256 "$$pkg.tar.gz") > "$$pkg.tar.gz.sha256"; \
 	cat "$$pkg.tar.gz.sha256"
 
-install: ## Installe le binaire dans ~/.cargo/bin
+# --- Paquets (tauri build) --------------------------------------------------
+#
+# `tauri build` construit l'interface (beforeBuildCommand) puis le binaire, et
+# empaquette. Contrairement au binaire nu, l'AppImage produit ici **embarque la
+# webview** (webkit2gtk et ses dépendances) : c'est ce qui le rend portable.
+
+appimage: ## Produit un AppImage (dist/, Linux)
+	@[ "$$(uname -s)" = Linux ] || { echo "AppImage : Linux seulement (ici : $$(uname -s))"; exit 1; }
+	$(MAKE) bundles BUNDLES=appimage
+
+bundles: ui-install ## Produit les paquets : AppImage, .deb et .rpm sous Linux (BUNDLES=appimage pour n'en faire qu'un)
+	@$(TAURI) --version >/dev/null 2>&1 \
+		|| { echo "tauri-cli absent : cargo install tauri-cli --version '^2' --locked"; exit 1; }
+	cd crates/desktop && $(TAURI) build $(if $(BUNDLES),--bundles $(BUNDLES),) $(TARGET_FLAG)
+	@set -eu; \
+	mkdir -p dist; \
+	found=0; \
+	for f in $(BUNDLE_DIR)/*/*.AppImage $(BUNDLE_DIR)/*/*.deb $(BUNDLE_DIR)/*/*.rpm \
+	         $(BUNDLE_DIR)/*/*.dmg $(BUNDLE_DIR)/*/*.msi $(BUNDLE_DIR)/*/*-setup.exe; do \
+		[ -f "$$f" ] || continue; \
+		found=1; \
+		cp -f "$$f" dist/; \
+		name=$$(basename "$$f"); \
+		( cd dist && (sha256sum "$$name" 2>/dev/null || shasum -a 256 "$$name") > "$$name.sha256" ); \
+	done; \
+	[ "$$found" = 1 ] || { echo "aucun paquet produit : voir la sortie de tauri build"; exit 1; }; \
+	ls -lh dist/
+
+# --- Interface web (ui/) ----------------------------------------------------
+
+ui-install: ui/node_modules ## Installe les dépendances npm de l'interface web (ui/)
+
+ui/node_modules: ui/package-lock.json
+	$(NPM) install --prefix ui --no-audit --no-fund
+	@touch ui/node_modules
+
+ui-check: ui-install ## Vérifie les types TypeScript de l'interface web
+	$(NPM) run --prefix ui -s typecheck
+
+ui-test: ui-install ## Test de fumée des écrans : chacun monté dans un DOM simulé
+	$(NPM) test --prefix ui -s
+
+ui-build: ui-install ## Produit le bundle de l'interface web (ui/dist)
+	$(NPM) run --prefix ui -s build
+
+# `tauri::generate_context!` exige que ui/dist existe à la compilation. Pour
+# compiler ou tester le Rust sans reconstruire l'interface, un index.html vide
+# suffit ; `ui-build` produit la vraie interface.
+ui-dist:
+	@mkdir -p ui/dist
+	@[ -f ui/dist/index.html ] || echo '<!doctype html><title>KubeWatch</title>' > ui/dist/index.html
+
+check: ui-check ui-dist ## Compile le workspace et vérifie l'interface, sans rien lancer
+	$(CARGO) check --workspace --all-targets
+
+icons: ## Régénère l'icône PNG à partir du SVG (ImageMagick avec librsvg)
+	@command -v magick >/dev/null 2>&1 \
+		|| { echo "magick absent : installez ImageMagick (avec le délégué librsvg)"; exit 1; }
+	magick -background none -density 384 "$(ICON_SVG)" -resize 256x256 -depth 8 -strip "$(ICON_PNG)"
+
+install: ui-build ## Installe le binaire dans ~/.cargo/bin (interface incluse)
 	$(CARGO) install --path crates/desktop --locked --force
 
 uninstall: ## Désinstalle le binaire de ~/.cargo/bin
 	$(CARGO) uninstall $(GUI_BIN) || true
 
-desktop-install: ## Installe l'entrée de menu et les métadonnées AppStream (utilisateur)
+desktop-install: ## Installe l'entrée de menu, l'icône et les métadonnées AppStream (utilisateur)
 	install -Dm 0644 packaging/$(APP_ID).desktop $(DESKTOP_DIR)/$(APP_ID).desktop
 	install -Dm 0644 packaging/$(APP_ID).metainfo.xml $(METAINFO_DIR)/$(APP_ID).metainfo.xml
+	install -Dm 0644 $(ICON_SVG) $(ICONS_DIR)/scalable/apps/$(APP_ID).svg
+	install -Dm 0644 $(ICON_PNG) $(ICONS_DIR)/256x256/apps/$(APP_ID).png
 	@command -v update-desktop-database >/dev/null 2>&1 \
 		&& update-desktop-database $(DESKTOP_DIR) || true
-	@printf 'Entrée installée dans %s.\n' '$(DESKTOP_DIR)'
+	@command -v gtk-update-icon-cache >/dev/null 2>&1 \
+		&& gtk-update-icon-cache -q -t $(ICONS_DIR) || true
+	@printf 'Entrée installée dans %s, icône dans %s.\n' '$(DESKTOP_DIR)' '$(ICONS_DIR)'
 	@printf 'Rappel : « Exec=kubewatch-desktop » suppose le binaire dans le PATH.\n'
 
-desktop-uninstall: ## Retire l'entrée de menu et les métadonnées AppStream (utilisateur)
-	rm -f $(DESKTOP_DIR)/$(APP_ID).desktop $(METAINFO_DIR)/$(APP_ID).metainfo.xml
+desktop-uninstall: ## Retire l'entrée de menu, l'icône et les métadonnées AppStream (utilisateur)
+	rm -f $(DESKTOP_DIR)/$(APP_ID).desktop $(METAINFO_DIR)/$(APP_ID).metainfo.xml \
+		$(ICONS_DIR)/scalable/apps/$(APP_ID).svg $(ICONS_DIR)/256x256/apps/$(APP_ID).png
 	@command -v update-desktop-database >/dev/null 2>&1 \
 		&& update-desktop-database $(DESKTOP_DIR) || true
+	@command -v gtk-update-icon-cache >/dev/null 2>&1 \
+		&& gtk-update-icon-cache -q -t $(ICONS_DIR) || true
 
 clean: ## Supprime les artefacts de compilation et de distribution
 	$(CARGO) clean
-	rm -rf dist
+	rm -rf dist ui/dist
