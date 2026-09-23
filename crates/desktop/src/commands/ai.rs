@@ -5,8 +5,9 @@ use tauri::ipc::Channel;
 use tauri::State;
 
 use kubewatch_ai::{
-    ChatMessage, ChatRequest, Error as AiError, ModelInfo, ProfileUpdate, ProfileView, Provider,
-    ProviderProfile, RunOptions, SettingsView, StopReason, StreamEvent, ToolExecutor, Usage,
+    ChatMessage, ChatRequest, ClaudeCodeAccount, Error as AiError, ModelInfo, ProfileUpdate,
+    ProfileView, Provider, ProviderProfile, RunOptions, SettingsView, StopReason, StreamEvent,
+    ToolExecutor, Usage,
 };
 
 use crate::assistant::{self, AiContext, KubeTools};
@@ -39,6 +40,21 @@ pub fn ai_upsert_profile(
     update: ProfileUpdate,
 ) -> Result<ProfileView, String> {
     state.ai.upsert_profile(update).map_err(describe)
+}
+
+/// Compte laissé par Claude Code dans `~/.claude`, s'il y en a un.
+///
+/// Sert à proposer « utiliser mon compte Claude » dans les réglages. Aucun
+/// secret n'est renvoyé : seulement de quoi l'annoncer et le dater.
+#[tauri::command]
+pub fn ai_claude_code_account() -> Option<ClaudeCodeAccount> {
+    kubewatch_ai::claude_code::account()
+}
+
+/// Crée — ou réactive — le profil adossé au compte de Claude Code.
+#[tauri::command]
+pub fn ai_use_claude_code(state: State<'_, AppState>) -> Result<ProfileView, String> {
+    state.ai.use_claude_code().map_err(describe)
 }
 
 #[tauri::command]
@@ -79,7 +95,9 @@ pub async fn ai_list_models(
         .as_deref()
         .and_then(|id| state.ai.profile(Some(id)).ok())
         .and_then(|p| p.api_key);
+    // Un profil adossé au compte de Claude Code n'a pas de clé à reprendre.
     let api_key = match draft.api_key.as_deref().map(str::trim) {
+        _ if draft.use_claude_code => None,
         Some(k) if !k.is_empty() => Some(k.to_string()),
         _ => stored_key,
     };
@@ -101,6 +119,7 @@ pub async fn ai_list_models(
         },
         max_output_tokens: None,
         show_thinking: false,
+        use_claude_code: draft.use_claude_code,
     };
     let provider = Provider::from_profile(&profile).map_err(describe)?;
     let mut models = provider.list_models().await.map_err(describe)?;
@@ -191,7 +210,7 @@ pub fn ai_cancel(state: State<'_, AppState>, chat_id: u64) -> bool {
 fn describe(e: AiError) -> String {
     match &e {
         AiError::Api { status: 401 | 403, message } => {
-            format!("clé d'API refusée par le fournisseur ({message}). Vérifiez-la dans les réglages de l'assistant.")
+            format!("identifiant refusé par le fournisseur ({message}). Vérifiez la clé dans les réglages de l'assistant ; si le profil emprunte le compte de Claude Code, relancez « claude » pour renouveler le jeton.")
         }
         AiError::Api { status: 404, message } => {
             format!("adresse ou modèle introuvable ({message}). Vérifiez l'adresse de base et le nom du modèle.")

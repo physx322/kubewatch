@@ -8,6 +8,9 @@
 //! * **compatible OpenAI** — même dialecte, adressé à un serveur local
 //!   (LM Studio, Ollama, llama.cpp, Jan…) ou à un proxy d'entreprise.
 //!
+//! Pour Anthropic, un profil peut se passer de clé et reprendre les identifiants
+//! laissés par Claude Code dans `~/.claude` : voir [`claude_code`].
+//!
 //! Le crate ne sait rien de Kubernetes : les outils sont décrits par un
 //! [`ToolSpec`] et exécutés par un [`ToolExecutor`] fourni par l'application.
 //! Les clés d'API sont conservées par [`AiStore`] dans le dossier d'état, en
@@ -16,6 +19,7 @@
 
 pub mod agent;
 pub mod anthropic;
+pub mod claude_code;
 pub mod config;
 pub mod error;
 pub mod message;
@@ -25,6 +29,7 @@ pub mod sse;
 pub mod store;
 
 pub use agent::{run, RunOptions, RunOutcome, ToolExecutor};
+pub use claude_code::Account as ClaudeCodeAccount;
 pub use config::{
     AiSettings, ProfileUpdate, ProfileView, ProviderKind, ProviderProfile, SettingsView,
 };

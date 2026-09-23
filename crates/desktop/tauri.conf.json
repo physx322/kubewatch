@@ -15,7 +15,7 @@
     }
   },
   "app": {
-    "withGlobalTauri": false,
+    "withGlobalTauri": true,
     "windows": [
       {
         "label": "main",
@@ -25,6 +25,7 @@
         "minWidth": 960,
         "minHeight": 620,
         "resizable": true,
+        "decorations": false,
         "center": true
       }
     ],

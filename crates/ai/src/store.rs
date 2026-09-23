@@ -7,11 +7,17 @@
 use std::path::{Path, PathBuf};
 use std::sync::RwLock;
 
-use crate::config::{AiSettings, ProfileUpdate, ProfileView, ProviderProfile, SettingsView};
+use crate::claude_code;
+use crate::config::{
+    AiSettings, ProfileUpdate, ProfileView, ProviderKind, ProviderProfile, SettingsView,
+};
 use crate::error::{Error, Result};
 
 /// Nom du fichier dans le dossier d'état.
 pub const FILE_NAME: &str = "ai.json";
+
+/// Nom donné au profil créé à partir du compte de Claude Code.
+pub const CLAUDE_CODE_PROFILE: &str = "Compte Claude (Claude Code)";
 
 /// Réglages de l'assistant, en mémoire et sur disque.
 #[derive(Debug)]
@@ -136,6 +142,7 @@ impl AiStore {
                 p.model = model;
                 p.max_output_tokens = update.max_output_tokens.filter(|n| *n > 0);
                 p.show_thinking = update.show_thinking;
+                p.use_claude_code = update.use_claude_code;
                 match update.api_key.as_deref() {
                     None => {}
                     Some("") => p.api_key = None,
@@ -156,6 +163,7 @@ impl AiStore {
                     model,
                     max_output_tokens: update.max_output_tokens.filter(|n| *n > 0),
                     show_thinking: update.show_thinking,
+                    use_claude_code: update.use_claude_code,
                 };
                 let view = ProfileView::from(&p);
                 // Le premier profil créé devient actif : l'assistant est utilisable
@@ -169,6 +177,79 @@ impl AiStore {
         };
         self.persist(&s)?;
         Ok(view)
+    }
+
+    /// Crée — ou réactive — le profil adossé au compte de Claude Code.
+    ///
+    /// Le modèle et l'adresse de base sont repris des réglages de Claude Code
+    /// quand celui-ci en impose ; le profil devient actif.
+    pub fn use_claude_code(&self) -> Result<ProfileView> {
+        let account = claude_code::account().ok_or_else(|| {
+            Error::Config(format!(
+                "aucun identifiant de Claude Code dans {} : lancez « claude » et connectez-vous",
+                claude_code::dir_label()
+            ))
+        })?;
+
+        let mut s = self.settings.write().expect("verrou empoisonné");
+        let id = match s.profiles.iter().find(|p| p.uses_claude_code()) {
+            Some(p) => p.id.clone(),
+            None => {
+                let p = ProviderProfile {
+                    id: uuid::Uuid::new_v4().to_string(),
+                    name: CLAUDE_CODE_PROFILE.to_string(),
+                    kind: ProviderKind::Anthropic,
+                    base_url: account.base_url.clone(),
+                    api_key: None,
+                    model: account
+                        .model
+                        .clone()
+                        .unwrap_or_else(|| ProviderKind::Anthropic.default_model().to_string()),
+                    max_output_tokens: None,
+                    show_thinking: false,
+                    use_claude_code: true,
+                };
+                let id = p.id.clone();
+                s.profiles.push(p);
+                id
+            }
+        };
+        s.active_profile = Some(id.clone());
+        let view = s
+            .profiles
+            .iter()
+            .find(|p| p.id == id)
+            .map(ProfileView::from)
+            .expect("le profil vient d'être ajouté");
+        self.persist(&s)?;
+        Ok(view)
+    }
+
+    /// Premier démarrage : reprendre le compte de Claude Code s'il y en a un.
+    ///
+    /// On ne touche à rien dès qu'un profil existe : les réglages de
+    /// l'utilisateur priment. Un échec n'est pas bloquant, l'assistant se
+    /// configure aussi à la main.
+    pub fn seed_from_claude_code(&self) -> Option<ProfileView> {
+        if !self
+            .settings
+            .read()
+            .expect("verrou empoisonné")
+            .profiles
+            .is_empty()
+        {
+            return None;
+        }
+        match self.use_claude_code() {
+            Ok(v) => {
+                tracing::info!(profil = %v.name, modele = %v.model, "compte de Claude Code repris");
+                Some(v)
+            }
+            Err(e) => {
+                tracing::debug!(erreur = %e, "pas de compte de Claude Code à reprendre");
+                None
+            }
+        }
     }
 
     /// Supprime un profil, puis enregistre.
@@ -254,6 +335,7 @@ mod tests {
             model: kind.default_model().into(),
             max_output_tokens: None,
             show_thinking: false,
+            use_claude_code: false,
         }
     }
 
@@ -339,6 +421,58 @@ mod tests {
         assert!(!v.tools_enabled);
         assert_eq!(v.max_tool_rounds, 50);
         assert_eq!(v.extra_instructions, "sois bref");
+    }
+
+    #[test]
+    fn reprise_du_compte_claude_code() {
+        let maison = tempfile::tempdir().unwrap();
+        let claude = maison.path().join(claude_code::DIR_NAME);
+        std::fs::create_dir_all(&claude).unwrap();
+        std::fs::write(
+            claude.join(claude_code::CREDENTIALS_FILE),
+            format!(
+                r#"{{"claudeAiOauth":{{"accessToken":"sk-ant-oat","expiresAt":{}}}}}"#,
+                std::time::SystemTime::now()
+                    .duration_since(std::time::UNIX_EPOCH)
+                    .unwrap()
+                    .as_millis() as i64
+                    + 3_600_000
+            ),
+        )
+        .unwrap();
+        // On détourne la détection vers ce faux dossier le temps du test.
+        std::env::set_var(claude_code::DIR_ENV, &claude);
+
+        let dir = tempfile::tempdir().unwrap();
+        let store = AiStore::open(dir.path());
+        let v = store.seed_from_claude_code().expect("compte détecté");
+        assert!(v.use_claude_code);
+        assert!(
+            !v.api_key_set,
+            "aucune clé n'est recopiée dans nos réglages"
+        );
+        assert_eq!(v.model, "claude-opus-5");
+        assert_eq!(store.view().active_profile.as_deref(), Some(v.id.as_str()));
+
+        // Deux appels ne font pas deux profils.
+        let encore = store.use_claude_code().unwrap();
+        assert_eq!(encore.id, v.id);
+        assert_eq!(store.view().profiles.len(), 1);
+
+        // Le jeton n'est jamais recopié dans le fichier de réglages.
+        let ecrit = std::fs::read_to_string(store.path()).unwrap();
+        assert!(!ecrit.contains("sk-ant-oat"));
+        assert!(ecrit.contains("\"useClaudeCode\": true"));
+
+        // Des réglages déjà peuplés ne sont pas touchés.
+        let autre = tempfile::tempdir().unwrap();
+        let store = AiStore::open(autre.path());
+        store
+            .upsert_profile(update("A", ProviderKind::OpenAiCompatible, None))
+            .unwrap();
+        assert!(store.seed_from_claude_code().is_none());
+
+        std::env::remove_var(claude_code::DIR_ENV);
     }
 
     #[cfg(unix)]

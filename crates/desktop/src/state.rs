@@ -83,6 +83,11 @@ impl AppState {
                 "réglages de l'assistant illisibles, on repart d'un état vide : {e}"
             ));
         }
+        // Premier démarrage : si Claude Code est connecté sur cette machine, on
+        // reprend son compte pour que l'assistant marche sans ressaisir de clé.
+        if let Some(p) = ai.seed_from_claude_code() {
+            tracing::info!(profil = %p.name, "assistant configuré depuis ~/.claude");
+        }
 
         Self {
             state_dir,

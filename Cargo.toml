@@ -21,6 +21,10 @@ kubewatch-ai = { path = "crates/ai", version = "0.1.0" }
 tauri = { version = "2", features = [] }
 tauri-build = { version = "2", features = [] }
 rfd = { version = "0.17", default-features = false, features = ["xdg-portal", "pollster"] }
+# GTK n'est utilisé que pour les réglages de rastérisation du texte, que
+# WebKitGTK lit dans `GtkSettings`. Version alignée sur celle de tao, pour
+# n'avoir qu'une seule liaison GTK dans l'arbre.
+gtk = "0.18"
 rustls = { version = "0.23", default-features = false, features = ["ring", "std"] }
 
 kube = { version = "4.2", default-features = false, features = ["client", "config", "runtime", "derive", "ws", "rustls-tls", "ring", "gzip", "socks5", "http-proxy", "oidc", "jsonpatch"] }

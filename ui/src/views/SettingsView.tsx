@@ -2,7 +2,7 @@ import { Check, Pencil, Plus, Sparkle, Trash } from "@phosphor-icons/react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
 import { api } from "@/api/client";
-import type { ModelInfo, ProfileUpdate, ProfileView, ProviderKind } from "@/api/types";
+import type { Acceleration, AppliedRender, ClaudeCodeAccount, ModelInfo, ProfileUpdate, ProfileView, ProviderKind, TextRendering } from "@/api/types";
 import type { UpdateChannel, UpdaterSettings } from "@/api/updates";
 import { useAiSettings } from "@/app/queries";
 import { useStore, type Theme } from "@/app/store";
@@ -24,16 +24,53 @@ export function SettingsView() {
   );
 }
 
+/** Libellés des modes d'accélération, du plus accéléré au plus compatible. */
+const ACCELERATIONS: { id: Acceleration; label: string }[] = [
+  { id: "full", label: "Tout GPU" },
+  { id: "auto", label: "Automatique" },
+  { id: "cpuPainting", label: "Peinture CPU" },
+  { id: "off", label: "Désactivée" },
+];
+
+/** Libellés de la rastérisation du texte. */
+const TEXT_RENDERINGS: { id: TextRendering; label: string }[] = [
+  { id: "system", label: "Système" },
+  { id: "sharp", label: "Net" },
+  { id: "smooth", label: "Lissé" },
+];
+
+const APPLIED_LABEL: Record<AppliedRender, string> = {
+  gpu: "tout le rendu sur la carte graphique",
+  hybrid: "composition accélérée, peinture GPU puis processeur",
+  cpuPainting: "composition accélérée, peinture sur le processeur",
+  noDmabuf: "DMA-BUF coupé par l'environnement : plus d'accélération",
+  software: "rendu logiciel",
+};
+
 function AppearanceSection() {
   const theme = useStore((s) => s.theme);
   const setTheme = useStore((s) => s.setTheme);
   const autoRefresh = useStore((s) => s.autoRefresh);
   const toggleAutoRefresh = useStore((s) => s.toggleAutoRefresh);
+  const toast = useStore((s) => s.toast);
+  const qc = useQueryClient();
+  const render = useQuery({ queryKey: ["render-settings"], queryFn: api.render.get });
+  const setAcceleration = useMutation({
+    mutationFn: (a: Acceleration) => api.render.setAcceleration(a),
+    onSuccess: (v) => qc.setQueryData(["render-settings"], v),
+    onError: (e: Error) => toast("err", e.message),
+  });
+  const setText = useMutation({
+    mutationFn: (t: TextRendering) => api.render.setText(t),
+    onSuccess: (v) => qc.setQueryData(["render-settings"], v),
+    onError: (e: Error) => toast("err", e.message),
+  });
   const options: { id: Theme; label: string }[] = [
     { id: "auto", label: "Système" },
     { id: "light", label: "Clair" },
     { id: "dark", label: "Sombre" },
   ];
+  const r = render.data;
   return (
     <Section title="Apparence et comportement">
       <div className="row gap-16">
@@ -52,6 +89,78 @@ function AppearanceSection() {
           </label>
         </Field>
       </div>
+
+      {r?.supported && (
+        <Field
+          label="Accélération matérielle"
+          hint={
+            r.forcedByEnv ? (
+              <>
+                Imposée par l'environnement (WEBKIT_DISABLE_…) : le choix ci-dessus reste sans effet. En vigueur :{" "}
+                {APPLIED_LABEL[r.applied]}.
+              </>
+            ) : (
+              <>
+                <strong>Tout GPU</strong> : composition et peinture des pages entièrement sur la carte graphique.{" "}
+                <strong>Automatique</strong> : peinture au GPU d'abord, le processeur prenant les débordements.{" "}
+                <strong>Peinture CPU</strong> : composition accélérée, pages peintes par le processeur — un repli si un
+                pilote peint mal, sans effet sur la netteté du texte. <strong>Désactivée</strong> : rendu logiciel, en dernier
+                recours si la fenêtre reste noire ou montre des artefacts. En vigueur depuis le lancement :{" "}
+                {APPLIED_LABEL[r.applied]}.
+              </>
+            )
+          }
+        >
+          <div className="btn-group">
+            {ACCELERATIONS.map((o) => (
+              <button
+                key={o.id}
+                className={`btn btn-sm ${r.acceleration === o.id ? "active" : ""}`}
+                disabled={r.forcedByEnv || setAcceleration.isPending}
+                onClick={() => setAcceleration.mutate(o.id)}
+              >
+                {o.label}
+              </button>
+            ))}
+          </div>
+        </Field>
+      )}
+      {r?.supported && (
+        <Field
+          label="Rendu du texte"
+          hint={
+            <>
+              <strong>Système</strong> : les réglages du bureau. <strong>Net</strong> : anticrénelage sous-pixel RGB et
+              hinting complet — le plus lisible sous 100 ppp, à condition que la dalle range ses sous-pixels dans l'ordre
+              RGB, sans quoi les bords se teintent. <strong>Lissé</strong> : niveaux de gris, formes fidèles et bords plus
+              doux. S'applique au prochain démarrage : le processus web garde les polices qu'il a déjà construites.
+            </>
+          }
+        >
+          <div className="btn-group">
+            {TEXT_RENDERINGS.map((o) => (
+              <button
+                key={o.id}
+                className={`btn btn-sm ${r.text === o.id ? "active" : ""}`}
+                disabled={setText.isPending}
+                onClick={() => setText.mutate(o.id)}
+              >
+                {o.label}
+              </button>
+            ))}
+          </div>
+        </Field>
+      )}
+      {r?.restartNeeded && (
+        <Alert tone="info">
+          <div className="row gap-8 grow" style={{ alignItems: "center" }}>
+            <span className="grow">Le mode de rendu choisi s'appliquera au prochain démarrage de KubeWatch.</span>
+            <button className="btn btn-sm" onClick={() => api.restart().catch((e: Error) => toast("err", e.message))}>
+              Redémarrer maintenant
+            </button>
+          </div>
+        </Alert>
+      )}
     </Section>
   );
 }
@@ -74,18 +183,25 @@ interface Preset {
 }
 
 const PRESETS: Preset[] = [
-  { id: "anthropic", label: "Claude (Anthropic)", kind: "anthropic", baseUrl: "https://api.anthropic.com", model: "claude-opus-5", hint: "Clé « sk-ant-… » depuis console.anthropic.com." },
+  { id: "anthropic", label: "Claude (Anthropic)", kind: "anthropic", baseUrl: "https://api.anthropic.com", model: "claude-opus-5", hint: "Votre compte Claude Code, ou une clé « sk-ant-… » depuis console.anthropic.com." },
   { id: "openai", label: "ChatGPT (OpenAI)", kind: "openAi", baseUrl: "https://api.openai.com/v1", model: "gpt-5", hint: "Clé « sk-… » depuis platform.openai.com." },
   { id: "lmstudio", label: "LM Studio (local)", kind: "openAiCompatible", baseUrl: "http://localhost:1234/v1", model: "", hint: "Démarrez le serveur local dans LM Studio (onglet Developer), puis listez les modèles." },
   { id: "ollama", label: "Ollama (local)", kind: "openAiCompatible", baseUrl: "http://localhost:11434/v1", model: "", hint: "Ollama expose une API compatible OpenAI sur /v1." },
   { id: "custom", label: "Autre serveur compatible OpenAI", kind: "openAiCompatible", baseUrl: "", model: "", hint: "llama.cpp, Jan, vLLM, LiteLLM, proxy d'entreprise…" },
 ];
 
+/** Libellé du compte détecté : courriel, organisation, formule. */
+function accountLabel(a: ClaudeCodeAccount): string {
+  const parts = [a.email, a.organization, a.subscription ? `formule ${a.subscription}` : null].filter(Boolean);
+  return parts.length > 0 ? parts.join(" — ") : a.dir;
+}
+
 function AiSection() {
   const settings = useAiSettings();
   const qc = useQueryClient();
   const toast = useStore((s) => s.toast);
   const [editing, setEditing] = useState<ProfileView | null | "new">(null);
+  const claudeCode = useQuery({ queryKey: ["claude-code-account"], queryFn: api.ai.claudeCodeAccount });
   const [general, setGeneral] = useState({ toolsEnabled: true, maxToolRounds: 8, extraInstructions: "" });
 
   useEffect(() => {
@@ -105,8 +221,23 @@ function AiSection() {
     onSuccess: invalidate,
     onError: (e: Error) => toast("err", e.message),
   });
+  const adopt = useMutation({
+    mutationFn: () => api.ai.useClaudeCode(),
+    onSuccess: (p) => {
+      toast("ok", `« ${p.name} » est prêt : l'assistant répond avec votre compte Claude.`);
+      invalidate();
+    },
+    onError: (e: Error) => toast("err", e.message),
+  });
   const remove = async (p: ProfileView) => {
-    const ok = await confirm({ title: `Supprimer « ${p.name} » ?`, message: "La clé d'API enregistrée est effacée.", confirmLabel: "Supprimer", danger: true });
+    const ok = await confirm({
+      title: `Supprimer « ${p.name} » ?`,
+      message: p.useClaudeCode
+        ? "Le profil disparaît des réglages ; le dossier ~/.claude n'est pas touché."
+        : "La clé d'API enregistrée est effacée.",
+      confirmLabel: "Supprimer",
+      danger: true,
+    });
     if (!ok) return;
     api.ai
       .removeProfile(p.id)
@@ -144,7 +275,30 @@ function AiSection() {
         Claude, ChatGPT ou un modèle local (LM Studio, Ollama…). Les clés sont conservées dans le dossier d'état, en lecture
         seule pour votre compte, et ne quittent la machine que vers le fournisseur choisi.
       </p>
-      {settings.data && settings.data.profiles.length === 0 && (
+      {claudeCode.data && !settings.data?.profiles.some((p) => p.useClaudeCode) && (
+        <Alert tone={claudeCode.data.expired ? "warn" : "info"}>
+          <div className="row gap-8 grow" style={{ alignItems: "center" }}>
+            <Sparkle size={16} />
+            <span className="grow">
+              {claudeCode.data.expired ? (
+                <>
+                  Claude Code est installé ({accountLabel(claudeCode.data)}) mais son jeton a expiré : lancez « claude » dans un
+                  terminal pour le renouveler.
+                </>
+              ) : (
+                <>
+                  Claude Code est connecté sur cette machine ({accountLabel(claudeCode.data)}) : l'assistant peut répondre avec ce
+                  compte, sans clé d'API.
+                </>
+              )}
+            </span>
+            <button className="btn btn-sm" disabled={claudeCode.data.expired || adopt.isPending} onClick={() => adopt.mutate()}>
+              {adopt.isPending ? <Spinner /> : null} Utiliser ce compte
+            </button>
+          </div>
+        </Alert>
+      )}
+      {settings.data && settings.data.profiles.length === 0 && !claudeCode.data && (
         <Alert tone="info">
           <Sparkle size={16} /> Aucun fournisseur configuré : ajoutez-en un pour activer l'assistant (Ctrl+J).
         </Alert>
@@ -175,7 +329,19 @@ function AiSection() {
                     <td>{KIND_LABEL[p.kind]}</td>
                     <td className="mono">{p.model || <span className="faint">non choisi</span>}</td>
                     <td className="mono muted small">{p.baseUrl}</td>
-                    <td>{p.apiKeySet ? <Badge tone="ok">enregistrée</Badge> : p.kind === "openAiCompatible" ? <Badge>facultative</Badge> : <Badge tone="warn">manquante</Badge>}</td>
+                    <td>
+                      {p.useClaudeCode ? (
+                        <Badge tone="ok" title={claudeCode.data ? `Lu dans ${claudeCode.data.dir}` : undefined}>
+                          compte Claude Code
+                        </Badge>
+                      ) : p.apiKeySet ? (
+                        <Badge tone="ok">enregistrée</Badge>
+                      ) : p.kind === "openAiCompatible" ? (
+                        <Badge>facultative</Badge>
+                      ) : (
+                        <Badge tone="warn">manquante</Badge>
+                      )}
+                    </td>
                     <td onClick={(e) => e.stopPropagation()}>
                       <div className="row gap-4">
                         <button className="btn btn-ghost btn-sm btn-icon" title="Modifier" onClick={() => setEditing(p)}>
@@ -229,6 +395,7 @@ function AiSection() {
 
       <ProfileDialog
         open={editing !== null}
+        account={claudeCode.data ?? null}
         profile={editing === "new" ? null : editing}
         onClose={() => setEditing(null)}
         onSaved={() => {
@@ -243,17 +410,20 @@ function AiSection() {
 function ProfileDialog({
   open,
   profile,
+  account,
   onClose,
   onSaved,
 }: {
   open: boolean;
   profile: ProfileView | null;
+  /** Compte de Claude Code détecté, s'il y en a un. */
+  account: ClaudeCodeAccount | null;
   onClose: () => void;
   onSaved: () => void;
 }) {
   const toast = useStore((s) => s.toast);
   const [preset, setPreset] = useState<string>("anthropic");
-  const [form, setForm] = useState<ProfileUpdate>({ name: "", kind: "anthropic", baseUrl: "", apiKey: "", model: "", maxOutputTokens: null, showThinking: false });
+  const [form, setForm] = useState<ProfileUpdate>({ name: "", kind: "anthropic", baseUrl: "", apiKey: "", model: "", maxOutputTokens: null, showThinking: false, useClaudeCode: false });
   const [models, setModels] = useState<ModelInfo[] | null>(null);
   const [error, setError] = useState<string | null>(null);
 
@@ -264,7 +434,7 @@ function ProfileDialog({
     if (profile) {
       const p = PRESETS.find((x) => x.kind === profile.kind && x.baseUrl === profile.baseUrl) ?? PRESETS.find((x) => x.kind === profile.kind && x.id === "custom") ?? PRESETS[0]!;
       setPreset(p.id);
-      setForm({ id: profile.id, name: profile.name, kind: profile.kind, baseUrl: profile.baseUrl, apiKey: undefined, model: profile.model, maxOutputTokens: profile.maxOutputTokens, showThinking: profile.showThinking });
+      setForm({ id: profile.id, name: profile.name, kind: profile.kind, baseUrl: profile.baseUrl, apiKey: undefined, model: profile.model, maxOutputTokens: profile.maxOutputTokens, showThinking: profile.showThinking, useClaudeCode: profile.useClaudeCode });
     } else {
       applyPreset(PRESETS[0]!);
     }
@@ -273,7 +443,14 @@ function ProfileDialog({
 
   const applyPreset = (p: Preset) => {
     setPreset(p.id);
-    setForm((f) => ({ ...f, kind: p.kind, baseUrl: p.baseUrl, model: p.model, name: f.name || p.label }));
+    setForm((f) => ({
+      ...f,
+      kind: p.kind,
+      baseUrl: p.baseUrl,
+      model: p.model,
+      name: f.name || p.label,
+      useClaudeCode: p.kind === "anthropic" ? f.useClaudeCode : false,
+    }));
     setModels(null);
   };
   const currentPreset = PRESETS.find((p) => p.id === preset) ?? PRESETS[0]!;
@@ -298,7 +475,8 @@ function ProfileDialog({
     onError: (e: Error) => setError(e.message),
   });
 
-  const needsKey = form.kind !== "openAiCompatible" && !profile?.apiKeySet && !form.apiKey;
+  const borrowed = form.kind === "anthropic" && !!form.useClaudeCode;
+  const needsKey = form.kind !== "openAiCompatible" && !borrowed && !profile?.apiKeySet && !form.apiKey;
 
   return (
     <Dialog
@@ -337,19 +515,41 @@ function ProfileDialog({
           </Field>
         </div>
       </div>
-      <Field
-        label={form.kind === "openAiCompatible" ? "Clé d'API (facultative)" : "Clé d'API"}
-        hint={profile?.apiKeySet ? "Une clé est enregistrée : laissez vide pour la conserver." : undefined}
-      >
-        <input
-          className="input mono"
-          type="password"
-          value={form.apiKey ?? ""}
-          onChange={(e) => setForm({ ...form, apiKey: e.target.value })}
-          placeholder={profile?.apiKeySet ? "••••••••  (inchangée)" : form.kind === "anthropic" ? "sk-ant-…" : "sk-…"}
-          autoComplete="off"
-        />
-      </Field>
+      {form.kind === "anthropic" && (
+        <Field
+          label="Compte Claude Code"
+          hint={
+            account
+              ? `Lu dans ${account.dir} (${account.source}) : ${accountLabel(account)}. Rien n'est recopié dans les réglages de KubeWatch.`
+              : "Aucun dossier ~/.claude sur cette machine : installez Claude Code et connectez-vous pour l'employer."
+          }
+        >
+          <label className="checkbox">
+            <input
+              type="checkbox"
+              checked={borrowed}
+              disabled={!account}
+              onChange={(e) => setForm({ ...form, useClaudeCode: e.target.checked })}
+            />{" "}
+            Employer les identifiants de Claude Code, sans clé d'API
+          </label>
+        </Field>
+      )}
+      {!borrowed && (
+        <Field
+          label={form.kind === "openAiCompatible" ? "Clé d'API (facultative)" : "Clé d'API"}
+          hint={profile?.apiKeySet ? "Une clé est enregistrée : laissez vide pour la conserver." : undefined}
+        >
+          <input
+            className="input mono"
+            type="password"
+            value={form.apiKey ?? ""}
+            onChange={(e) => setForm({ ...form, apiKey: e.target.value })}
+            placeholder={profile?.apiKeySet ? "••••••••  (inchangée)" : form.kind === "anthropic" ? "sk-ant-…" : "sk-…"}
+            autoComplete="off"
+          />
+        </Field>
+      )}
       <Field label="Modèle" hint="Listez les modèles pour vérifier la connexion et choisir dans la liste.">
         <div className="row">
           {models && models.length > 0 ? (

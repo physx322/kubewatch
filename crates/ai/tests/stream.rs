@@ -99,6 +99,7 @@ fn profile(kind: ProviderKind, base: &str, model: &str) -> ProviderProfile {
         model: model.into(),
         max_output_tokens: Some(500),
         show_thinking: false,
+        use_claude_code: false,
     }
 }
 

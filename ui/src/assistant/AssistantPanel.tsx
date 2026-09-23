@@ -210,7 +210,7 @@ export function AssistantPanel() {
           ref={inputRef}
           className="input"
           rows={1}
-          placeholder={active ? "Votre question… (Entrée pour envoyer, Maj+Entrée pour une nouvelle ligne)" : "Configurez un fournisseur dans les réglages"}
+          placeholder={active ? "Votre question…" : "Configurez un fournisseur dans les réglages"}
           value={input}
           disabled={!active}
           onChange={(e) => {

@@ -33,8 +33,10 @@ import { pluralOf } from "@/lib/kinds";
 import {
   bounds,
   centerView,
+  cullRect,
   fitText,
   fitView,
+  hits,
   LARGE_NODES,
   layeredLayout,
   MIN_NAME_FONT,
@@ -46,7 +48,9 @@ import {
   WHEEL_ZOOM,
   ZOOM_NAME_ONLY,
   ZOOM_NO_TEXT,
+  viewInside,
   zoomAt,
+  type Bounds,
   type LayoutMode,
   type Positions,
   type Sim,
@@ -355,6 +359,11 @@ interface DragState {
 
 type TextMode = "full" | "name" | "none";
 
+/** Ce qu'une carte porte à une échelle donnée. */
+function textBand(k: number): TextMode {
+  return k < ZOOM_NO_TEXT ? "none" : k < ZOOM_NAME_ONLY ? "name" : "full";
+}
+
 function keyAt(target: EventTarget | null): string | null {
   return target instanceof Element ? (target.closest("[data-key]")?.getAttribute("data-key") ?? null) : null;
 }
@@ -382,9 +391,59 @@ function GraphArea({
   const layout = useRef<LayoutState>({ positions: scene.positions, pinned: scene.pinned, fitPending: scene.view === null, sim: null });
   const [, bump] = useReducer((n: number) => n + 1, 0);
   const [size, setSize] = useState({ w: 0, h: 0 });
+  // Vue : `viewRef` fait foi et se répercute directement sur l'attribut
+  // `transform` du groupe de scène ; `view` n'est que la dernière valeur dont
+  // React a eu connaissance. Zoomer ou déplacer ne doit pas reconstruire les
+  // milliers d'éléments du graphe : un nouveau rendu n'est demandé que si son
+  // contenu doit changer — seuil de texte franchi, ou fenêtre sortie de la
+  // zone déjà dessinée. Voir `applyView`.
   const [view, setView] = useState<ViewTransform>(scene.view ?? { x: 0, y: 0, k: 1 });
   const viewRef = useRef(view);
-  viewRef.current = view;
+  const sceneGRef = useRef<SVGGElement>(null);
+  const sizeRef = useRef(size);
+  sizeRef.current = size;
+  const rafRef = useRef(0);
+  const idleRef = useRef(0);
+  /** Ce que le dernier rendu a produit : seuil de texte et zone couverte. */
+  const drawnRef = useRef<{ band: TextMode; rect: Bounds } | null>(null);
+
+  const writeTransform = () => {
+    const v = viewRef.current;
+    sceneGRef.current?.setAttribute("transform", `translate(${v.x} ${v.y}) scale(${v.k})`);
+  };
+
+  /** Vue portée à l'écran sans passer par React, au plus une fois par image. */
+  const applyView = useCallback((next: ViewTransform | ((v: ViewTransform) => ViewTransform)) => {
+    const v = typeof next === "function" ? next(viewRef.current) : next;
+    if (v === viewRef.current) return;
+    viewRef.current = v;
+    if (rafRef.current) return;
+    rafRef.current = requestAnimationFrame(() => {
+      rafRef.current = 0;
+      writeTransform();
+      const cur = viewRef.current;
+      const drawn = drawnRef.current;
+      const { w, h } = sizeRef.current;
+      if (!drawn || textBand(cur.k) !== drawn.band || !viewInside(drawn.rect, cur, w, h)) {
+        window.clearTimeout(idleRef.current);
+        setView(cur);
+        return;
+      }
+      // Le dessin en place convient encore : ne prévenir React qu'une fois le
+      // geste fini, pour que la scène gardée en session et l'infobulle
+      // retrouvent la vue réelle.
+      window.clearTimeout(idleRef.current);
+      idleRef.current = window.setTimeout(() => setView(viewRef.current), 140);
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  /** Vue imposée d'un coup (cadrage, centrage) : rendu immédiat. */
+  const commitView = useCallback((v: ViewTransform) => {
+    window.clearTimeout(idleRef.current);
+    viewRef.current = v;
+    setView(v);
+  }, []);
   const [hovered, setHovered] = useState<string | null>(null);
   const [selected, setSelected] = useState<string | null>(scene.selected);
   useEffect(() => {
@@ -475,7 +534,11 @@ function GraphArea({
       // Démontage (changement d'écran, ou remontage en StrictMode) : la scène
       // reste en session, seule la simulation s'arrête.
       scene.settling = layout.current.sim !== null;
+      // La vue vive peut avoir de l'avance sur celle que React connaît.
+      scene.view = viewRef.current;
       stopSim();
+      if (rafRef.current) cancelAnimationFrame(rafRef.current);
+      window.clearTimeout(idleRef.current);
       mounted.current = false;
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -492,7 +555,7 @@ function GraphArea({
     const L = layout.current;
     if (!L.fitPending || size.w <= 0 || size.h <= 0 || graph.nodes.length === 0) return;
     L.fitPending = false;
-    setView(fitView(bounds(graph, L.positions), size.w, size.h));
+    commitView(fitView(bounds(graph, L.positions), size.w, size.h));
   });
 
   // --- Sélection orpheline.
@@ -517,14 +580,17 @@ function GraphArea({
     if (!el) return;
     const onWheel = (e: WheelEvent) => {
       e.preventDefault();
+      // L'infobulle est placée d'après la vue connue de React, qui reste en
+      // arrière pendant le geste : la retirer plutôt que la laisser dériver.
+      setHovered(null);
       const rect = el.getBoundingClientRect();
       const delta = e.deltaMode === 1 ? e.deltaY * 16 : e.deltaMode === 2 ? e.deltaY * 100 : e.deltaY;
       const factor = Math.exp(-delta * WHEEL_ZOOM * (e.ctrlKey ? 2 : 1));
-      setView((v) => zoomAt(v, e.clientX - rect.left, e.clientY - rect.top, factor));
+      applyView((v) => zoomAt(v, e.clientX - rect.left, e.clientY - rect.top, factor));
     };
     el.addEventListener("wheel", onWheel, { passive: false });
     return () => el.removeEventListener("wheel", onWheel);
-  }, []);
+  }, [applyView]);
 
   // --- Pointeur : glisser le fond déplace la vue, glisser une carte la déplace
   // (et l'épingle), un clic sans mouvement sélectionne.
@@ -553,7 +619,7 @@ function GraphArea({
       if (d.kind === "node") layout.current.sim?.alphaTarget(0.3).restart();
     }
     if (d.kind === "pan") {
-      setView((v) => ({ ...v, x: d.ox + dx, y: d.oy + dy }));
+      applyView((v) => ({ ...v, x: d.ox + dx, y: d.oy + dy }));
       return;
     }
     const L = layout.current;
@@ -599,7 +665,7 @@ function GraphArea({
     useStore.getState().goToResource({ kind: pluralOf(node.kind, kinds), name: node.name, namespace: node.namespace });
   const centerOn = (key: string) => {
     const p = layout.current.positions.get(key);
-    if (p) setView((v) => centerView(v, p.x + NODE_W / 2, p.y + NODE_H / 2, size.w, size.h));
+    if (p) commitView(centerView(viewRef.current, p.x + NODE_W / 2, p.y + NODE_H / 2, size.w, size.h));
   };
   const togglePin = (key: string) => {
     const L = layout.current;
@@ -653,9 +719,25 @@ function GraphArea({
 
   const L = layout.current;
   const P = L.positions;
-  const textMode: TextMode = view.k < ZOOM_NO_TEXT ? "none" : view.k < ZOOM_NAME_ONLY ? "name" : "full";
-  const nameSize = textMode === "name" ? Math.round(Math.max(13, MIN_NAME_FONT / view.k) * 2) / 2 : 13;
+  const textMode = textBand(view.k);
+  // Taille entière : une taille fractionnaire brouille le texte (voir
+  // tokens.css), et elle multiplierait les valeurs distinctes, donc les
+  // rendus, sur la plage de zoom où seul le nom est affiché.
+  const nameSize = textMode === "name" ? Math.max(13, Math.round(MIN_NAME_FONT / view.k)) : 13;
   const layered = mode === "layered";
+
+  // Zone dessinée : la fenêtre visible plus une marge. Hors de là, ni carte ni
+  // lien n'est produit — sur un graphe dense, c'est l'essentiel du DOM en
+  // moins. Tant que la taille est inconnue, tout est dessiné.
+  const clip = size.w > 0 && size.h > 0 ? cullRect(view, size.w, size.h) : null;
+
+  // Après chaque rendu : l'attribut `transform` n'appartient pas à React (il
+  // est écrit image par image par `applyView`), et la zone couverte sert à
+  // décider des rendus suivants.
+  useLayoutEffect(() => {
+    writeTransform();
+    drawnRef.current = clip ? { band: textMode, rect: clip } : null;
+  });
 
   const menuNode = menu ? graph.nodes[graph.index.get(menu.key) ?? -1] : undefined;
   const menuItems: MenuItem[] = menuNode
@@ -691,12 +773,25 @@ function GraphArea({
           onPointerLeave={() => setHovered(null)}
           onContextMenu={onContextMenu}
         >
-          <g transform={`translate(${view.x} ${view.y}) scale(${view.k})`}>
+          <g ref={sceneGRef}>
             <g className="topo-edges">
               {graph.edges.map((e, i) => {
                 const a = P.get(graph.nodes[e.from]?.key ?? "");
                 const b = P.get(graph.nodes[e.to]?.key ?? "");
                 if (!a || !b) return null;
+                // La courbe des dispositions par couches s'écarte au plus de
+                // 30 unités des cartes reliées.
+                if (
+                  clip &&
+                  !hits(
+                    clip,
+                    Math.min(a.x, b.x) - 30,
+                    Math.min(a.y, b.y),
+                    Math.max(a.x, b.x) + NODE_W + 30,
+                    Math.max(a.y, b.y) + NODE_H,
+                  )
+                )
+                  return null;
                 const active = activeIdx !== undefined && (e.from === activeIdx || e.to === activeIdx);
                 const state = active ? "active" : dimmed(e.from) || dimmed(e.to) ? "dim" : "";
                 return <TopoEdge key={i} x1={a.x} y1={a.y} x2={b.x} y2={b.y} kind={e.kind} layered={layered} state={state} />;
@@ -706,6 +801,7 @@ function GraphArea({
               {graph.nodes.map((n, i) => {
                 const p = P.get(n.key);
                 if (!p) return null;
+                if (clip && !hits(clip, p.x, p.y, p.x + NODE_W, p.y + NODE_H)) return null;
                 return (
                   <TopoNode
                     key={n.key}

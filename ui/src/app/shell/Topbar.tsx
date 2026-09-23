@@ -11,6 +11,7 @@ import { api } from "@/api/client";
 import { useClusters, useNamespaces } from "../queries";
 import { useNamespace, useStore, VIEW_LABELS } from "../store";
 import { Dot } from "@/components/Basics";
+import { WindowControls } from "./WindowControls";
 
 const THEME_NEXT = { auto: "light", light: "dark", dark: "auto" } as const;
 const THEME_LABEL = { auto: "Thème : système", light: "Thème : clair", dark: "Thème : sombre" } as const;
@@ -45,8 +46,10 @@ export function Topbar() {
   const ThemeIcon = theme === "dark" ? Moon : theme === "light" ? Sun : SunHorizon;
 
   return (
-    <header className="topbar">
-      <span className="topbar-title">{VIEW_LABELS[view]}</span>
+    <header className="topbar" data-tauri-drag-region>
+      <span className="topbar-title" data-tauri-drag-region>
+        {VIEW_LABELS[view]}
+      </span>
 
       <label className="cluster-pill" title={current?.server ?? "Aucun cluster"}>
         <Dot tone={tone} />
@@ -84,7 +87,7 @@ export function Topbar() {
         ))}
       </select>
 
-      <span className="grow" />
+      <span className="grow" data-tauri-drag-region />
 
       <div className="search">
         <MagnifyingGlass size={14} />
@@ -116,6 +119,9 @@ export function Topbar() {
       >
         <Sparkle size={17} weight={assistantOpen ? "fill" : "regular"} />
       </button>
+
+      <span className="vdivider win-sep" />
+      <WindowControls />
     </header>
   );
 }

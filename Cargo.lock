@@ -2450,6 +2450,7 @@ dependencies = [
 name = "kubewatch-ai"
 version = "0.1.0"
 dependencies = [
+ "dirs 7.0.0",
  "futures",
  "reqwest",
  "serde",
@@ -2497,6 +2498,7 @@ dependencies = [
  "chrono",
  "dirs 7.0.0",
  "futures",
+ "gtk",
  "kubewatch-ai",
  "kubewatch-core",
  "kubewatch-hub",
@@ -2509,6 +2511,7 @@ dependencies = [
  "serde_json",
  "tauri",
  "tauri-build",
+ "tempfile",
  "thiserror 2.0.20",
  "tokio",
  "tracing",

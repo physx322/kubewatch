@@ -200,6 +200,41 @@ export function centerView(v: ViewTransform, cx: number, cy: number, w: number, 
   return { k: v.k, x: w / 2 - cx * v.k, y: h / 2 - cy * v.k };
 }
 
+/**
+ * Marge dessinée de part et d'autre de la fenêtre visible, en fraction de sa
+ * taille. Plus elle est large, plus on dessine d'objets hors champ, mais moins
+ * un déplacement demande de nouveau rendu.
+ */
+export const CULL_MARGIN = 0.6;
+
+/**
+ * Zone de scène à dessiner pour une vue : la fenêtre visible, élargie de
+ * `CULL_MARGIN`. Tant que la fenêtre reste dans cette zone, zoomer ou déplacer
+ * ne change que la transformation du groupe — rien n'est à redessiner.
+ */
+export function cullRect(v: ViewTransform, w: number, h: number): Bounds {
+  const sw = w / v.k;
+  const sh = h / v.k;
+  const mx = sw * CULL_MARGIN;
+  const my = sh * CULL_MARGIN;
+  return { x: -v.x / v.k - mx, y: -v.y / v.k - my, w: sw + 2 * mx, h: sh + 2 * my };
+}
+
+/** Vrai si la fenêtre visible de `v` tient entièrement dans `r`. */
+export function viewInside(r: Bounds, v: ViewTransform, w: number, h: number): boolean {
+  return (
+    -v.x / v.k >= r.x &&
+    -v.y / v.k >= r.y &&
+    (-v.x + w) / v.k <= r.x + r.w &&
+    (-v.y + h) / v.k <= r.y + r.h
+  );
+}
+
+/** Vrai si la boîte de coins (x0, y0) et (x1, y1) rencontre `r`. */
+export function hits(r: Bounds, x0: number, y0: number, x1: number, y1: number): boolean {
+  return x1 >= r.x && x0 <= r.x + r.w && y1 >= r.y && y0 <= r.y + r.h;
+}
+
 /** Zoom d'un facteur autour d'un point écran, borné. */
 export function zoomAt(v: ViewTransform, px: number, py: number, factor: number): ViewTransform {
   const target = clamp(v.k * factor, ZOOM_MIN, ZOOM_MAX);

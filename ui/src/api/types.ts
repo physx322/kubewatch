@@ -203,6 +203,27 @@ export interface AppInfo {
   warnings: string[];
 }
 
+/** Accélération matérielle demandée pour la fenêtre. */
+export type Acceleration = "auto" | "full" | "cpuPainting" | "off";
+
+/** Rendu réellement en vigueur depuis le lancement. */
+export type AppliedRender = "gpu" | "hybrid" | "cpuPainting" | "noDmabuf" | "software";
+
+/** Rastérisation du texte ; s'applique à chaud. */
+export type TextRendering = "system" | "sharp" | "smooth";
+
+export interface RenderView {
+  acceleration: Acceleration;
+  text: TextRendering;
+  applied: AppliedRender;
+  /** Une variable d'environnement impose le mode : le réglage est sans effet. */
+  forcedByEnv: boolean;
+  /** Le choix enregistré attend un redémarrage. */
+  restartNeeded: boolean;
+  /** Faux là où la plateforme ne sait rien faire de ce réglage. */
+  supported: boolean;
+}
+
 // --- Assistant IA -----------------------------------------------------------
 
 export type ProviderKind = "anthropic" | "openAi" | "openAiCompatible";
@@ -216,6 +237,23 @@ export interface ProfileView {
   apiKeySet: boolean;
   maxOutputTokens: number;
   showThinking: boolean;
+  /** Le profil emprunte les identifiants de Claude Code (`~/.claude`). */
+  useClaudeCode: boolean;
+}
+
+/** Compte laissé par Claude Code sur la machine. Jamais de secret ici. */
+export interface ClaudeCodeAccount {
+  dir: string;
+  source: string;
+  kind: "oauth" | "apiKey";
+  email: string | null;
+  organization: string | null;
+  subscription: string | null;
+  /** Millisecondes depuis l'époque Unix. */
+  expiresAt: number | null;
+  expired: boolean;
+  baseUrl: string | null;
+  model: string | null;
 }
 
 export interface AiSettingsView {
@@ -236,6 +274,7 @@ export interface ProfileUpdate {
   model: string;
   maxOutputTokens?: number | null;
   showThinking?: boolean;
+  useClaudeCode?: boolean;
 }
 
 export interface ModelInfo {

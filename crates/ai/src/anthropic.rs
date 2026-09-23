@@ -4,12 +4,17 @@
 //! `x-api-key` et `anthropic-version: 2023-06-01`. Le flux SSE enchaîne
 //! `message_start`, des blocs (`content_block_start` / `_delta` / `_stop`),
 //! `message_delta` (raison d'arrêt, jetons produits) puis `message_stop`.
+//!
+//! Le profil peut aussi emprunter le compte de Claude Code ([`crate::claude_code`]) :
+//! le jeton part alors en `Authorization: Bearer`, avec l'en-tête bêta
+//! `anthropic-beta: oauth-2025-04-20`, à la place de `x-api-key`.
 
 use std::collections::BTreeMap;
 
 use futures::StreamExt;
 use serde_json::{json, Value};
 
+use crate::claude_code::{self, CredentialKind};
 use crate::config::ProviderProfile;
 use crate::error::{Error, Result};
 use crate::message::{ChatMessage, ChatRequest, Part, Role, StopReason, StreamEvent, Turn, Usage};
@@ -22,30 +27,68 @@ pub const API_VERSION: &str = "2023-06-01";
 /// En-tête bêta du repli serveur en cas de refus (`fallbacks: "default"`).
 pub const FALLBACK_BETA: &str = "server-side-fallback-2026-07-01";
 
+/// Manière de présenter l'identifiant au serveur.
+#[derive(Clone)]
+enum Auth {
+    /// Clé d'API classique : en-tête `x-api-key`.
+    ApiKey(String),
+    /// Jeton de compte : `Authorization: Bearer` et en-tête bêta OAuth.
+    Bearer(String),
+}
+
+impl std::fmt::Debug for Auth {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Auth::ApiKey(_) => f.write_str("ApiKey(masquée)"),
+            Auth::Bearer(_) => f.write_str("Bearer(masqué)"),
+        }
+    }
+}
+
 /// Client Anthropic.
 #[derive(Debug, Clone)]
 pub struct AnthropicClient {
     http: reqwest::Client,
     base: String,
-    api_key: String,
+    auth: Auth,
     model: String,
 }
 
 impl AnthropicClient {
-    /// Construit le client ; la clé et le modèle sont obligatoires.
+    /// Construit le client ; l'identifiant et le modèle sont obligatoires.
+    ///
+    /// L'identifiant vient du compte de Claude Code quand le profil le demande,
+    /// et il est relu à chaque construction : Claude Code renouvelle son jeton
+    /// dans notre dos, on prend toujours le dernier écrit sur le disque.
     pub fn new(profile: &ProviderProfile) -> Result<Self> {
-        let api_key = profile
-            .api_key
-            .as_deref()
-            .map(str::trim)
-            .filter(|k| !k.is_empty())
-            .ok_or_else(|| {
-                Error::Config(format!(
-                    "le profil « {} » n'a pas de clé d'API Anthropic",
+        let auth = if profile.uses_claude_code() {
+            let c = claude_code::credential().map_err(|e| match e {
+                Error::Config(m) => Error::Config(format!(
+                    "le profil « {} » emprunte le compte de Claude Code, mais {m}",
                     profile.name
-                ))
-            })?
-            .to_string();
+                )),
+                other => other,
+            })?;
+            match c.kind {
+                CredentialKind::Oauth => Auth::Bearer(c.token),
+                CredentialKind::ApiKey => Auth::ApiKey(c.token),
+            }
+        } else {
+            Auth::ApiKey(
+                profile
+                    .api_key
+                    .as_deref()
+                    .map(str::trim)
+                    .filter(|k| !k.is_empty())
+                    .ok_or_else(|| {
+                        Error::Config(format!(
+                            "le profil « {} » n'a pas de clé d'API Anthropic",
+                            profile.name
+                        ))
+                    })?
+                    .to_string(),
+            )
+        };
         let model = profile.model.trim().to_string();
         if model.is_empty() {
             return Err(Error::Config(format!(
@@ -56,7 +99,7 @@ impl AnthropicClient {
         Ok(Self {
             http: http_client()?,
             base: profile.endpoint(),
-            api_key,
+            auth,
             model,
         })
     }
@@ -66,16 +109,40 @@ impl AnthropicClient {
         &self.model
     }
 
-    fn headers(&self, r: reqwest::RequestBuilder) -> reqwest::RequestBuilder {
-        r.header("x-api-key", &self.api_key)
-            .header("anthropic-version", API_VERSION)
-            .header("content-type", "application/json")
+    /// En-têtes communs. `fallback` n'est vrai que pour `/v1/messages`, seul
+    /// endroit où le repli serveur a un sens.
+    ///
+    /// Les bêtas voyagent dans un seul en-tête séparé par des virgules :
+    /// deux `anthropic-beta` distincts ne sont pas garantis d'être fusionnés.
+    fn headers(&self, r: reqwest::RequestBuilder, fallback: bool) -> reqwest::RequestBuilder {
+        let r = match &self.auth {
+            Auth::ApiKey(k) => r.header("x-api-key", k),
+            Auth::Bearer(t) => r.header("authorization", format!("Bearer {t}")),
+        }
+        .header("anthropic-version", API_VERSION)
+        .header("content-type", "application/json");
+        match self.betas(fallback) {
+            Some(v) => r.header("anthropic-beta", v),
+            None => r,
+        }
+    }
+
+    /// Bêtas à annoncer pour cette requête.
+    fn betas(&self, fallback: bool) -> Option<String> {
+        let mut betas: Vec<&str> = Vec::new();
+        if matches!(self.auth, Auth::Bearer(_)) {
+            betas.push(claude_code::OAUTH_BETA);
+        }
+        if fallback && wants_fallbacks(&self.model) {
+            betas.push(FALLBACK_BETA);
+        }
+        (!betas.is_empty()).then(|| betas.join(","))
     }
 
     /// Modèles accessibles avec cette clé.
     pub async fn list_models(&self) -> Result<Vec<ModelInfo>> {
         let url = format!("{}/v1/models?limit=1000", self.base);
-        let resp = self.headers(self.http.get(url)).send().await?;
+        let resp = self.headers(self.http.get(url), false).send().await?;
         let resp = ensure_success(resp).await?;
         let body: Value = resp.json().await?;
         let data = body
@@ -98,12 +165,9 @@ impl AnthropicClient {
     /// Un tour de conversation en flux.
     pub async fn stream_turn(&self, req: &ChatRequest, sink: &Sink<'_>) -> Result<Turn> {
         let body = build_request(&self.model, req);
-        let mut r = self
-            .headers(self.http.post(format!("{}/v1/messages", self.base)))
+        let r = self
+            .headers(self.http.post(format!("{}/v1/messages", self.base)), true)
             .header("accept", "text/event-stream");
-        if wants_fallbacks(&self.model) {
-            r = r.header("anthropic-beta", FALLBACK_BETA);
-        }
         let resp = r.json(&body).send().await?;
         let resp = ensure_success(resp).await?;
 
@@ -481,6 +545,40 @@ pub(crate) fn parse_tool_input(raw: &str) -> Value {
 mod tests {
     use super::*;
     use crate::message::ToolSpec;
+
+    #[test]
+    fn en_tetes_selon_l_identifiant() {
+        let client = |auth: Auth| AnthropicClient {
+            http: http_client().unwrap(),
+            base: "https://api.anthropic.com".to_string(),
+            auth,
+            model: "claude-opus-5".to_string(),
+        };
+
+        let c = client(Auth::ApiKey("sk-ant-secret".into()));
+        let r = c.headers(c.http.post("https://x/"), true).build().unwrap();
+        assert_eq!(r.headers()["x-api-key"], "sk-ant-secret");
+        assert!(!r.headers().contains_key("authorization"));
+        assert_eq!(r.headers()["anthropic-version"], API_VERSION);
+        assert_eq!(r.headers()["anthropic-beta"], FALLBACK_BETA);
+
+        let c = client(Auth::Bearer("oat-secret".into()));
+        let r = c.headers(c.http.post("https://x/"), true).build().unwrap();
+        assert_eq!(r.headers()["authorization"], "Bearer oat-secret");
+        assert!(!r.headers().contains_key("x-api-key"));
+        assert_eq!(
+            r.headers()["anthropic-beta"].to_str().unwrap(),
+            format!("{},{}", claude_code::OAUTH_BETA, FALLBACK_BETA),
+            "un seul en-tête, bêtas séparés par une virgule"
+        );
+
+        // Liste des modèles : pas de repli serveur, mais toujours la bêta OAuth.
+        let r = c.headers(c.http.get("https://x/"), false).build().unwrap();
+        assert_eq!(r.headers()["anthropic-beta"], claude_code::OAUTH_BETA);
+
+        // Le Debug du client ne laisse pas fuir le secret dans les journaux.
+        assert!(!format!("{c:?}").contains("oat-secret"));
+    }
 
     #[test]
     fn requete_minimale_et_options() {

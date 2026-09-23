@@ -117,6 +117,14 @@ export function base64ToBytes(b64: string): Uint8Array {
 export const api = {
   appInfo: () => call<T.AppInfo>("app_info"),
   openUrl: (url: string) => call<void>("open_url", { url }),
+  restart: () => call<void>("app_restart"),
+
+  render: {
+    get: () => call<T.RenderView>("render_settings"),
+    setAcceleration: (acceleration: T.Acceleration) =>
+      call<T.RenderView>("render_set_acceleration", { acceleration }),
+    setText: (text: T.TextRendering) => call<T.RenderView>("render_set_text", { text }),
+  },
 
   clusters: {
     list: () => call<T.ClusterInfo[]>("list_clusters").then((l) => l.map(normalizeCluster)),
@@ -256,6 +264,8 @@ export const api = {
 
   ai: {
     settings: () => call<T.AiSettingsView>("ai_settings"),
+    claudeCodeAccount: () => call<T.ClaudeCodeAccount | null>("ai_claude_code_account"),
+    useClaudeCode: () => call<T.ProfileView>("ai_use_claude_code"),
     upsertProfile: (update: T.ProfileUpdate) => call<T.ProfileView>("ai_upsert_profile", { update }),
     removeProfile: (id: string) => call<void>("ai_remove_profile", { id }),
     setActive: (id: string | null) => call<void>("ai_set_active", { id }),

@@ -40,3 +40,11 @@ chrono.workspace = true
 dirs.workspace = true
 parking_lot.workspace = true
 uuid.workspace = true
+
+# WebKitGTK lit les réglages de rastérisation du texte dans `GtkSettings` :
+# c'est le seul usage de GTK ici, et il n'a de sens que là où WebKitGTK existe.
+[target.'cfg(all(unix, not(target_os = "macos")))'.dependencies]
+gtk.workspace = true
+
+[dev-dependencies]
+tempfile.workspace = true

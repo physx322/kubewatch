@@ -11,6 +11,7 @@
 
 mod assistant;
 mod commands;
+mod render;
 mod state;
 mod util;
 
@@ -20,7 +21,6 @@ use tracing_subscriber::EnvFilter;
 use crate::state::AppState;
 
 fn main() {
-    util::install_crypto_provider();
     tracing_subscriber::fmt()
         .with_env_filter(
             EnvFilter::try_from_default_env()
@@ -28,9 +28,22 @@ fn main() {
         )
         .init();
 
+    // Avant que GTK et WebKit ne démarrent : ils lisent leur environnement une
+    // fois pour toutes à l'initialisation, et l'écriture doit précéder les fils.
+    let state_dir = util::state_dir();
+    let rendu = render::apply(&state_dir);
+    tracing::info!(?rendu, "accélération matérielle");
+
+    // La rastérisation du texte, elle, se règle dans GTK — et avant que la
+    // fenêtre ne naisse : WebKitGTK garde les polices déjà construites telles
+    // qu'elles sont, et ce qui est peint le reste jusqu'au rechargement.
+    render::apply_text(render::load(&state_dir).text);
+
+    util::install_crypto_provider();
+
     tauri::Builder::default()
-        .setup(|app| {
-            let state = AppState::new(util::state_dir());
+        .setup(move |app| {
+            let state = AppState::new(state_dir);
             tracing::info!(dossier = %state.state_dir.display(), "dossier d'état");
             let clusters = state.clusters.clone();
             app.manage(state);
@@ -60,6 +73,10 @@ fn main() {
         })
         .invoke_handler(tauri::generate_handler![
             commands::app::app_info,
+            commands::app::app_restart,
+            commands::app::render_settings,
+            commands::app::render_set_acceleration,
+            commands::app::render_set_text,
             commands::app::open_url,
             commands::clusters::list_clusters,
             commands::clusters::connect_cluster,
@@ -115,6 +132,8 @@ fn main() {
             commands::updater::updates_settings,
             commands::updater::updates_save_settings,
             commands::ai::ai_settings,
+            commands::ai::ai_claude_code_account,
+            commands::ai::ai_use_claude_code,
             commands::ai::ai_upsert_profile,
             commands::ai::ai_remove_profile,
             commands::ai::ai_set_active,

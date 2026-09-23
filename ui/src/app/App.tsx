@@ -16,6 +16,7 @@ import { useShortcuts } from "./shortcuts";
 import { Sidebar } from "./shell/Sidebar";
 import { Toasts } from "./shell/Toasts";
 import { Topbar } from "./shell/Topbar";
+import { ResizeGrips } from "./shell/WindowControls";
 import { useStore, VIEW_LABELS, type View } from "./store";
 import { useApplyTheme } from "./theme";
 import "./shell/Shell.css";
@@ -119,6 +120,7 @@ function Shell() {
       <AssistantColumn />
       <Toasts />
       <ConfirmHost />
+      <ResizeGrips />
     </div>
   );
 }

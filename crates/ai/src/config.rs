@@ -87,6 +87,10 @@ pub struct ProviderProfile {
     /// Demander l'affichage du raisonnement (Claude 4.6 et suivants).
     #[serde(default)]
     pub show_thinking: bool,
+    /// Reprendre les identifiants laissés par Claude Code dans `~/.claude`
+    /// plutôt qu'une clé enregistrée ici. Anthropic seulement.
+    #[serde(default)]
+    pub use_claude_code: bool,
 }
 
 impl ProviderProfile {
@@ -114,6 +118,17 @@ impl ProviderProfile {
             .as_deref()
             .map(|k| !k.trim().is_empty())
             .unwrap_or(false)
+    }
+
+    /// Vrai si le profil s'appuie sur le compte de Claude Code.
+    pub fn uses_claude_code(&self) -> bool {
+        self.use_claude_code && matches!(self.kind, ProviderKind::Anthropic)
+    }
+
+    /// Vrai si le profil est utilisable en l'état : une clé, un compte Claude
+    /// Code, ou un fournisseur qui n'en demande pas.
+    pub fn is_usable(&self) -> bool {
+        self.has_api_key() || self.uses_claude_code() || !self.kind.requires_api_key()
     }
 }
 
@@ -184,6 +199,8 @@ pub struct ProfileView {
     pub max_output_tokens: u32,
     /// Affichage du raisonnement.
     pub show_thinking: bool,
+    /// Vrai si le profil emprunte les identifiants de Claude Code.
+    pub use_claude_code: bool,
 }
 
 impl From<&ProviderProfile> for ProfileView {
@@ -197,6 +214,7 @@ impl From<&ProviderProfile> for ProfileView {
             api_key_set: p.has_api_key(),
             max_output_tokens: p.max_output_tokens(),
             show_thinking: p.show_thinking,
+            use_claude_code: p.uses_claude_code(),
         }
     }
 }
@@ -244,6 +262,9 @@ pub struct ProfileUpdate {
     /// Affichage du raisonnement.
     #[serde(default)]
     pub show_thinking: bool,
+    /// Employer les identifiants de Claude Code au lieu d'une clé.
+    #[serde(default)]
+    pub use_claude_code: bool,
 }
 
 #[cfg(test)]
@@ -261,6 +282,7 @@ mod tests {
             model: "qwen".into(),
             max_output_tokens: None,
             show_thinking: false,
+            use_claude_code: false,
         };
         assert_eq!(p.endpoint(), "http://127.0.0.1:1234/v1");
         assert_eq!(p.max_output_tokens(), 4_096);
@@ -285,6 +307,7 @@ mod tests {
             model: "claude-opus-5".into(),
             max_output_tokens: None,
             show_thinking: true,
+            use_claude_code: false,
         };
         let v = ProfileView::from(&p);
         assert!(v.api_key_set);
@@ -292,6 +315,35 @@ mod tests {
         assert!(!json.contains("secret"));
         assert!(json.contains("\"apiKeySet\":true"));
         assert_eq!(v.base_url, "https://api.anthropic.com");
+    }
+
+    #[test]
+    fn profil_adosse_au_compte_claude_code() {
+        let mut p = ProviderProfile {
+            id: "1".into(),
+            name: "Compte Claude".into(),
+            kind: ProviderKind::Anthropic,
+            base_url: None,
+            api_key: None,
+            model: "claude-opus-5".into(),
+            max_output_tokens: None,
+            show_thinking: false,
+            use_claude_code: true,
+        };
+        assert!(!p.has_api_key());
+        assert!(p.uses_claude_code());
+        assert!(p.is_usable(), "le compte remplace la clé");
+        assert!(ProfileView::from(&p).use_claude_code);
+
+        // Le drapeau ne vaut que pour Anthropic.
+        p.kind = ProviderKind::OpenAi;
+        assert!(!p.uses_claude_code());
+        assert!(!p.is_usable());
+
+        // Un fichier écrit avant cette version reste lisible.
+        let ancien = r#"{"id":"2","name":"X","kind":"anthropic","model":"claude-opus-5"}"#;
+        let p: ProviderProfile = serde_json::from_str(ancien).unwrap();
+        assert!(!p.use_claude_code);
     }
 
     #[test]
